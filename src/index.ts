@@ -1,0 +1,1 @@
+console.log('Hello, Fastify with TypeScript!');
