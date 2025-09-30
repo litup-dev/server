@@ -4,8 +4,8 @@
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "start": "yarn build && node dist/index.js",
+    "dev": "tsx watch src/main.ts",
+    "start": "yarn build && node dist/main.js",
     "build": "tsc",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
