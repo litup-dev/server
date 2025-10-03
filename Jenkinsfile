@@ -42,6 +42,8 @@ pipeline {
                             ${REMOTE_USER}@${REMOTE_SERVER} 'bash -s' <<'DEPLOY'
 
 set -e
+export PATH="/usr/local/bin:/usr/bin:/bin:\$PATH"
+
 cd ${APP_PATH}
 
 # 백업 디렉토리 생성
