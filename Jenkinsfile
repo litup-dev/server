@@ -2,11 +2,12 @@ pipeline {
     agent any
 
     environment {
-        REMOTE_USER    = 'litup'
-        REMOTE_SERVER  = '220.93.50.45'
-        REMOTE_PORT    = '4342'
-        REMOTE_PATH    = '/Users/litup/workspace/litup/dockers/server'
-        APP_PATH       = "${REMOTE_PATH}/app"
+        NODE_VERSION    = '20'
+        REMOTE_USER     = 'litup'
+        REMOTE_SERVER   = '220.93.50.45'
+        REMOTE_PORT     = '4342'
+        REMOTE_PATH     = '/Users/litup/workspace/litup/dockers/server'
+        APP_PATH        = "${REMOTE_PATH}/app"
     }
 
     stages {
@@ -18,7 +19,8 @@ pipeline {
 
         stage('Install & Build') {
             steps {
-                sh 'yarn install --frozen-lockfile'
+                sh 'yarn install --immutable'
+                sh 'yarn prisma generate'
                 sh 'yarn build'
             }
         }
@@ -75,4 +77,3 @@ pipeline {
         }
     }
 }
-
