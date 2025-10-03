@@ -5,7 +5,7 @@ pipeline {
         REMOTE_USER    = 'litup'
         REMOTE_SERVER  = '220.93.50.45'
         REMOTE_PORT    = '4342'
-        REMOTE_PATH    = '/Users/litup/workspace/onhz/dockers/server'
+        REMOTE_PATH    = '/Users/litup/workspace/litup/dockers/server'
         APP_PATH       = "${REMOTE_PATH}/app"
     }
 
@@ -51,8 +51,13 @@ pipeline {
                             # 새 dist 내용 복사
                             cp -r dist_new/* dist/
                             rm -rf dist_new
-
                             echo "✅ 새 dist 배포 완료"
+
+                            # Docker 컨테이너 재시작
+                            echo "🔄 Docker 컨테이너 재시작"
+                            docker-compose down
+                            docker-compose up -d
+                            echo "✅ Docker 컨테이너 재시작 완료"
                             EOF
                         """
                     }
