@@ -64,8 +64,8 @@ echo "✅ 새 dist 배포 완료"
 
 # Docker 컨테이너 재시작
 echo "🔄 Docker 컨테이너 재시작"
-docker-compose down
-docker-compose up -d --build
+docker compose down
+docker compose up -d --build
 echo "✅ Docker 컨테이너 재시작 완료"
 
 DEPLOY
