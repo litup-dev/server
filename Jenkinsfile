@@ -19,8 +19,8 @@ pipeline {
 
         stage('Install & Build') {
             steps {
-                sh 'yarn install --immutable --inline-builds'
-                sh 'yarn prisma generate --skip-install'
+                sh 'yarn install --immutable'
+                sh 'yarn prisma generate'
                 sh 'yarn build'
             }
         }
