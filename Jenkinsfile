@@ -36,14 +36,17 @@ pipeline {
                             -o StrictHostKeyChecking=no \
                             -r dist ${REMOTE_USER}@${REMOTE_SERVER}:${APP_PATH}/dist_new
 
+                        scp -P ${REMOTE_PORT} \
+                            -o StrictHostKeyChecking=no \
+                            package.json yarn.lock \
+                            ${REMOTE_USER}@${REMOTE_SERVER}:${APP_PATH}/
+                            
                         echo "📦 원격 서버에서 배포 및 백업 진행"
                         ssh -p ${REMOTE_PORT} \
                             -o StrictHostKeyChecking=no \
                             ${REMOTE_USER}@${REMOTE_SERVER} 'bash -s' <<'DEPLOY'
 
 set -e
-export PATH="/usr/local/bin:/usr/bin:/bin:\$PATH"
-
 cd ${APP_PATH}
 
 # 백업 디렉토리 생성
