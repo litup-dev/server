@@ -1,6 +1,6 @@
 import fastify from 'fastify';
-import { PORT, HOST } from './common/constants';
-import { loggerOptions } from './common/loggerOptions';
+import { PORT, HOST } from './common/constants.js';
+import { loggerOptions } from './common/loggerOptions.js';
 
 const app = fastify({
     logger: loggerOptions,
