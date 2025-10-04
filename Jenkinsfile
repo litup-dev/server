@@ -40,7 +40,7 @@ pipeline {
                             -o StrictHostKeyChecking=no \
                             package.json yarn.lock \
                             ${REMOTE_USER}@${REMOTE_SERVER}:${APP_PATH}/
-                            
+
                         echo "📦 원격 서버에서 배포 및 백업 진행"
                         ssh -p ${REMOTE_PORT} \
                             -o StrictHostKeyChecking=no \
@@ -69,8 +69,8 @@ echo "✅ 새 dist 배포 완료"
 
 # Docker 컨테이너 재시작
 echo "🔄 Docker 컨테이너 재시작"
-docker compose down
-docker compose up -d --build
+/usr/local/bin/docker compose down
+/usr/local/bin/docker compose up -d --build
 echo "✅ Docker 컨테이너 재시작 완료"
 
 DEPLOY
