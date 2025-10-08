@@ -6,7 +6,13 @@ import type { CreateClubDto, UpdateClubDto } from '../dto/club.dto.js';
 
 export async function clubRoutes(fastify: FastifyInstance) {
 
-    fastify.get('/clubs', async (request, reply) => {
+    fastify.get('/clubs', {
+      schema: {
+        tags: ['Clubs'],
+        summary: '클럽 목록 조회',
+        description: '클럽 목록 조회',
+      },
+    }, async (request, reply) => {
     try {
       const service = new ClubService(request.server.prisma);
       const clubs = await service.getAll();
@@ -21,7 +27,14 @@ export async function clubRoutes(fastify: FastifyInstance) {
     }
   });
   
-  fastify.get('/clubs/:id', {schema: getClubSchema}, async (request, reply) => {
+  fastify.get('/clubs/:id', {
+      schema: {
+        ...getClubSchema,
+        tags: ['Clubs'],
+        summary: '클럽 상세 조회',
+        description: '클럽 상세 조회',
+      },
+    }, async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
       const service = new ClubService(request.server.prisma);
@@ -41,7 +54,14 @@ export async function clubRoutes(fastify: FastifyInstance) {
     }
   });
 
-  fastify.post('/clubs', { schema: createClubSchema }, async (request, reply) => {
+  fastify.post('/clubs',  { 
+    schema: {
+      ...createClubSchema,
+      tags: ['Clubs'], 
+      summary: '클럽 추가',
+      description: '클럽 추가',
+    },
+   }, async (request, reply) => {
     try {
       const service = new ClubService(request.server.prisma);
       const club = await service.create(request.body as CreateClubDto);
@@ -55,7 +75,14 @@ export async function clubRoutes(fastify: FastifyInstance) {
     }
   });
 
-  fastify.put('/clubs/:id', { schema: updateClubSchema }, async (request, reply) => {
+  fastify.put('/clubs/:id', { 
+    schema: {
+      ...updateClubSchema,
+      tags: ['Clubs'], 
+      summary: '클럽 수정',
+      description: '클럽 수정',
+    },
+   }, async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
       const service = new ClubService(request.server.prisma);
@@ -73,7 +100,13 @@ export async function clubRoutes(fastify: FastifyInstance) {
     }
   });
 
-  fastify.delete('/clubs/:id', async (request, reply) => {
+  fastify.delete('/clubs/:id', {
+    schema: {
+      tags: ['Clubs'],
+      summary: '클럽 삭제',
+      description: '클럽 삭제',
+    },
+  }, async (request, reply) => {
     try {
       const { id } = request.params as { id: string };
       const service = new ClubService(request.server.prisma);
