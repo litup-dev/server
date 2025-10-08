@@ -40,7 +40,7 @@ export async function clubRoutes(fastify) {
         const service = new ClubService(request.server.prisma);
         const userId = 1;
         const club = await service.create(userId, request.body);
-        return reply.code(201).send(club);
+        return reply.send(club);
     });
     fastify.put('/clubs/:id', {
         schema: {

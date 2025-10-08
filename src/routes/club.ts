@@ -55,7 +55,7 @@ export async function clubRoutes(fastify: FastifyInstance) {
     // TODO: JWT에서 실제 userId 추출
     const userId = 1; // 임시
     const club = await service.create(userId, request.body as CreateClubDto);
-    return reply.code(201).send(club);
+    return reply.send(club);
   });
 
   // PUT /clubs/:id - 클럽 수정
