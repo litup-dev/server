@@ -148,7 +148,7 @@ export class ReviewService {
         }
       });
 
-      // 2. 키워드 연결
+      // 2. 리뷰-키워드 연결
       if (data.keywords && data.keywords.length > 0) {
         await tx.club_review_keyword_tb.createMany({
           data: data.keywords.map(keywordId => ({
@@ -158,7 +158,19 @@ export class ReviewService {
         });
       }
 
-      // 3. 클럽의 평균 평점과 리뷰 수 업데이트
+      // TODO: club_keyword_summary(TB) - review_id(COL) 추가 후 주석 해제
+      // 3. 클럽-키워드 연결
+    //   if (data.keywords && data.keywords.length > 0) {
+    //     await tx.club_keyword_summary.createMany({
+    //       data: data.keywords.map(keywordId => ({
+    //         review_id: review.id,
+    //         club_id: clubId,
+    //         keyword_id: keywordId
+    //       }))
+    //     });
+    //   }
+      
+      // 4. 클럽의 평균 평점과 리뷰 수 업데이트
       const stats = await tx.club_review_tb.aggregate({
         where: { club_id: clubId },
         _avg: { rating: true },
@@ -210,6 +222,11 @@ export class ReviewService {
           where: { review_id: id }
         });
 
+      // TODO: club_keyword_summary(TB) - review_id(COL) 추가 후 주석 해제
+        // await tx.club_keyword_summary.deleteMany({
+        //     where: { review_id: id }
+        // });
+
         if (data.keywords.length > 0) {
           await tx.club_review_keyword_tb.createMany({
             data: data.keywords.map(keywordId => ({
@@ -217,6 +234,14 @@ export class ReviewService {
               keyword_id: keywordId
             }))
           });
+        // TODO: club_keyword_summary 데이터 추가 로직
+            //     await tx.club_keyword_summary.createMany({
+            //       data: data.keywords.map(keywordId => ({
+            //         review_id: id,
+            //         club_id: review.club_id,
+            //         keyword_id: keywordId
+            //       }))
+            //     });
         }
       }
 
@@ -261,7 +286,12 @@ export class ReviewService {
         where: { review_id: id }
       });
 
-      await tx.review_img_tb.deleteMany({
+      // TODO: club_keyword_summary(TB) - review_id(COL) 추가 후 주석 해제
+        // await tx.club_keyword_summary.deleteMany({
+        //     where: { review_id: id }
+        // });
+      
+        await tx.review_img_tb.deleteMany({
         where: { review_id: id }
       });
 
