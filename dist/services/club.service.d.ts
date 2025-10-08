@@ -1,77 +1,115 @@
 import { PrismaClient } from '@prisma/client';
-import { CreateClubDto, UpdateClubDto } from '../dto/club.dto.js';
+import type { CreateClubDto, UpdateClubDto } from '../dto/club.dto.js';
 export declare class ClubService {
     private prisma;
     constructor(prisma: PrismaClient);
-    getAll(): Promise<{
-        description: string | null;
-        name: string | null;
-        id: number;
-        userId: number;
-        createdAt: Date | null;
-        phone: string | null;
-        openTime: Date | null;
-        closeTime: Date | null;
-        capacity: number | null;
-        address: string | null;
-        avgRating: number | null;
-        reviewCnt: number | null;
-    }[]>;
+    getAll(offset?: number, limit?: number): Promise<{
+        clubs: {
+            id: number;
+            name: string | null;
+            address: string | null;
+            phone: string | null;
+            capacity: number | null;
+            openTime: Date | null;
+            closeTime: Date | null;
+            description: string | null;
+            avgRating: number | null;
+            reviewCnt: number | null;
+            createdAt: Date | null;
+            owner: {
+                id: number;
+                nickname: string | null;
+                profilePath: string | null;
+            } | undefined;
+            mainImage: {
+                id: number;
+                filePath: string | null;
+            } | undefined;
+            keywords: {
+                id: number;
+                name: string | null;
+                iconPath: string | null;
+            }[];
+        }[];
+        total: number;
+        offset: number;
+        limit: number;
+    }>;
     getById(id: number): Promise<{
-        description: string | null;
-        name: string | null;
         id: number;
-        userId: number;
-        createdAt: Date | null;
+        name: string | null;
+        address: string | null;
         phone: string | null;
+        capacity: number | null;
         openTime: Date | null;
         closeTime: Date | null;
-        capacity: number | null;
-        address: string | null;
+        description: string | null;
         avgRating: number | null;
         reviewCnt: number | null;
+        createdAt: Date | null;
+        owner: {
+            id: number;
+            nickname: string | null;
+            profilePath: string | null;
+        } | undefined;
+        images: {
+            id: number;
+            filePath: string | null;
+            isMain: boolean | null;
+            createdAt: Date | null;
+        }[];
+        keywords: {
+            id: number;
+            name: string | null;
+            iconPath: string | null;
+        }[];
+        upcomingPerforms: {
+            id: number;
+            title: string | null;
+            performDate: Date | null;
+            price: number | null;
+        }[];
     } | null>;
-    create(data: CreateClubDto): Promise<{
-        description: string | null;
-        name: string | null;
+    create(userId: number, data: CreateClubDto): Promise<{
         id: number;
-        userId: number;
-        createdAt: Date | null;
+        name: string | null;
+        address: string | null;
         phone: string | null;
+        capacity: number | null;
         openTime: Date | null;
         closeTime: Date | null;
-        capacity: number | null;
-        address: string | null;
+        description: string | null;
         avgRating: number | null;
         reviewCnt: number | null;
+        createdAt: Date | null;
+        owner: {
+            id: number;
+            nickname: string | null;
+            profilePath: string | null;
+        } | undefined;
     }>;
-    update(id: number, data: UpdateClubDto): Promise<{
-        description: string | null;
-        name: string | null;
+    update(id: number, userId: number, data: UpdateClubDto): Promise<{
         id: number;
-        userId: number;
-        createdAt: Date | null;
+        name: string | null;
+        address: string | null;
         phone: string | null;
+        capacity: number | null;
         openTime: Date | null;
         closeTime: Date | null;
-        capacity: number | null;
-        address: string | null;
+        description: string | null;
         avgRating: number | null;
         reviewCnt: number | null;
+        createdAt: Date | null;
+        owner: {
+            id: number;
+            nickname: string | null;
+            profilePath: string | null;
+        } | undefined;
     }>;
-    delete(id: number): Promise<{
-        description: string | null;
-        name: string | null;
-        id: number;
-        userId: number;
-        createdAt: Date | null;
-        phone: string | null;
-        openTime: Date | null;
-        closeTime: Date | null;
-        capacity: number | null;
-        address: string | null;
-        avgRating: number | null;
-        reviewCnt: number | null;
+    delete(id: number, userId: number): Promise<void>;
+    toggleFavorite(clubId: number, userId: number): Promise<{
+        isFavorite: boolean;
+        message: string;
     }>;
 }
 //# sourceMappingURL=club.service.d.ts.map

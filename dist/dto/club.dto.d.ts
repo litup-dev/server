@@ -16,13 +16,4 @@ export interface UpdateClubDto {
     openTime?: Date;
     closeTime?: Date;
 }
-export interface ClubResponseDto {
-    id: number;
-    name: string | null;
-    address: string | null;
-    phone: string | null;
-    avgRating: number | null;
-    reviewCnt: number | null;
-    createdAt: Date | null;
-}
 //# sourceMappingURL=club.dto.d.ts.map

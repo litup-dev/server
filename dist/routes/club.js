@@ -1,24 +1,17 @@
 import { ClubService } from '../services/club.service.js';
-import { createClubSchema, updateClubSchema, getClubSchema } from '../schemas/club.schema.js';
+import { createClubSchema, updateClubSchema, getClubSchema, getClubsSchema, toggleFavoriteSchema } from '../schemas/club.schema.js';
 export async function clubRoutes(fastify) {
     fastify.get('/clubs', {
         schema: {
+            ...getClubsSchema,
             tags: ['Clubs'],
             summary: '클럽 목록 조회',
             description: '클럽 목록 조회',
         },
-    }, async (request, reply) => {
-        try {
-            const service = new ClubService(request.server.prisma);
-            const clubs = await service.getAll();
-            request.log.info(`Found ${clubs.length} clubs`);
-            return clubs;
-        }
-        catch (error) {
-            request.log.error(error);
-            reply.code(500);
-            return { error: 'Failed to fetch clubs' };
-        }
+    }, async (request) => {
+        const { offset = 0, limit = 20 } = request.query;
+        const service = new ClubService(request.server.prisma);
+        return service.getAll(offset, limit);
     });
     fastify.get('/clubs/:id', {
         schema: {
@@ -28,22 +21,13 @@ export async function clubRoutes(fastify) {
             description: '클럽 상세 조회',
         },
     }, async (request, reply) => {
-        try {
-            const { id } = request.params;
-            const service = new ClubService(request.server.prisma);
-            const club = await service.getById(parseInt(id));
-            if (!club) {
-                reply.code(404);
-                return { error: 'Club not found' };
-            }
-            request.log.info(`Found club with ID ${id}`);
-            return club;
+        const { id } = request.params;
+        const service = new ClubService(request.server.prisma);
+        const club = await service.getById(parseInt(id));
+        if (!club) {
+            return reply.code(404).send({ error: 'Club not found' });
         }
-        catch (error) {
-            request.log.error(error);
-            reply.code(500);
-            return { error: 'Failed to fetch club' };
-        }
+        return club;
     });
     fastify.post('/clubs', {
         schema: {
@@ -53,18 +37,10 @@ export async function clubRoutes(fastify) {
             description: '클럽 추가',
         },
     }, async (request, reply) => {
-        try {
-            const service = new ClubService(request.server.prisma);
-            const club = await service.create(request.body);
-            request.log.info(`Created club with ID ${club.id}`);
-            reply.code(201);
-            return club;
-        }
-        catch (error) {
-            request.log.error(error);
-            reply.code(500);
-            return { error: 'Failed to create club' };
-        }
+        const service = new ClubService(request.server.prisma);
+        const userId = 1;
+        const club = await service.create(userId, request.body);
+        return reply.code(201).send(club);
     });
     fastify.put('/clubs/:id', {
         schema: {
@@ -74,44 +50,67 @@ export async function clubRoutes(fastify) {
             description: '클럽 수정',
         },
     }, async (request, reply) => {
+        const { id } = request.params;
+        const service = new ClubService(request.server.prisma);
+        const userId = 1;
         try {
-            const { id } = request.params;
-            const service = new ClubService(request.server.prisma);
-            const updated = await service.update(parseInt(id), request.body);
-            request.log.info(`Updated club with ID ${id}`);
+            const updated = await service.update(parseInt(id), userId, request.body);
             return updated;
         }
         catch (error) {
-            request.log.error(error);
-            if (error.code === 'P2025') {
-                reply.code(404);
-                return { error: 'Club not found' };
+            if (error.message === 'Club not found') {
+                return reply.code(404).send({ error: 'Club not found' });
             }
-            reply.code(500);
-            return { error: 'Failed to update club' };
+            if (error.message === 'Unauthorized') {
+                return reply.code(403).send({ error: 'Unauthorized' });
+            }
+            throw error;
         }
     });
     fastify.delete('/clubs/:id', {
         schema: {
+            ...getClubSchema,
             tags: ['Clubs'],
             summary: '클럽 삭제',
             description: '클럽 삭제',
         },
     }, async (request, reply) => {
+        const { id } = request.params;
+        const service = new ClubService(request.server.prisma);
+        const userId = 1;
         try {
-            const { id } = request.params;
-            const service = new ClubService(request.server.prisma);
-            await service.delete(parseInt(id));
-            request.log.info(`Deleted club with ID ${id}`);
+            await service.delete(parseInt(id), userId);
         }
         catch (error) {
-            request.log.error(error);
-            if (error.code === 'P2025') {
-                reply.code(404);
-                return { error: 'Club not found' };
+            if (error.message === 'Club not found') {
+                return reply.code(404).send({ error: 'Club not found' });
             }
-            reply.code(500);
-            return { error: 'Failed to delete club' };
+            if (error.message === 'Unauthorized') {
+                return reply.code(403).send({ error: 'Unauthorized' });
+            }
+            throw error;
+        }
+    });
+    fastify.post('/clubs/:id/favorite', {
+        schema: {
+            ...toggleFavoriteSchema,
+            tags: ['Clubs'],
+            summary: '클럽 즐겨찾기 등록/해제',
+            description: '클럽 즐겨찾기 등록/해제',
+        },
+    }, async (request, reply) => {
+        const { id } = request.params;
+        const service = new ClubService(request.server.prisma);
+        const userId = 1;
+        try {
+            const result = await service.toggleFavorite(parseInt(id), userId);
+            return result;
+        }
+        catch (error) {
+            if (error.message === 'Club not found') {
+                return reply.code(404).send({ error: 'Club not found' });
+            }
+            throw error;
         }
     });
 }

@@ -68,7 +68,7 @@ export class ReviewService {
                     isMain: img.is_main
                 }))
             })),
-            total,
+            total: reviews.length,
             avgRating: club?.avgRating || 0
         };
     }

@@ -1,12 +1,19 @@
 import { ReviewService } from '../services/review.service.js';
-import { createReviewSchema, updateReviewSchema, getReviewSchema, getReviewsSchema } from '../schemas/review.schema.js';
+import { createReviewSchema, updateReviewSchema, getReviewsSchema } from '../schemas/review.schema.js';
 export async function reviewRoutes(fastify) {
-    fastify.get('/clubs/:id/reviews', { schema: getReviewsSchema }, async (request, reply) => {
+    fastify.get('/clubs/:id/reviews', {
+        schema: {
+            ...getReviewsSchema,
+            tags: ['Reviews'],
+            summary: '클럽의 리뷰 목록 조회',
+            description: '클럽의 리뷰 목록 조회',
+        },
+    }, async (request, reply) => {
         try {
             const { id } = request.params;
-            const { page = 1, limit = 10 } = request.query;
+            const { offset = 0, limit = 10 } = request.query;
             const service = new ReviewService(request.server.prisma);
-            const result = await service.getReviewsByClubId(parseInt(id), page, limit);
+            const result = await service.getReviewsByClubId(parseInt(id), offset, limit);
             request.log.info(`Found ${result.reviews.length} reviews for club ${id}`);
             return result;
         }
@@ -16,7 +23,14 @@ export async function reviewRoutes(fastify) {
             return { error: 'Failed to fetch reviews' };
         }
     });
-    fastify.get('/reviews/:id', { schema: getReviewSchema }, async (request, reply) => {
+    fastify.get('/reviews/:id', {
+        schema: {
+            ...getReviewsSchema,
+            tags: ['Reviews'],
+            summary: '리뷰 상세 조회',
+            description: '리뷰 상세 조회',
+        },
+    }, async (request, reply) => {
         try {
             const { id } = request.params;
             const service = new ReviewService(request.server.prisma);
@@ -34,7 +48,14 @@ export async function reviewRoutes(fastify) {
             return { error: 'Failed to fetch review' };
         }
     });
-    fastify.post('/clubs/:id/reviews', { schema: createReviewSchema }, async (request, reply) => {
+    fastify.post('/clubs/:id/reviews', {
+        schema: {
+            ...createReviewSchema,
+            tags: ['Reviews'],
+            summary: '리뷰 등록',
+            description: '리뷰 상세 조회',
+        },
+    }, async (request, reply) => {
         try {
             const { id } = request.params;
             const clubId = parseInt(id);
@@ -49,7 +70,6 @@ export async function reviewRoutes(fastify) {
             }
             const review = await service.create(clubId, userId, request.body);
             request.log.info(`Created review with ID ${review.id} for club ${clubId}`);
-            reply.code(201);
             return review;
         }
         catch (error) {
@@ -58,7 +78,14 @@ export async function reviewRoutes(fastify) {
             return { error: 'Failed to create review' };
         }
     });
-    fastify.patch('/reviews/:id', { schema: updateReviewSchema }, async (request, reply) => {
+    fastify.patch('/reviews/:id', {
+        schema: {
+            ...updateReviewSchema,
+            tags: ['Reviews'],
+            summary: '리뷰 수정',
+            description: '리뷰 수정',
+        },
+    }, async (request, reply) => {
         try {
             const { id } = request.params;
             const userId = 1;
@@ -81,14 +108,19 @@ export async function reviewRoutes(fastify) {
             return { error: 'Failed to update review' };
         }
     });
-    fastify.delete('/reviews/:id', { schema: getReviewSchema }, async (request, reply) => {
+    fastify.delete('/reviews/:id', {
+        schema: {
+            tags: ['Reviews'],
+            summary: '리뷰 삭제',
+            description: '리뷰 삭제',
+        },
+    }, async (request, reply) => {
         try {
             const { id } = request.params;
             const userId = 1;
             const service = new ReviewService(request.server.prisma);
             await service.delete(parseInt(id), userId);
             request.log.info(`Deleted review with ID ${id}`);
-            reply.code(204);
             return;
         }
         catch (error) {

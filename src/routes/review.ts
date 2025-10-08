@@ -31,7 +31,7 @@ export async function reviewRoutes(fastify: FastifyInstance) {
 
   fastify.get('/reviews/:id', { 
       schema: {
-        ...getReviewsSchema,
+        ...getReviewSchema,
         tags: ['Reviews'],
         summary: '리뷰 상세 조회',
         description: '리뷰 상세 조회',
@@ -136,6 +136,7 @@ export async function reviewRoutes(fastify: FastifyInstance) {
   // 리뷰 삭제
   fastify.delete('/reviews/:id', { 
       schema: {
+        ...getReviewSchema,
         tags: ['Reviews'],
         summary: '리뷰 삭제',
         description: '리뷰 삭제',
