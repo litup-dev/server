@@ -12,3 +12,6 @@ node_modules
 !.yarn/sdks
 !.yarn/versions
 .pnp.*
+# prisma build files 
+prisma/*
+!prisma/schema.prisma

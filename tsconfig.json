@@ -30,7 +30,11 @@
     // const u: User = {};
     // u.name = undefined;
     "strict": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "baseUrl": "./",
+    "paths": {
+      "@prisma": ["./prisma/index"],
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
