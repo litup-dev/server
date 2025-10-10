@@ -1,40 +1,40 @@
 {
-  "compilerOptions": {
-    "module": "ESNext",
-    "target": "es2020",
-    "moduleResolution": "node",
-    "rootDir": "./src",
-    "outDir": "./dist",
-    "removeComments": true, // 컴파일 시 주석 제거
-    "esModuleInterop": true, // ES 모듈과 CommonJS 간 호환성 개선
-    "allowSyntheticDefaultImports": true, // default export가 없어도 default import 허용
-    "forceConsistentCasingInFileNames": true, // 파일 이름 대소문자 일관성 강제
-    "resolveJsonModule": true, // JSON 파일을 모듈로 import 가능
-    "sourceMap": true,
-    "declaration": true,
-    "declarationMap": true,
-    "noUncheckedIndexedAccess": true,
-    // 인터페이스 혹은 타입의 opational필드에 대한 타입 안정성 확보
-    // 예시
-    // const arr: string[] = [];
-    // const value = arr[0].toUpperCase();
-    
-    "exactOptionalPropertyTypes": true,
-    // 인터페이스 혹은 타입의 opational필드에 대한 타입 안정성 확보
-    // 예시
-    //interface User {
-    //   name?: string;
-    // }
-    // const u: User = {};
-    // u.name = undefined;
-    "strict": true,
-    "skipLibCheck": true,
-    "baseUrl": "./",
-    "paths": {
-      "@prisma": ["./prisma/index"],
-      "@/*": ["./src/*"]
-    }
-  },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+    "compilerOptions": {
+        "module": "ESNext",
+        "target": "es2020",
+        "moduleResolution": "node",
+        "rootDir": "./src",
+        "outDir": "./dist",
+        "removeComments": true, // 컴파일 시 주석 제거
+        "esModuleInterop": true, // ES 모듈과 CommonJS 간 호환성 개선
+        "allowSyntheticDefaultImports": true, // default export가 없어도 default import 허용
+        "forceConsistentCasingInFileNames": true, // 파일 이름 대소문자 일관성 강제
+        "resolveJsonModule": true, // JSON 파일을 모듈로 import 가능
+        "sourceMap": true,
+        "declaration": true,
+        "declarationMap": true,
+        "noUncheckedIndexedAccess": true,
+        // 인터페이스 혹은 타입의 opational필드에 대한 타입 안정성 확보
+        // 예시
+        // const arr: string[] = [];
+        // const value = arr[0].toUpperCase();
+
+        "exactOptionalPropertyTypes": true,
+        // 인터페이스 혹은 타입의 opational필드에 대한 타입 안정성 확보
+        // 예시
+        //interface User {
+        //   name?: string;
+        // }
+        // const u: User = {};
+        // u.name = undefined;
+        "strict": true,
+        "skipLibCheck": true,
+        "baseUrl": "./",
+        "paths": {
+            "@prisma/client": ["./prisma/index"],
+            "@/*": ["./src/*"]
+        }
+    },
+    "include": ["src/**/*"],
+    "exclude": ["node_modules", "dist"]
 }
