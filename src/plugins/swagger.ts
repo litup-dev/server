@@ -1,6 +1,8 @@
 import { FastifyInstance } from 'fastify';
 import fastifySwagger from '@fastify/swagger';
 import fastifySwaggerUi from '@fastify/swagger-ui';
+import { PORT, HOST } from '@/common/constants.js';
+
 
 export async function registerSwagger(fastify: FastifyInstance) {
     await fastify.register(fastifySwagger, {
@@ -12,7 +14,7 @@ export async function registerSwagger(fastify: FastifyInstance) {
             },
             servers: [
                 {
-                    url: 'http://localhost:10000',
+                    url: `http://${HOST}:${PORT}`,
                     description: 'Development server',
                 },
             ],
