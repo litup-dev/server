@@ -16,3 +16,7 @@ node_modules
 # prisma build files 
 prisma/*
 !prisma/schema.prisma
+
+# Build
+dist
+build
