@@ -32,6 +32,7 @@
     "baseUrl": "./",
     "paths": {
       "@prisma": ["./prisma/index"],
+      "@/*": ["./src/*"]
     }
   },
   "include": ["src/**/*"],
