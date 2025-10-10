@@ -3,7 +3,6 @@ import fastifySwagger from '@fastify/swagger';
 import fastifySwaggerUi from '@fastify/swagger-ui';
 import { PORT, HOST } from '@/common/constants.js';
 
-
 export async function registerSwagger(fastify: FastifyInstance) {
     await fastify.register(fastifySwagger, {
         openapi: {

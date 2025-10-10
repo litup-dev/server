@@ -1,10 +1,9 @@
-import path from 'path'
+import path from 'path';
 import dotenv from 'dotenv';
 
-
-if(process.env.NODE_ENV === 'development') {
+if (process.env.NODE_ENV === 'development') {
     dotenv.config({ path: path.resolve('.env.development') });
-} else if(process.env.NODE_ENV === 'production') {
+} else if (process.env.NODE_ENV === 'production') {
     dotenv.config({ path: path.resolve('.env') });
 } else {
     throw new Error(`NODE_ENV 미지정 오류`);

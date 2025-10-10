@@ -1,16 +1,16 @@
 export interface CreateReviewDto {
     rating: number;
     content?: string;
-    keywords?: number[]; 
-  }
-  
-  export interface UpdateReviewDto {
+    keywords?: number[];
+}
+
+export interface UpdateReviewDto {
     rating?: number;
     content?: string;
     keywords?: number[];
-  }
-  
-  export interface ReviewResponseDto {
+}
+
+export interface ReviewResponseDto {
     id: number;
     clubId: number;
     userId: number;
@@ -19,23 +19,23 @@ export interface CreateReviewDto {
     createdAt: Date | null;
     updatedAt: Date | null;
     user?: {
-      id: number;
-      nickname: string | null;
-      profilePath: string | null;
+        id: number;
+        nickname: string | null;
+        profilePath: string | null;
     };
     keywords?: {
-      id: number;
-      name: string | null;
+        id: number;
+        name: string | null;
     }[];
     images?: {
-      id: number;
-      filePath: string | null;
-      isMain: boolean | null;
+        id: number;
+        filePath: string | null;
+        isMain: boolean | null;
     }[];
-  }
-  
-  export interface ReviewListResponseDto {
+}
+
+export interface ReviewListResponseDto {
     reviews: ReviewResponseDto[];
     total: number;
     avgRating: number;
-  }
+}
