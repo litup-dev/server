@@ -26,7 +26,7 @@ model Club {
   club_review_tb       club_review_tb[]
   user_tb              user_tb                   @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   favorite_tb          favorite_tb[]
-  perform_tb           perform_tb[]
+  perform_tb           Perform[]
 
   @@map("club_tb")
 }
@@ -34,7 +34,7 @@ model Club {
 model attend_tb {
   perform_id Int
   user_id    Int
-  perform_tb perform_tb @relation(fields: [perform_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  perform_tb Perform @relation(fields: [perform_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   user_tb    user_tb    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@id([perform_id, user_id])
@@ -115,7 +115,7 @@ model perform_img_tb {
   created_at DateTime?  @default(now()) @db.Timestamp(6)
   updated_at DateTime?  @db.Timestamp(6)
   is_main    Boolean?
-  perform_tb perform_tb @relation(fields: [perform_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  perform_tb Perform @relation(fields: [perform_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model perform_review_tb {
@@ -125,11 +125,11 @@ model perform_review_tb {
   created_at DateTime?  @default(now()) @db.Timestamp(6)
   updated_at DateTime?  @db.Timestamp(6)
   content    String?    @db.VarChar(100)
-  perform_tb perform_tb @relation(fields: [perform_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  perform_tb Perform @relation(fields: [perform_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   user_tb    user_tb    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
-model perform_tb {
+model Perform {
   id                Int                 @id @default(autoincrement())
   club_id           Int
   user_id           Int
@@ -147,6 +147,8 @@ model perform_tb {
   perform_review_tb perform_review_tb[]
   club_tb           Club                @relation(fields: [club_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   user_tb           user_tb             @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("perform_tb")
 }
 
 model report_category_code {
@@ -225,7 +227,7 @@ model user_tb {
   club_tb           Club[]
   favorite_tb       favorite_tb[]
   perform_review_tb perform_review_tb[]
-  perform_tb        perform_tb[]
+  perform_tb        Perform[]
   report_tb         report_tb[]
   social_code       social_code         @relation(fields: [social_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }

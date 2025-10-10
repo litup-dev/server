@@ -1,9 +1,10 @@
 export interface GetPerformancesByDateRangeQueryDto {
     startDate: string;
     endDate: string;
-    clubId?: number;
     offset?: number;
     limit?: number;
+    isFree?: boolean;
+    area?: string;
 }
 
 export interface SnsLinks {
@@ -37,7 +38,7 @@ export interface PerformanceResponseDto {
         id: number;
         name: string | null;
         address: string | null;
-    },
+    };
     images?: {
         id: number;
         filePath: string | null;
