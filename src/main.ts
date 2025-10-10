@@ -27,7 +27,7 @@ const start = async () => {
         await app.listen({ port: PORT, host: HOST });
         app.log.info(`****************************************************************`);
         app.log.info(`LitUp API Server Started and Listening at http://${HOST}:${PORT}`);
-        app.log.info(`   Database URL: ${DATABASE_URL?.split('@')[1] || 'Not configured'}`); // 비밀번호 제외
+        app.log.info(`Database URL: ${DATABASE_URL?.split('@')[1] || 'Not configured'}`); // 비밀번호 제외
         app.log.info(`****************************************************************`);
     } catch (err) {
         app.log.error(err);
