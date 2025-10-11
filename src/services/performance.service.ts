@@ -106,4 +106,34 @@ export class PerformanceService {
             limit: limit ?? 1000,
         };
     }
+
+    async attendPerformance(userId: number, performId: number): Promise<string> {
+        // 토글로 작성 - 이미 참석한 기록이 있으면 삭제, 없으면 생성
+        // 동시성 문제가 생길 수 있다고 로우 쿼리를 추천함.
+        // race condition
+        const sql = Prisma.sql`
+            WITH ins AS (
+                INSERT INTO attend_tb (perform_id, user_id, created_at)
+                VALUES (${performId}, ${userId}, now())
+                ON CONFLICT (perform_id, user_id) DO NOTHING
+                RETURNING 'true' AS action
+            ), del AS (
+                DELETE FROM attend_tb
+                WHERE perform_id = ${performId} AND user_id = ${userId}
+                AND NOT EXISTS (SELECT 1 FROM ins)
+                RETURNING 'false' AS action
+            )
+            SELECT action FROM ins
+            UNION ALL
+            SELECT action FROM del;
+            `;
+        const result = await this.prisma.$queryRaw<{ action: string }[]>(sql);
+        
+        if (result.length === 0 || typeof result[0]?.action !== 'string') {
+            throw new Error('참석 여부 실패');
+        }
+        // 'true' or 'false'
+        const action = result[0].action;
+        return action;
+    }
 }
