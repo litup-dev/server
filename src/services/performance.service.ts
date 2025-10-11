@@ -45,6 +45,10 @@ export class PerformanceService {
                         ],
                     },
                 };
+            } else if(a === '부산'){
+                where.club_tb = {
+                    is: { address: { contains: '부산' } },
+                };
             }
         }
 
