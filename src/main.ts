@@ -6,6 +6,11 @@ import { registerRoutes } from './routes/index.js';
 
 const app = Fastify({
     logger: loggerOptions,
+    ajv: {
+    customOptions: {
+      strict: false,
+    },
+  },
 });
 
 // 플러그인 등록
@@ -35,5 +40,3 @@ const start = async () => {
     }
 };
 start();
-
-//d:\workspace\init\.yarn\sdks\typescript\lib\tsserver.js doesn't point to a valid tsserver install. Falling back to bundled TypeScript version.

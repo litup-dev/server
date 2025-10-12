@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
+import zodToJsonSchema from 'zod-to-json-schema';
+import { zodToOpenApiSchema } from './swagger.helper';
 
 // 공연 조회
 export const getPerformanceByDateRangeSchema = z.object({
@@ -25,14 +26,4 @@ export const getPerformanceByDateRangeSchema = z.object({
 });
 
 export type GetPerformanceByDateRangeSchema = z.infer<typeof getPerformanceByDateRangeSchema>;
-
-// 공연 참석
-export const attendPerformanceSchema = z.object({
-    performId: z.preprocess((val) => {
-        if (typeof val === 'string') return parseInt(val, 10);
-        return val;
-    }, z.number().int().positive()),
-});
-
-export type AttendPerformanceSchema = z.infer<typeof attendPerformanceSchema>;
-export const attendParamsJsonSchema = zodToJsonSchema(attendPerformanceSchema, { target: 'jsonSchema7' });
+export const getPerformanceByDateRangeJsonSchema = zodToJsonSchema(getPerformanceByDateRangeSchema, { target: 'jsonSchema7' });

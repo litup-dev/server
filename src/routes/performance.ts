@@ -1,9 +1,8 @@
-import { user_tb } from './../../node_modules/.prisma/client/index.d';
 import { FastifyInstance } from 'fastify';
 import { PerformanceService } from '@/services/performance.service';
-import { attendParamsJsonSchema, getPerformanceByDateRangeSchema } from '@/schemas/performance.schema';
+import { getPerformanceByDateRangeSchema } from '@/schemas/performance.schema';
 import { GetPerformancesByDateRangeQueryDto } from '@/dto/performance.dto';
-import { attendPerformanceSchema } from '@/schemas/performance.schema';
+import { idParamJsonSchema, idParamSchema } from '@/schemas/common.schema';
 
 export async function performanceRoutes(fastify: FastifyInstance) {
     fastify.get(
@@ -48,10 +47,11 @@ export async function performanceRoutes(fastify: FastifyInstance) {
                 tags: ['Performances'],
                 summary: '공연 참석/취소',
                 description: '공연 참석/취소',
+                params: idParamJsonSchema,
             },
         },
         async (request, reply) => {
-            const parsed = attendPerformanceSchema.safeParse(request.params);
+            const parsed = idParamSchema.safeParse(request.params);
             if (!parsed.success) {
                 return reply
                     .status(400)
