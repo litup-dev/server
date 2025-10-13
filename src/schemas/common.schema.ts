@@ -1,13 +1,19 @@
 import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
-import { zodToOpenApiSchema } from './swagger.helper';
+import { extendZodWithOpenApi, generateSchema } from "@anatine/zod-openapi";
+extendZodWithOpenApi(z);
 
 export const idParamSchema = z.object({
     performId: z.preprocess((val) => {
         if (typeof val === 'string') return parseInt(val, 10);
         return val;
-    }, z.number().int().positive()),
+    }, z.number().int().positive())
+    .openapi({ 
+        type: 'number',
+        description: '공연 ID', 
+        example: 1
+    })
+    
 });
 
 export type idParamSchema = z.infer<typeof idParamSchema>;
-export const idParamJsonSchema = zodToOpenApiSchema(idParamSchema, { id: 1 }, true);
+export const idParamJsonSchema = generateSchema(idParamSchema);

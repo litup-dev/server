@@ -15,7 +15,6 @@ const app = Fastify({
 
 // 플러그인 등록
 await registerPlugins(app);
-
 await registerRoutes(app);
 
 app.get('/', async (request, reply) => {

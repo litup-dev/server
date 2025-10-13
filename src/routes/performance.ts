@@ -1,15 +1,16 @@
 import { FastifyInstance } from 'fastify';
 import { PerformanceService } from '@/services/performance.service';
-import { getPerformanceByDateRangeSchema } from '@/schemas/performance.schema';
+import { getPerformanceByDateRangeSchema, getPerformanceByDateRangeJsonSchema } from '@/schemas/performance.schema';
 import { GetPerformancesByDateRangeQueryDto } from '@/dto/performance.dto';
-import { idParamJsonSchema, idParamSchema } from '@/schemas/common.schema';
+import { idParamSchema, idParamJsonSchema } from '@/schemas/common.schema';
+
 
 export async function performanceRoutes(fastify: FastifyInstance) {
     fastify.get(
         '/performances',
         {
             schema: {
-                ...getPerformanceByDateRangeSchema,
+                querystring: getPerformanceByDateRangeJsonSchema,
                 tags: ['Performances'],
                 summary: '공연 목록 조회',
                 description: '공연 목록 조회',
@@ -44,10 +45,10 @@ export async function performanceRoutes(fastify: FastifyInstance) {
         '/performances/:performId/attend',
         {
             schema: {
+                params: idParamJsonSchema,
                 tags: ['Performances'],
                 summary: '공연 참석/취소',
-                description: '공연 참석/취소',
-                params: idParamJsonSchema,
+                description: '공연 참석/취소'
             },
         },
         async (request, reply) => {

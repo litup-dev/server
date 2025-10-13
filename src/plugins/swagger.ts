@@ -1,14 +1,15 @@
 import { FastifyInstance } from 'fastify';
+import { PORT, HOST } from '@/common/constants.js';
 import fastifySwagger from '@fastify/swagger';
 import fastifySwaggerUi from '@fastify/swagger-ui';
-import { PORT, HOST } from '@/common/constants.js';
 
 export async function registerSwagger(fastify: FastifyInstance) {
     await fastify.register(fastifySwagger, {
         openapi: {
+            openapi: '3.0.0',
             info: {
-                title: 'Fastify Prisma API',
-                description: 'API documentation',
+                title: 'LitUp API',
+                description: 'API documentation',  
                 version: '1.0.0',
             },
             servers: [
@@ -17,7 +18,7 @@ export async function registerSwagger(fastify: FastifyInstance) {
                     description: 'Development server',
                 },
             ],
-        },
+        },  
     });
 
     await fastify.register(fastifySwaggerUi, {
