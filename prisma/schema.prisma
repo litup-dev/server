@@ -34,11 +34,9 @@ model Club {
 model attend_tb {
   perform_id Int
   user_id    Int
-  
-  created_at  DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
-  
-  perform_tb Perform @relation(fields: [perform_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  user_tb    user_tb    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  created_at DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+  perform_tb Perform   @relation(fields: [perform_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user_tb    user_tb   @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@id([perform_id, user_id])
 }
@@ -56,11 +54,13 @@ model club_img_tb {
 }
 
 model club_keyword_summary {
-  id         Int        @id @default(autoincrement())
-  club_id    Int
-  keyword_id Int
-  club_tb    Club       @relation(fields: [club_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  keyword_tb keyword_tb @relation(fields: [keyword_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id             Int            @id @default(autoincrement())
+  club_id        Int
+  keyword_id     Int
+  review_id      Int
+  club_tb        Club           @relation(fields: [club_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  club_review_tb club_review_tb @relation(fields: [review_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "club_keyword_summary_club_review_id_fkey")
+  keyword_tb     keyword_tb     @relation(fields: [keyword_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model club_review_keyword_tb {
@@ -79,6 +79,7 @@ model club_review_tb {
   created_at             DateTime?                @default(now()) @db.Timestamp(6)
   updated_at             DateTime?                @db.Timestamp(6)
   content                String?
+  club_keyword_summary   club_keyword_summary[]
   club_review_keyword_tb club_review_keyword_tb[]
   club_tb                Club                     @relation(fields: [club_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   user_tb                user_tb                  @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -112,24 +113,26 @@ model keyword_tb {
 }
 
 model perform_img_tb {
-  id         Int        @id @default(autoincrement())
+  id         Int       @id @default(autoincrement())
   perform_id Int
-  file_path  String?    @db.VarChar(255)
-  created_at DateTime?  @default(now()) @db.Timestamp(6)
-  updated_at DateTime?  @db.Timestamp(6)
+  file_path  String?   @db.VarChar(255)
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+  updated_at DateTime? @db.Timestamp(6)
   is_main    Boolean?
-  perform_tb Perform @relation(fields: [perform_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  perform_tb Perform   @relation(fields: [perform_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model perform_review_tb {
-  id         Int        @id @default(autoincrement())
-  perform_id Int
-  user_id    Int
-  created_at DateTime?  @default(now()) @db.Timestamp(6)
-  updated_at DateTime?  @db.Timestamp(6)
-  content    String?    @db.VarChar(100)
-  perform_tb Perform @relation(fields: [perform_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  user_tb    user_tb    @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id                     Int                      @id @default(autoincrement())
+  perform_id             Int
+  user_id                Int
+  created_at             DateTime?                @default(now()) @db.Timestamp(6)
+  updated_at             DateTime?                @db.Timestamp(6)
+  content                String                   @db.VarChar(100)
+  like_count             Int                      @default(0)
+  perform_review_like_tb perform_review_like_tb[]
+  perform_tb             Perform                  @relation(fields: [perform_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user_tb                user_tb                  @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model Perform {
@@ -217,20 +220,32 @@ model spatial_ref_sys {
 }
 
 model user_tb {
-  id                Int                 @id @default(autoincrement())
-  social_id         Int
-  nickname          String?             @db.VarChar(20)
-  created_at        DateTime?           @default(now()) @db.Timestamp(6)
-  updated_at        DateTime?           @db.Timestamp(6)
-  profile_path      String?
-  role              String?             @db.VarChar(20)
-  attend_tb         attend_tb[]
-  club_img_tb       club_img_tb[]
-  club_review_tb    club_review_tb[]
-  club_tb           Club[]
-  favorite_tb       favorite_tb[]
-  perform_review_tb perform_review_tb[]
-  perform_tb        Perform[]
-  report_tb         report_tb[]
-  social_code       social_code         @relation(fields: [social_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id                     Int                      @id @default(autoincrement())
+  social_id              Int
+  nickname               String?                  @db.VarChar(20)
+  created_at             DateTime?                @default(now()) @db.Timestamp(6)
+  updated_at             DateTime?                @db.Timestamp(6)
+  profile_path           String?
+  role                   String?                  @db.VarChar(20)
+  attend_tb              attend_tb[]
+  club_img_tb            club_img_tb[]
+  club_review_tb         club_review_tb[]
+  club_tb                Club[]
+  favorite_tb            favorite_tb[]
+  perform_review_like_tb perform_review_like_tb[]
+  perform_review_tb      perform_review_tb[]
+  perform_tb             Perform[]
+  report_tb              report_tb[]
+  social_code            social_code              @relation(fields: [social_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model perform_review_like_tb {
+  id                Int               @id @default(autoincrement())
+  review_id         Int
+  user_id           Int
+  created_at        DateTime?         @default(now()) @db.Timestamp(6)
+  perform_review_tb perform_review_tb @relation(fields: [review_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user_tb           user_tb           @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([review_id, user_id])
 }
