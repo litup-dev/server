@@ -1,6 +1,4 @@
-import { z } from 'zod';
-import { extendZodWithOpenApi, generateSchema } from "@anatine/zod-openapi";
-extendZodWithOpenApi(z);
+import {z, generateSchema} from '@/common/zod';
 
 export const idParamSchema = z.object({
     performId: z.preprocess((val) => {
@@ -12,7 +10,6 @@ export const idParamSchema = z.object({
         description: '공연 ID', 
         example: 1
     })
-    
 });
 
 export type idParamSchema = z.infer<typeof idParamSchema>;

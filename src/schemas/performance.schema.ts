@@ -1,6 +1,4 @@
-import { z } from 'zod';
-import { extendZodWithOpenApi, generateSchema } from "@anatine/zod-openapi";
-extendZodWithOpenApi(z);
+import {z, generateSchema} from '@/common/zod';
 
 export const getPerformanceByDateRangeSchema = z.object({
     startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '기간 조회 포맷 YYYY-MM-DD')
