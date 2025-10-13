@@ -45,7 +45,7 @@ export class PerformanceService {
                         ],
                     },
                 };
-            } else if(a === '부산'){
+            } else if (a === '부산') {
                 where.club_tb = {
                     is: { address: { contains: '부산' } },
                 };
@@ -128,12 +128,24 @@ export class PerformanceService {
             SELECT action FROM del;
             `;
         const result = await this.prisma.$queryRaw<{ action: string }[]>(sql);
-        
+
         if (result.length === 0 || typeof result[0]?.action !== 'string') {
             throw new Error('참석 여부 실패');
         }
         // 'true' or 'false'
         const action = result[0].action;
         return action;
+    }
+
+    async isUserAttending(userId: number, performId: number): Promise<boolean> {
+        const attend = await this.prisma.attend_tb.findUnique({
+            where: {
+                perform_id_user_id: {
+                    perform_id: performId,
+                    user_id: userId,
+                },
+            },
+        });
+        return attend !== null;
     }
 }

@@ -1,9 +1,11 @@
 import { FastifyInstance } from 'fastify';
 import { PerformanceService } from '@/services/performance.service';
-import { getPerformanceByDateRangeSchema, getPerformanceByDateRangeJsonSchema } from '@/schemas/performance.schema';
+import {
+    getPerformanceByDateRangeSchema,
+    getPerformanceByDateRangeJsonSchema,
+} from '@/schemas/performance.schema';
 import { GetPerformancesByDateRangeQueryDto } from '@/dto/performance.dto';
 import { idParamSchema, idParamJsonSchema } from '@/schemas/common.schema';
-
 
 export async function performanceRoutes(fastify: FastifyInstance) {
     fastify.get(
@@ -48,7 +50,7 @@ export async function performanceRoutes(fastify: FastifyInstance) {
                 params: idParamJsonSchema,
                 tags: ['Performances'],
                 summary: '공연 참석/취소',
-                description: '공연 참석/취소'
+                description: '공연 참석/취소',
             },
         },
         async (request, reply) => {
@@ -71,6 +73,39 @@ export async function performanceRoutes(fastify: FastifyInstance) {
                 } else {
                     return reply.status(200).send({ data: 'false' });
                 }
+            } catch (err: any) {
+                request.log.error(err);
+                return reply.status(500).send({ error: '요청 실패' });
+            }
+        }
+    );
+
+    fastify.get(
+        '/performances/:performId/attend',
+        {
+            schema: {
+                params: idParamJsonSchema,
+                tags: ['Performances'],
+                summary: '공연 참석확인',
+                description: '공연 참석확인',
+            },
+        },
+        async (request, reply) => {
+            const parsed = idParamSchema.safeParse(request.params);
+            if (!parsed.success) {
+                return reply
+                    .status(400)
+                    .send(`허용되지 않은 쿼리 파라미터 입니다. ${parsed.error.message}`);
+            }
+
+            const { performId } = parsed.data;
+            // 임시 추출
+            const userId = 1;
+
+            const service = new PerformanceService(request.server.prisma);
+            try {
+                const result = await service.isUserAttending(userId, performId);
+                return reply.status(200).send({ data: result });
             } catch (err: any) {
                 request.log.error(err);
                 return reply.status(500).send({ error: '요청 실패' });
