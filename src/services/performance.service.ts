@@ -1,16 +1,17 @@
+import {
+    GetPerformanceByDateRangeType,
+    PerformanceListResponseType,
+    PerformanceType,
+} from '@/schemas/performance.schema';
 import { PrismaClient } from '@prisma/client';
 import { Prisma } from '@prisma/client';
-import type {
-    GetPerformancesByDateRangeQueryDto,
-    PerformanceListResponseDto,
-} from '../dto/performance.dto';
 
 export class PerformanceService {
     constructor(private prisma: PrismaClient) {}
 
     async getPerformancesByDateRange(
-        query: GetPerformancesByDateRangeQueryDto
-    ): Promise<PerformanceListResponseDto> {
+        query: GetPerformanceByDateRangeType
+    ): Promise<PerformanceListResponseType> {
         const { startDate, endDate, isFree, area } = query;
 
         const offset = query.offset ?? 0;
@@ -80,16 +81,23 @@ export class PerformanceService {
             this.prisma.perform.count({ where }),
         ]);
         return {
-            performances: performances.map((p) => ({
+            items: performances.map((p) => ({
                 id: p.id,
                 title: p.title,
                 description: p.description,
-                performDate: p.perform_date,
+                performDate:
+                    p.perform_date instanceof Date ? p.perform_date.toISOString() : p.perform_date,
                 price: p.price,
                 isCanceled: p.is_cancelled,
-                artists: p.artists as { name: string; description?: string }[] | null,
+                artists: Array.isArray(p.artists)
+                    ? p.artists
+                          .filter((artist): artist is string => typeof artist === 'string')
+                          .map((artistName: string) => ({
+                              name: artistName,
+                          }))
+                    : null,
                 snsLinks: p.sns_links as { instagram?: string; youtube?: string }[] | null,
-                createdAt: p.created_at,
+                createdAt: p.created_at instanceof Date ? p.created_at.toISOString() : p.created_at,
                 club: {
                     id: p.club_tb.id,
                     name: p.club_tb.name,
@@ -107,7 +115,7 @@ export class PerformanceService {
         };
     }
 
-    async attendPerformance(userId: number, performId: number): Promise<string> {
+    async attendPerformance(userId: number, performId: number): Promise<boolean> {
         // 토글로 작성 - 이미 참석한 기록이 있으면 삭제, 없으면 생성
         // 동시성 문제가 생길 수 있다고 로우 쿼리를 추천함.
         // race condition
@@ -134,7 +142,7 @@ export class PerformanceService {
         }
         // 'true' or 'false'
         const action = result[0].action;
-        return action;
+        return action === 'true';
     }
 
     async isUserAttending(userId: number, performId: number): Promise<boolean> {
@@ -147,5 +155,65 @@ export class PerformanceService {
             },
         });
         return attend !== null;
+    }
+
+    async getPerformanceDetails(performId: number): Promise<PerformanceType | null> {
+        const performance = await this.prisma.perform.findUnique({
+            where: { id: performId },
+            include: {
+                club_tb: {
+                    select: {
+                        id: true,
+                        name: true,
+                        address: true,
+                    },
+                },
+                perform_img_tb: {
+                    select: {
+                        id: true,
+                        file_path: true,
+                        is_main: true,
+                    },
+                },
+            },
+        });
+        if (!performance) {
+            return null;
+        }
+        return {
+            id: performance.id,
+            title: performance.title ?? null,
+            description: performance.description ?? null,
+            performDate:
+                performance.perform_date instanceof Date
+                    ? performance.perform_date.toISOString()
+                    : (performance.perform_date ?? null),
+            price: performance.price ?? null,
+            isCanceled: performance.is_cancelled ?? null,
+            artists: Array.isArray(performance.artists)
+                ? performance.artists
+                      .filter((artist): artist is string => typeof artist === 'string')
+                      .map((artistName: string) => ({
+                          name: artistName,
+                      }))
+                : null,
+            snsLinks:
+                (performance.sns_links as { instagram?: string; youtube?: string }[] | null) ??
+                null,
+            createdAt:
+                performance.created_at instanceof Date
+                    ? performance.created_at.toISOString()
+                    : (performance.created_at ?? null),
+            club: {
+                id: performance.club_tb?.id ?? 0,
+                name: performance.club_tb?.name ?? null,
+                address: performance.club_tb?.address ?? null,
+            },
+            images: (performance.perform_img_tb ?? []).map((img) => ({
+                id: img.id,
+                filePath: img.file_path ?? null,
+                isMain: img.is_main ?? null,
+            })),
+        };
     }
 }

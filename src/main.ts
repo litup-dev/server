@@ -7,10 +7,10 @@ import { registerRoutes } from './routes/index.js';
 const app = Fastify({
     logger: loggerOptions,
     ajv: {
-    customOptions: {
-      strict: false,
+        customOptions: {
+            strict: false,
+        },
     },
-  },
 });
 
 // 플러그인 등록
