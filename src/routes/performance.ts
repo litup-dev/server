@@ -14,6 +14,7 @@ import {
     errorResponseJsonSchema,
     booleanSuccessResponseJsonSchema,
 } from '@/schemas/common.schema';
+import { BadRequestError } from '@/common/error';
 
 export async function performanceRoutes(fastify: FastifyInstance) {
     fastify.get(
@@ -36,21 +37,11 @@ export async function performanceRoutes(fastify: FastifyInstance) {
 
             const service = new PerformanceService(request.server.prisma);
 
-            try {
-                const result = await service.getPerformancesByDateRange(query);
+            const result = await service.getPerformancesByDateRange(query);
 
-                return reply.send({
-                    data: result,
-                });
-            } catch (err: any) {
-                request.log.error(err);
-                return reply.status(500).send({
-                    error: {
-                        statusCode: 500,
-                        message: '요청 실패',
-                    },
-                });
-            }
+            return reply.send({
+                data: result,
+            });
         }
     );
 
@@ -73,9 +64,9 @@ export async function performanceRoutes(fastify: FastifyInstance) {
         async (request, reply) => {
             const parsed = idParamSchema.safeParse(request.params);
             if (!parsed.success) {
-                return reply
-                    .status(400)
-                    .send(`허용되지 않은 쿼리 파라미터 입니다. ${parsed.error.message}`);
+                throw new BadRequestError(
+                    `허용되지 않은 쿼리 파라미터 입니다. ${parsed.error.message}`
+                );
             }
 
             const { performId } = parsed.data;
@@ -83,15 +74,10 @@ export async function performanceRoutes(fastify: FastifyInstance) {
             const userId = 1;
 
             const service = new PerformanceService(request.server.prisma);
-            try {
-                const result = await service.attendPerformance(userId, performId);
-                return reply.send({
-                    data: result,
-                });
-            } catch (err: any) {
-                request.log.error(err);
-                return reply.status(500).send({ error: '요청 실패' });
-            }
+            const result = await service.attendPerformance(userId, performId);
+            return reply.send({
+                data: result,
+            });
         }
     );
 
@@ -114,9 +100,9 @@ export async function performanceRoutes(fastify: FastifyInstance) {
         async (request, reply) => {
             const parsed = idParamSchema.safeParse(request.params);
             if (!parsed.success) {
-                return reply
-                    .status(400)
-                    .send(`허용되지 않은 쿼리 파라미터 입니다. ${parsed.error.message}`);
+                throw new BadRequestError(
+                    `허용되지 않은 쿼리 파라미터 입니다. ${parsed.error.message}`
+                );
             }
 
             const { performId } = parsed.data;
@@ -124,15 +110,10 @@ export async function performanceRoutes(fastify: FastifyInstance) {
             const userId = 1;
 
             const service = new PerformanceService(request.server.prisma);
-            try {
-                const result = await service.isUserAttending(userId, performId);
-                return reply.send({
-                    data: result,
-                });
-            } catch (err: any) {
-                request.log.error(err);
-                return reply.status(500).send({ error: '요청 실패' });
-            }
+            const result = await service.isUserAttending(userId, performId);
+            return reply.send({
+                data: result,
+            });
         }
     );
 
@@ -155,29 +136,16 @@ export async function performanceRoutes(fastify: FastifyInstance) {
         async (request, reply) => {
             const parsed = idParamSchema.safeParse(request.params);
             if (!parsed.success) {
-                return reply.status(400).send({
-                    error: {
-                        statusCode: 400,
-                        message: `허용되지 않은 파라미터 입니다. ${parsed.error.message}`,
-                    },
-                });
+                throw new BadRequestError(
+                    `허용되지 않은 쿼리 파라미터 입니다. ${parsed.error.message}`
+                );
             }
 
             const { performId } = parsed.data;
 
             const service = new PerformanceService(request.server.prisma);
-            try {
-                const result = await service.getPerformanceDetails(performId);
-                if (!result) {
-                    return reply
-                        .status(404)
-                        .send({ error: { statusCode: 404, message: '공연을 찾을 수 없습니다.' } });
-                }
-                return reply.send({ data: result });
-            } catch (err: any) {
-                request.log.error(err);
-                return reply.status(500).send({ error: '요청 실패' });
-            }
+            const result = await service.getPerformanceDetails(performId);
+            return reply.send({ data: result });
         }
     );
 }

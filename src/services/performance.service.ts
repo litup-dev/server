@@ -1,3 +1,4 @@
+import { NotFoundError } from '@/common/error';
 import {
     GetPerformanceByDateRangeType,
     PerformanceListResponseType,
@@ -178,7 +179,7 @@ export class PerformanceService {
             },
         });
         if (!performance) {
-            return null;
+            throw new NotFoundError('공연을 찾을 수 없습니다.');
         }
         return {
             id: performance.id,

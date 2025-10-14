@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { CreateReviewDto, UpdateReviewDto } from '../dto/review.dto.js';
+import { NotFoundError } from '@/common/error.js';
 
 export class ReviewService {
     constructor(private prisma: PrismaClient) {}
@@ -110,7 +111,7 @@ export class ReviewService {
             },
         });
 
-        if (!review) return null;
+        if (!review) throw new NotFoundError('Review not found');
 
         return {
             id: review.id,

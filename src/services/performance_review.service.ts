@@ -1,6 +1,9 @@
-import { PerformanceReviewListResponseType } from '@/schemas/perfomance_review.schema';
+import { ConflictError } from '@/common/error';
+import {
+    PerformanceReviewListResponseType,
+    PerformanceReviewType,
+} from '@/schemas/perfomanceReview.schema';
 import { PrismaClient } from '@prisma/client';
-import { Prisma } from '@prisma/client';
 
 export class PerformanceReviewService {
     constructor(private prisma: PrismaClient) {}
@@ -48,6 +51,57 @@ export class PerformanceReviewService {
             total,
             offset,
             limit,
+        };
+    }
+
+    async createReview(
+        performId: number,
+        userId: number,
+        content: string
+    ): Promise<PerformanceReviewType> {
+        const existingReview = await this.prisma.perform_review_tb.findUnique({
+            where: {
+                perform_id_user_id: {
+                    perform_id: performId,
+                    user_id: userId,
+                },
+            },
+        });
+
+        if (existingReview) {
+            throw new ConflictError('작성한 리뷰가 존재합니다.');
+        }
+
+        const review = await this.prisma.perform_review_tb.create({
+            data: {
+                perform_id: performId,
+                user_id: userId,
+                content: content,
+            },
+            include: {
+                user_tb: {
+                    select: {
+                        id: true,
+                        nickname: true,
+                        profile_path: true,
+                    },
+                },
+            },
+        });
+
+        return {
+            id: review.id,
+            content: review.content,
+            likeCount: review.like_count,
+            createdAt:
+                review.created_at instanceof Date
+                    ? review.created_at.toISOString()
+                    : review.created_at,
+            user: {
+                id: review.user_tb.id,
+                nickname: review.user_tb.nickname,
+                profile_path: review.user_tb.profile_path ?? null,
+            },
         };
     }
 }

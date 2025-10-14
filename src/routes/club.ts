@@ -41,11 +41,6 @@ export async function clubRoutes(fastify: FastifyInstance) {
             const { id } = request.params as { id: string };
             const service = new ClubService(request.server.prisma);
             const club = await service.getById(parseInt(id));
-
-            if (!club) {
-                return reply.code(404).send({ error: 'Club not found' });
-            }
-
             return club;
         }
     );
@@ -86,22 +81,12 @@ export async function clubRoutes(fastify: FastifyInstance) {
             // TODO: JWT에서 실제 userId 추출
             const userId = 1; // 임시
 
-            try {
-                const updated = await service.update(
-                    parseInt(id),
-                    userId,
-                    request.body as UpdateClubDto
-                );
-                return updated;
-            } catch (error: any) {
-                if (error.message === 'Club not found') {
-                    return reply.code(404).send({ error: 'Club not found' });
-                }
-                if (error.message === 'Unauthorized') {
-                    return reply.code(403).send({ error: 'Unauthorized' });
-                }
-                throw error;
-            }
+            const updated = await service.update(
+                parseInt(id),
+                userId,
+                request.body as UpdateClubDto
+            );
+            return updated;
         }
     );
 
@@ -121,18 +106,7 @@ export async function clubRoutes(fastify: FastifyInstance) {
             const service = new ClubService(request.server.prisma);
             // TODO: JWT에서 실제 userId 추출
             const userId = 1; // 임시
-
-            try {
-                await service.delete(parseInt(id), userId);
-            } catch (error: any) {
-                if (error.message === 'Club not found') {
-                    return reply.code(404).send({ error: 'Club not found' });
-                }
-                if (error.message === 'Unauthorized') {
-                    return reply.code(403).send({ error: 'Unauthorized' });
-                }
-                throw error;
-            }
+            await service.delete(parseInt(id), userId);
         }
     );
 
@@ -151,16 +125,8 @@ export async function clubRoutes(fastify: FastifyInstance) {
             const service = new ClubService(request.server.prisma);
             // TODO: JWT에서 실제 userId 추출
             const userId = 1; // 임시
-
-            try {
-                const result = await service.toggleFavorite(parseInt(id), userId);
-                return result;
-            } catch (error: any) {
-                if (error.message === 'Club not found') {
-                    return reply.code(404).send({ error: 'Club not found' });
-                }
-                throw error;
-            }
+            const result = await service.toggleFavorite(parseInt(id), userId);
+            return result;
         }
     );
 }

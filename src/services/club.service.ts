@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import type { CreateClubDto, UpdateClubDto } from '../dto/club.dto.js';
+import { ForbiddenError, NotFoundError } from '@/common/error.js';
 
 export class ClubService {
     constructor(private prisma: PrismaClient) {}
@@ -132,7 +133,7 @@ export class ClubService {
             },
         });
 
-        if (!club) return null;
+        if (!club) throw new NotFoundError('Club not found');
 
         return {
             id: club.id,
@@ -287,11 +288,11 @@ export class ClubService {
         });
 
         if (!club) {
-            throw new Error('Club not found');
+            throw new NotFoundError('Club not found');
         }
 
         if (club.userId !== userId) {
-            throw new Error('Unauthorized');
+            throw new ForbiddenError('Unauthorized');
         }
 
         await this.prisma.$transaction(async (tx) => {

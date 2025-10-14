@@ -3,7 +3,7 @@ import { clubRoutes } from './club.js';
 import { reviewRoutes } from './review.js';
 import { performanceRoutes } from './performance.js';
 import { API_PREFIX } from '../common/constants.js';
-import { performanceReviewRoutes } from './performance_review.js';
+import { performanceReviewRoutes } from './performanceReview.js';
 
 export async function registerRoutes(fastify: FastifyInstance) {
     await fastify.register(clubRoutes, { prefix: API_PREFIX });
