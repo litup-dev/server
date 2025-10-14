@@ -133,6 +133,8 @@ model perform_review_tb {
   perform_review_like_tb perform_review_like_tb[]
   perform_tb             Perform                  @relation(fields: [perform_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   user_tb                user_tb                  @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([perform_id, user_id], map: "uk_perform_review_user_perform")
 }
 
 model Perform {
