@@ -13,6 +13,7 @@
         "format": "prettier --write src/**/*.ts",
         "db:generate": "prisma generate",
         "db:studio": "prisma studio",
+        "db:pull": "prisma db pull",
         "test": "echo \"Error: no test specified\" && exit 1"
     },
     "author": "",
