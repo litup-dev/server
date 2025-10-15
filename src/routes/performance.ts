@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify';
-import { PerformanceService } from '@/services/performance.service';
+import { PerformanceService } from '@/services/performance.service.js';
 import {
     getPerformanceByDateRangeSchema,
     getPerformanceByDateRangeJson,
