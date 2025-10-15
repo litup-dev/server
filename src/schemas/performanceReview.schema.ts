@@ -1,4 +1,4 @@
-import { z, generateSchema } from '@/common/zod';
+import { z, generateSchema } from '@/common/zod.js';
 import { paginatedResponseSchema, successResponseSchema } from '@/schemas/common.schema.js';
 
 export const performanceReviewSchema = z.object({

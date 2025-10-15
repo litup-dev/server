@@ -1,4 +1,4 @@
-import { z, generateSchema } from '@/common/zod';
+import { z, generateSchema } from '@/common/zod.js';
 import { successResponseSchema, paginatedResponseSchema } from '@/schemas/common.schema.js';
 
 // 아티스트 스키마

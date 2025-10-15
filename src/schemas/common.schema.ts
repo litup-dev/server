@@ -1,4 +1,4 @@
-import { z, generateSchema } from '@/common/zod';
+import { z, generateSchema } from '@/common/zod.js';
 
 export const idParamSchema = z.object({
     entityId: z
