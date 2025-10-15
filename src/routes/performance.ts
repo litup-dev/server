@@ -46,7 +46,7 @@ export async function performanceRoutes(fastify: FastifyInstance) {
     );
 
     fastify.post(
-        '/performances/:performId/attend',
+        '/performances/:entityId/attend',
         {
             schema: {
                 params: idParamJson,
@@ -69,12 +69,12 @@ export async function performanceRoutes(fastify: FastifyInstance) {
                 );
             }
 
-            const { performId } = parsed.data;
+            const { entityId } = parsed.data;
             // 임시 추출
             const userId = 1;
 
             const service = new PerformanceService(request.server.prisma);
-            const result = await service.attendPerformance(userId, performId);
+            const result = await service.attendPerformance(userId, entityId);
             return reply.send({
                 data: result,
             });
@@ -82,7 +82,7 @@ export async function performanceRoutes(fastify: FastifyInstance) {
     );
 
     fastify.get(
-        '/performances/:performId/attend',
+        '/performances/:entityId/attend',
         {
             schema: {
                 params: idParamJson,
@@ -105,12 +105,12 @@ export async function performanceRoutes(fastify: FastifyInstance) {
                 );
             }
 
-            const { performId } = parsed.data;
+            const { entityId } = parsed.data;
             // 임시 추출
             const userId = 1;
 
             const service = new PerformanceService(request.server.prisma);
-            const result = await service.isUserAttending(userId, performId);
+            const result = await service.isUserAttending(userId, entityId);
             return reply.send({
                 data: result,
             });
@@ -118,7 +118,7 @@ export async function performanceRoutes(fastify: FastifyInstance) {
     );
 
     fastify.get(
-        '/performances/:performId/details',
+        '/performances/:entityId/details',
         {
             schema: {
                 params: idParamJson,
@@ -141,10 +141,10 @@ export async function performanceRoutes(fastify: FastifyInstance) {
                 );
             }
 
-            const { performId } = parsed.data;
+            const { entityId } = parsed.data;
 
             const service = new PerformanceService(request.server.prisma);
-            const result = await service.getPerformanceDetails(performId);
+            const result = await service.getPerformanceDetails(entityId);
             return reply.send({ data: result });
         }
     );

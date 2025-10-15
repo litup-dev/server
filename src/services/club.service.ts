@@ -229,11 +229,11 @@ export class ClubService {
         });
 
         if (!club) {
-            throw new Error('Club not found');
+            throw new NotFoundError('Club not found');
         }
 
         if (club.userId !== userId) {
-            throw new Error('Unauthorized');
+            throw new ForbiddenError('Unauthorized');
         }
 
         const updated = await this.prisma.club.update({
@@ -324,7 +324,7 @@ export class ClubService {
         });
 
         if (!club) {
-            throw new Error('Club not found');
+            throw new NotFoundError('Club not found');
         }
 
         // 기존 즐겨찾기 확인

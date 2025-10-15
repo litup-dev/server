@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { CreateReviewDto, UpdateReviewDto } from '../dto/review.dto.js';
-import { NotFoundError } from '@/common/error.js';
+import { ForbiddenError, NotFoundError } from '@/common/error.js';
 
 export class ReviewService {
     constructor(private prisma: PrismaClient) {}
@@ -202,11 +202,11 @@ export class ReviewService {
         });
 
         if (!review) {
-            throw new Error('Review not found');
+            throw new NotFoundError('Review not found');
         }
 
         if (review.user_id !== userId) {
-            throw new Error('Unauthorized');
+            throw new ForbiddenError('Unauthorized');
         }
 
         const result = await this.prisma.$transaction(async (tx) => {
@@ -277,11 +277,11 @@ export class ReviewService {
         });
 
         if (!review) {
-            throw new Error('Review not found');
+            throw new NotFoundError('Review not found');
         }
 
         if (review.user_id !== userId) {
-            throw new Error('Unauthorized');
+            throw new ForbiddenError('Unauthorized');
         }
 
         await this.prisma.$transaction(async (tx) => {

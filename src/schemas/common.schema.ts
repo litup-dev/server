@@ -1,7 +1,7 @@
 import { z, generateSchema } from '@/common/zod';
 
 export const idParamSchema = z.object({
-    performId: z
+    entityId: z
         .preprocess((val) => {
             if (typeof val === 'string') return parseInt(val, 10);
             return val;
@@ -16,7 +16,16 @@ export const idParamSchema = z.object({
 export type idParamType = z.infer<typeof idParamSchema>;
 export const idParamJson = generateSchema(idParamSchema);
 
-// 성공 응답 스키마 함수
+// 요청 성공 응답 스키마
+export const operationSuccessResponseSchema = z
+    .object({
+        success: z.boolean().default(true),
+        operation: z.string(), // 'created', 'updated', 'deleted'
+        message: z.string().optional(),
+    })
+    .openapi({ description: '작업 성공 응답' });
+
+// 성공 응답 스키마
 export const successResponseSchema = <T extends z.ZodType>(dataSchema: T) =>
     z
         .object({
@@ -54,5 +63,13 @@ export const paginatedResponseSchema = <T extends z.ZodType>(itemSchema: T) =>
         })
         .openapi({ description: '페이지네이션 응답' });
 
+// 응답 스키마
+export const operationSuccessRes = successResponseSchema(operationSuccessResponseSchema);
+
+// JSON 스키마
+export const successResponseJson = generateSchema(operationSuccessRes);
 export const errorResponseJsonSchema = generateSchema(errorResponseSchema);
 export const booleanSuccessResponseJsonSchema = generateSchema(successResponseSchema(z.boolean()));
+
+// 타입 추출
+export type OperationSuccessType = z.infer<typeof operationSuccessResponseSchema>;

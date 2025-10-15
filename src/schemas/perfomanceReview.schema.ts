@@ -6,6 +6,7 @@ export const performanceReviewSchema = z.object({
     content: z.string().min(1).max(100),
     likeCount: z.number().default(0),
     createdAt: z.string().nullable(),
+    updatedAt: z.string().nullable(),
     user: z.object({
         id: z.number(),
         nickname: z.string().nullable(),
@@ -21,10 +22,14 @@ export const performanceReviewListResponseSchema = z.object({
 });
 
 export const createPerformanceReviewSchema = z.object({
-    content: z.string().min(1).max(100).openapi({
-        description: '한줄평 내용',
-        example: '정말 좋은 공연이었어요!',
-    }),
+    content: z
+        .string()
+        .min(1)
+        .max(100)
+        .openapi({
+            description: '한줄평 내용',
+            example: { content: '정말 좋은 공연이었어요!' },
+        }),
 });
 
 // 응답 스키마
