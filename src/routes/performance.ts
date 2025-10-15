@@ -1,20 +1,19 @@
 import { FastifyInstance } from 'fastify';
 import { PerformanceService } from '@/services/performance.service.js';
 import {
-    getPerformanceByDateRangeSchema,
     getPerformanceByDateRangeJson,
     GetPerformanceByDateRangeType,
     performanceListResJson,
     attendRes,
     performDetailResJson,
-} from '@/schemas/performance.schema';
+} from '@/schemas/performance.schema.js';
 import {
     idParamSchema,
     idParamJson,
     errorResponseJsonSchema,
     booleanSuccessResponseJsonSchema,
-} from '@/schemas/common.schema';
-import { BadRequestError } from '@/common/error';
+} from '@/schemas/common.schema.js';
+import { BadRequestError } from '@/common/error.js';
 
 export async function performanceRoutes(fastify: FastifyInstance) {
     fastify.get(

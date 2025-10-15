@@ -1,5 +1,5 @@
 import { z, generateSchema } from '@/common/zod';
-import { paginatedResponseSchema, successResponseSchema } from '@/schemas/common.schema';
+import { paginatedResponseSchema, successResponseSchema } from '@/schemas/common.schema.js';
 
 export const performanceReviewSchema = z.object({
     id: z.number(),

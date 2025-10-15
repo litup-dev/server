@@ -5,12 +5,12 @@ import {
     successResponseJson,
     errorResponseJsonSchema,
     idParamType,
-} from '@/schemas/common.schema';
+} from '@/schemas/common.schema.js';
 import {
     performanceReviewListResJson,
     performanceReviewResJson,
     createPerformanceReviewJson,
-} from '@/schemas/perfomanceReview.schema';
+} from '@/schemas/performanceReview.schema.js';
 
 export async function performanceReviewRoutes(fastify: FastifyInstance) {
     fastify.get(

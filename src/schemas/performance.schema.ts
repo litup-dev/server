@@ -1,5 +1,5 @@
 import { z, generateSchema } from '@/common/zod';
-import { successResponseSchema, paginatedResponseSchema } from '@/schemas/common.schema';
+import { successResponseSchema, paginatedResponseSchema } from '@/schemas/common.schema.js';
 
 // 아티스트 스키마
 const artistSchema = z.object({
