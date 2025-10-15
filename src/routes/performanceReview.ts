@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify';
-import { PerformanceReviewService } from '@/services/performanceReview.service';
+import { PerformanceReviewService } from '@/services/performanceReview.service.js';
 import {
     idParamJson,
     successResponseJson,

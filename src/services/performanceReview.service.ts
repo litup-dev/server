@@ -1,9 +1,9 @@
-import { ConflictError, ForbiddenError, NotFoundError } from '@/common/error';
-import { OperationSuccessType } from '@/schemas/common.schema';
+import { ConflictError, ForbiddenError, NotFoundError } from '@/common/error.js';
+import { OperationSuccessType } from '@/schemas/common.schema.js';
 import {
     PerformanceReviewListResponseType,
     PerformanceReviewType,
-} from '@/schemas/perfomanceReview.schema';
+} from '@/schemas/perfomanceReview.schema.js';
 import { PrismaClient } from '@prisma/client';
 
 export class PerformanceReviewService {

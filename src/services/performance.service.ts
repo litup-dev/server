@@ -1,9 +1,9 @@
-import { NotFoundError } from '@/common/error';
+import { NotFoundError } from '@/common/error.js';
 import {
     GetPerformanceByDateRangeType,
     PerformanceListResponseType,
     PerformanceType,
-} from '@/schemas/performance.schema';
+} from '@/schemas/performance.schema.js';
 import { PrismaClient } from '@prisma/client';
 import { Prisma } from '@prisma/client';
 
