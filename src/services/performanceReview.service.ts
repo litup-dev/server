@@ -3,7 +3,7 @@ import { OperationSuccessType } from '@/schemas/common.schema.js';
 import {
     PerformanceReviewListResponseType,
     PerformanceReviewType,
-} from '@/schemas/perfomanceReview.schema.js';
+} from '@/schemas/performanceReview.schema.js';
 import { PrismaClient } from '@prisma/client';
 
 export class PerformanceReviewService {
