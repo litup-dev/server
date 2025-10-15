@@ -9,16 +9,10 @@ export async function registerSwagger(fastify: FastifyInstance) {
             openapi: '3.0.0',
             info: {
                 title: 'LitUp API',
-                description: 'API documentation',  
+                description: 'API documentation',
                 version: '1.0.0',
             },
-            servers: [
-                {
-                    url: `http://${HOST}:${PORT}`,
-                    description: 'Development server',
-                },
-            ],
-        },  
+        },
     });
 
     await fastify.register(fastifySwaggerUi, {
