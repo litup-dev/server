@@ -39,7 +39,7 @@ pipeline {
 
                         scp -P ${REMOTE_PORT} \
                             -o StrictHostKeyChecking=no \
-                            package.json yarn.lock prisma \
+                            -r package.json .yarnrc.yml yarn.lock prisma \
                             ${REMOTE_USER}@${REMOTE_SERVER}:${APP_PATH}/
 
                         echo "📦 원격 서버에서 배포 및 백업 진행"
