@@ -13,7 +13,6 @@ import {
 } from '@/schemas/perfomanceReview.schema';
 
 export async function performanceReviewRoutes(fastify: FastifyInstance) {
-    console.log(createPerformanceReviewJson);
     fastify.get(
         '/performance/:entityId/reviews',
         {
