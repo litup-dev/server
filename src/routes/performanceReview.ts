@@ -13,6 +13,7 @@ import {
     performanceReviewResJson,
     createPerformanceReviewJson,
     performanceReviewLikeResJson,
+    performanceReviewQueryJson,
 } from '@/schemas/performanceReview.schema.js';
 import { BadRequestError } from '@/common/error';
 
@@ -21,6 +22,7 @@ export async function performanceReviewRoutes(fastify: FastifyInstance) {
         '/performance/:entityId/reviews',
         {
             schema: {
+                querystring: performanceReviewQueryJson,
                 params: idParamJson,
                 tags: ['Performance Reviews'],
                 summary: '공연 한줄평 목록 조회',
@@ -34,8 +36,9 @@ export async function performanceReviewRoutes(fastify: FastifyInstance) {
         },
         async (request, reply) => {
             const { entityId } = request.params as idParamType;
+            const { offset, limit } = request.query as { offset: number; limit: number };
             const service = new PerformanceReviewService(request.server.prisma);
-            const result = await service.getReviewsByPerformanceId(entityId);
+            const result = await service.getReviewsByPerformanceId(entityId, offset, limit);
             return reply.send({
                 data: result,
             });

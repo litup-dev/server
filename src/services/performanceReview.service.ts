@@ -124,6 +124,7 @@ export class PerformanceReviewService {
                 id: reviewId,
             },
         });
+        console.log(existingReview);
 
         if (!existingReview) {
             throw new NotFoundError('리뷰가 존재하지 않습니다.');
@@ -200,38 +201,47 @@ export class PerformanceReviewService {
         userId: number,
         reviewId: number
     ): Promise<PerformanceReviewLikeResponseType> {
-        // race condition
-        const sql = Prisma.sql`
-            WITH ins AS (
-                INSERT INTO perform_review_like_tb (review_id, user_id, created_at)
-                VALUES (${reviewId}, ${userId}, now())
-                ON CONFLICT (review_id, user_id) DO NOTHING
-                RETURNING 1 AS added
-            ), del AS (
-                DELETE FROM perform_review_like_tb
-                WHERE review_id = ${reviewId} AND user_id = ${userId}
-                AND NOT EXISTS (SELECT 1 FROM ins)
-                RETURNING 1 AS removed
-            ), delta AS (
-                SELECT COALESCE((SELECT added FROM ins), 0) - COALESCE((SELECT removed FROM del), 0) AS d
-            )
-            UPDATE perform_review_tb
-            SET like_count = GREATEST(0, like_count + (SELECT d FROM delta))
-            WHERE id = ${reviewId}
-            RETURNING (SELECT d FROM delta) AS delta, like_count;
-        `;
-        const res = await this.prisma.$queryRaw<{ delta: number; like_count: number }[]>(sql);
-
-        const row = res[0];
-        if (!row) {
-            throw new Error('리뷰가 존재하지 않거나 토글에 실패했습니다.');
+        const review = await this.prisma.perform_review_tb.findUnique({
+            where: { id: reviewId },
+            select: { id: true },
+        });
+        if (!review) {
+            throw new NotFoundError('리뷰가 존재하지 않습니다.');
         }
 
-        const likeCount = Number(row.like_count ?? 0);
+        const existing = await this.prisma.perform_review_like_tb.findUnique({
+            where: {
+                review_id_user_id: { review_id: reviewId, user_id: userId },
+            },
+        });
 
-        return {
-            reviewId: reviewId,
-            likeCount: likeCount,
-        };
+        if (existing) {
+            await this.prisma.$transaction([
+                this.prisma.perform_review_like_tb.delete({
+                    where: { id: existing.id },
+                }),
+                this.prisma.perform_review_tb.update({
+                    where: { id: reviewId },
+                    data: { like_count: { decrement: 1 } },
+                }),
+            ]);
+        } else {
+            await this.prisma.$transaction([
+                this.prisma.perform_review_like_tb.create({
+                    data: { review_id: reviewId, user_id: userId },
+                }),
+                this.prisma.perform_review_tb.update({
+                    where: { id: reviewId },
+                    data: { like_count: { increment: 1 } },
+                }),
+            ]);
+        }
+
+        const updated = await this.prisma.perform_review_tb.findUnique({
+            where: { id: reviewId },
+            select: { like_count: true },
+        });
+
+        return { reviewId, totalLikeCount: Number(updated?.like_count ?? 0) };
     }
 }
