@@ -32,16 +32,30 @@ export const createPerformanceReviewSchema = z.object({
         }),
 });
 
+export const performanceReviewLikeResponseSchema = z.object({
+    reviewId: z.number().openapi({
+        description: '반영된 한줄평 ID',
+        example: 1,
+    }),
+    likeCount: z.number().openapi({
+        description: '반영된 좋아요 수',
+        example: 10,
+    }),
+});
+
 // 응답 스키마
 export const performanceReviewListRes = paginatedResponseSchema(performanceReviewSchema);
 export const performanceReviewRes = successResponseSchema(performanceReviewSchema);
+export const performanceReviewLikeRes = successResponseSchema(performanceReviewLikeResponseSchema);
 
 // JSON Schema
 export const performanceReviewListResJson = generateSchema(performanceReviewListRes);
 export const performanceReviewResJson = generateSchema(performanceReviewRes);
 export const createPerformanceReviewJson = generateSchema(createPerformanceReviewSchema);
+export const performanceReviewLikeResJson = generateSchema(performanceReviewLikeRes);
 
 // 타입 추출
 export type PerformanceReviewType = z.infer<typeof performanceReviewSchema>;
 export type PerformanceReviewListType = z.infer<typeof performanceReviewListRes>;
 export type PerformanceReviewListResponseType = z.infer<typeof performanceReviewListResponseSchema>;
+export type PerformanceReviewLikeResponseType = z.infer<typeof performanceReviewLikeResponseSchema>;

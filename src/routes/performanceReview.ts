@@ -5,12 +5,16 @@ import {
     successResponseJson,
     errorResponseJsonSchema,
     idParamType,
+    idParamSchema,
+    booleanSuccessResponseJsonSchema,
 } from '@/schemas/common.schema.js';
 import {
     performanceReviewListResJson,
     performanceReviewResJson,
     createPerformanceReviewJson,
+    performanceReviewLikeResJson,
 } from '@/schemas/performanceReview.schema.js';
+import { BadRequestError } from '@/common/error';
 
 export async function performanceReviewRoutes(fastify: FastifyInstance) {
     fastify.get(
@@ -118,6 +122,41 @@ export async function performanceReviewRoutes(fastify: FastifyInstance) {
             const userId = 1; // 임시 ID
             const result = await service.deleteReview(entityId, userId);
             return { data: result };
+        }
+    );
+
+    fastify.post(
+        '/performances/:entityId/review/like',
+        {
+            schema: {
+                params: idParamJson,
+                tags: ['Performance Reviews'],
+                summary: '공연 한줄평 좋아요/취소',
+                description: '공연 한줄평 좋아요/취소',
+                response: {
+                    200: performanceReviewLikeResJson,
+                    400: errorResponseJsonSchema,
+                    500: errorResponseJsonSchema,
+                },
+            },
+        },
+        async (request, reply) => {
+            const parsed = idParamSchema.safeParse(request.params);
+            if (!parsed.success) {
+                throw new BadRequestError(
+                    `허용되지 않은 쿼리 파라미터 입니다. ${parsed.error.message}`
+                );
+            }
+
+            const { entityId } = parsed.data;
+            // 임시 추출
+            const userId = 1;
+
+            const service = new PerformanceReviewService(request.server.prisma);
+            const result = await service.likePerformanceReview(userId, entityId);
+            return reply.send({
+                data: result,
+            });
         }
     );
 }

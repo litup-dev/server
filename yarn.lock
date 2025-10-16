@@ -2954,6 +2954,7 @@ __metadata:
     eslint-plugin-promise: "npm:^7.2.1"
     fastify: "npm:^5.6.0"
     globals: "npm:^16.4.0"
+    node-cron: "npm:^4.2.1"
     pino: "npm:^9.12.0"
     pino-pretty: "npm:^13.1.1"
     prettier: "npm:^3.6.2"
@@ -3678,6 +3679,13 @@ __metadata:
   version: 1.0.0
   resolution: "negotiator@npm:1.0.0"
   checksum: 10c0/4c559dd52669ea48e1914f9d634227c561221dd54734070791f999c52ed0ff36e437b2e07d5c1f6e32909fc625fe46491c16e4a8f0572567d4dd15c3a4fda04b
+  languageName: node
+  linkType: hard
+
+"node-cron@npm:^4.2.1":
+  version: 4.2.1
+  resolution: "node-cron@npm:4.2.1"
+  checksum: 10c0/804df01df230e96fd2f8ffcde004f4d5af953bccdf3ccf993dc450526dd65f553a2f2ad4bc0faf55c90c38cbc99c9ddbb88ee16cba3fc6bc74e606da6efb249e
   languageName: node
   linkType: hard
 

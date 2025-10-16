@@ -4,6 +4,7 @@ import { loggerOptions } from './common/loggerOptions.js';
 import { registerPlugins } from './plugins/index.js';
 import { registerRoutes } from './routes/index.js';
 import { setupErrorHandler } from './common/errorHandler.js';
+import schedulePerformanceReviewTasks from './schedule/performanceReview.schedule.js';
 
 const app = Fastify({
     logger: loggerOptions,
@@ -20,6 +21,7 @@ setupErrorHandler(app);
 // 플러그인 등록
 await registerPlugins(app);
 await registerRoutes(app);
+app.register(schedulePerformanceReviewTasks);
 
 app.get('/', async (request, reply) => {
     return { hello: 'world' };

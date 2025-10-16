@@ -1,10 +1,12 @@
 import { ConflictError, ForbiddenError, NotFoundError } from '@/common/error.js';
 import { OperationSuccessType } from '@/schemas/common.schema.js';
 import {
+    PerformanceReviewLikeResponseType,
     PerformanceReviewListResponseType,
     PerformanceReviewType,
 } from '@/schemas/performanceReview.schema.js';
 import { PrismaClient } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 
 export class PerformanceReviewService {
     constructor(private prisma: PrismaClient) {}
@@ -191,6 +193,45 @@ export class PerformanceReviewService {
             success: true,
             operation: 'deleted',
             message: '리뷰가 삭제되었습니다.',
+        };
+    }
+
+    async likePerformanceReview(
+        userId: number,
+        reviewId: number
+    ): Promise<PerformanceReviewLikeResponseType> {
+        // race condition
+        const sql = Prisma.sql`
+            WITH ins AS (
+                INSERT INTO perform_review_like_tb (review_id, user_id, created_at)
+                VALUES (${reviewId}, ${userId}, now())
+                ON CONFLICT (review_id, user_id) DO NOTHING
+                RETURNING 1 AS added
+            ), del AS (
+                DELETE FROM perform_review_like_tb
+                WHERE review_id = ${reviewId} AND user_id = ${userId}
+                AND NOT EXISTS (SELECT 1 FROM ins)
+                RETURNING 1 AS removed
+            ), delta AS (
+                SELECT COALESCE((SELECT added FROM ins), 0) - COALESCE((SELECT removed FROM del), 0) AS d
+            )
+            UPDATE perform_review_tb
+            SET like_count = GREATEST(0, like_count + (SELECT d FROM delta))
+            WHERE id = ${reviewId}
+            RETURNING (SELECT d FROM delta) AS delta, like_count;
+        `;
+        const res = await this.prisma.$queryRaw<{ delta: number; like_count: number }[]>(sql);
+
+        const row = res[0];
+        if (!row) {
+            throw new Error('리뷰가 존재하지 않거나 토글에 실패했습니다.');
+        }
+
+        const likeCount = Number(row.like_count ?? 0);
+
+        return {
+            reviewId: reviewId,
+            likeCount: likeCount,
         };
     }
 }
