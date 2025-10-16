@@ -126,7 +126,7 @@ export async function performanceReviewRoutes(fastify: FastifyInstance) {
     );
 
     fastify.post(
-        '/performances/:entityId/review/like',
+        '/performances/review/:entityId/like',
         {
             schema: {
                 params: idParamJson,
