@@ -6,7 +6,6 @@ import {
     PerformanceReviewType,
 } from '@/schemas/performanceReview.schema.js';
 import { PrismaClient } from '@prisma/client';
-import { Prisma } from '@prisma/client';
 
 export class PerformanceReviewService {
     constructor(private prisma: PrismaClient) {}

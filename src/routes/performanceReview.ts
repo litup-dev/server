@@ -15,7 +15,7 @@ import {
     performanceReviewLikeResJson,
     performanceReviewQueryJson,
 } from '@/schemas/performanceReview.schema.js';
-import { BadRequestError } from '@/common/error';
+import { BadRequestError } from '@/common/error.js';
 
 export async function performanceReviewRoutes(fastify: FastifyInstance) {
     fastify.get(
