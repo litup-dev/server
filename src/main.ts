@@ -21,7 +21,6 @@ setupErrorHandler(app);
 // 플러그인 등록
 await registerPlugins(app);
 await registerRoutes(app);
-app.register(schedulePerformanceReviewTasks);
 
 app.get('/', async (request, reply) => {
     return { hello: 'world' };
