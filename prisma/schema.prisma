@@ -229,6 +229,7 @@ model user_tb {
   updated_at             DateTime?                @db.Timestamp(6)
   profile_path           String?
   role                   String?                  @db.VarChar(20)
+  provider_id            String?                  @db.VarChar(255)
   attend_tb              attend_tb[]
   club_img_tb            club_img_tb[]
   club_review_tb         club_review_tb[]
@@ -239,6 +240,8 @@ model user_tb {
   perform_tb             Perform[]
   report_tb              report_tb[]
   social_code            social_code              @relation(fields: [social_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([social_id, provider_id], map: "uq_user_tb_socialid_providerid")
 }
 
 model perform_review_like_tb {
