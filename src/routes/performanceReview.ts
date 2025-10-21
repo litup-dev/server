@@ -6,13 +6,13 @@ import {
     errorResJson,
     IdParamType,
     idParamSchema,
+    defaultPaginationJson,
 } from '@/schemas/common.schema.js';
 import {
     performanceReviewListResJson,
     performanceReviewResJson,
     createPerformanceReviewJson,
     performanceReviewLikeResJson,
-    performanceReviewQueryJson,
 } from '@/schemas/performanceReview.schema.js';
 import { BadRequestError } from '@/common/error.js';
 
@@ -21,7 +21,7 @@ export async function performanceReviewRoutes(fastify: FastifyInstance) {
         '/performance/:entityId/reviews',
         {
             schema: {
-                querystring: performanceReviewQueryJson,
+                querystring: defaultPaginationJson,
                 params: idParamJson,
                 tags: ['Performance Reviews'],
                 summary: '공연 한줄평 목록 조회',

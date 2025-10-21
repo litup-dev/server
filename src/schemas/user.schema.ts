@@ -1,7 +1,7 @@
 import { z, generateSchema } from '@/common/zod.js';
 import { successResponseSchema, paginatedResponseSchema } from '@/schemas/common.schema.js';
 
-export const userSchema = z.object({
+export const userDefaultSchema = z.object({
     id: z.number().int().positive().openapi({
         type: 'number',
         description: '사용자 ID',
@@ -18,16 +18,16 @@ export const userSchema = z.object({
         description: '생성 일시',
         example: '2023-10-01T12:34:56Z',
     }),
-    bio: z.string().nullable().openapi({
-        type: 'string',
-        description: '사용자 소개',
-        example: '안녕하세요! 저는 반려동물타조입니다.',
-    }),
     updatedAt: z.string().nullable().openapi({
         type: 'string',
         format: 'date-time',
         description: '수정 일시',
         example: '2023-10-01T12:34:56Z',
+    }),
+    bio: z.string().nullable().openapi({
+        type: 'string',
+        description: '사용자 소개',
+        example: '안녕하세요! 저는 반려동물타조입니다.',
     }),
     profilePath: z.string().nullable().openapi({
         type: 'string',
@@ -37,28 +37,11 @@ export const userSchema = z.object({
     }),
 });
 
-export const userInfoSchema = z.object({
-    id: z.number().int().positive().openapi({
-        type: 'number',
-        description: '사용자 ID',
-        example: 1,
-    }),
-    nickname: z.string().nullable().openapi({
-        type: 'string',
-        description: '사용자 닉네임',
-        example: '반려동물타조',
-    }),
-    profilePath: z.string().nullable().openapi({
-        type: 'string',
-        format: 'uri',
-        description: '프로필 이미지 경로',
-        example: 'https://example.com/profile.jpg',
-    }),
-    bio: z.string().nullable().openapi({
-        type: 'string',
-        description: '사용자 소개',
-        example: '안녕하세요! 저는 반려동물타조입니다.',
-    }),
+export const userInfoSchema = userDefaultSchema.pick({
+    id: true,
+    nickname: true,
+    profilePath: true,
+    bio: true,
 });
 
 export const userStatsSchema = z.object({
@@ -77,25 +60,25 @@ export const userStatsSchema = z.object({
 
 // 유저 목록 응답
 export const userListResponseSchema = z.object({
-    items: z.array(userSchema),
+    items: z.array(userDefaultSchema),
     total: z.number(),
     offset: z.number(),
     limit: z.number(),
 });
 
 // 응답 스키마
-export const userRes = successResponseSchema(userSchema);
+export const userDefaultRes = successResponseSchema(userDefaultSchema);
 export const userListRes = successResponseSchema(userListResponseSchema);
 export const userInfoRes = successResponseSchema(userInfoSchema);
 export const userStatsRes = successResponseSchema(userStatsSchema);
 
 // Json 스키마
-export const userJson = generateSchema(userSchema);
+export const userDefaultJson = generateSchema(userDefaultSchema);
 export const userInfoJson = generateSchema(userInfoSchema);
 export const userInfoResJson = generateSchema(userInfoRes);
 export const userStatsResJson = generateSchema(userStatsRes);
 
 // 타입 추출
-export type UserType = z.infer<typeof userSchema>;
+export type UserDefaultType = z.infer<typeof userDefaultSchema>;
 export type UserInfoType = z.infer<typeof userInfoSchema>;
 export type UserStatsType = z.infer<typeof userStatsSchema>;

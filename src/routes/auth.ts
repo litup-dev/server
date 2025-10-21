@@ -1,6 +1,6 @@
 import { createUserJson } from '@/schemas/auth.schema.js';
 import { errorResJson, idParamJson, successResJson } from '@/schemas/common.schema.js';
-import { userJson } from '@/schemas/user.schema.js';
+import { userDefaultJson } from '@/schemas/user.schema.js';
 import { AuthService } from '@/services/auth.service.js';
 import { FastifyInstance } from 'fastify';
 
@@ -14,7 +14,7 @@ export async function authRoutes(fastify: FastifyInstance) {
                 summary: '회원가입',
                 description: '회원가입',
                 response: {
-                    201: userJson,
+                    201: userDefaultJson,
                     400: errorResJson,
                     500: errorResJson,
                 },

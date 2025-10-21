@@ -1,14 +1,14 @@
 import { ConflictError, NotFoundError } from '@/common/error.js';
 import { CreateUserType } from '@/schemas/auth.schema.js';
 import { OperationSuccessType } from '@/schemas/common.schema.js';
-import { UserType } from '@/schemas/user.schema.js';
+import { UserDefaultType } from '@/schemas/user.schema.js';
 import { PrismaClient } from '@prisma/client';
 import { randomUUID } from 'crypto';
 
 export class AuthService {
     constructor(private prisma: PrismaClient) {}
 
-    async registerUser(body: CreateUserType): Promise<UserType> {
+    async registerUser(body: CreateUserType): Promise<UserDefaultType> {
         const { provider, providerId } = body;
 
         const socialCode = await this.prisma.social_code.findFirst({

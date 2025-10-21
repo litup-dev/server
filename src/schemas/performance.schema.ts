@@ -19,8 +19,15 @@ const imageSchema = z.object({
     isMain: z.boolean().nullable(),
 });
 
+// 클럽 스키마
+const clubSchema = z.object({
+    id: z.number(),
+    name: z.string().nullable(),
+    address: z.string().nullable(),
+});
+
 // 공연 응답 스키마
-export const performanceSchema = z.object({
+export const performanceDefaultSchema = z.object({
     id: z.number(),
     title: z.string().nullable(),
     description: z.string().nullable(),
@@ -30,34 +37,45 @@ export const performanceSchema = z.object({
     artists: z.array(artistSchema).nullable(),
     snsLinks: z.array(snsLinkSchema).nullable(),
     createdAt: z.string().nullable(),
-    club: z.object({
-        id: z.number(),
-        name: z.string().nullable(),
-        address: z.string().nullable(),
-    }),
+    club: clubSchema,
     images: z.array(imageSchema).optional().nullable(),
 });
 
 // 공연 페이지 응답 스키마
 export const performanceListResponseSchema = z.object({
-    items: z.array(performanceSchema),
+    items: z.array(performanceDefaultSchema),
     total: z.number(),
     offset: z.number(),
     limit: z.number(),
 });
 
 // 공연 관람기록 조회용 스키마
-export const performanceRecordsSchema = z.object({
-    id: z.number(),
-    title: z.string().nullable(),
-    performDate: z.string().nullable(),
-    artists: z.array(artistSchema).nullable(),
-    createdAt: z.string().nullable(),
-    club: z.object({
-        name: z.string().nullable(),
-    }),
-    images: z.array(imageSchema).optional().nullable(),
-});
+export const performanceRecordsSchema = performanceDefaultSchema
+    .pick({
+        id: true,
+        title: true,
+        performDate: true,
+        artists: true,
+        createdAt: true,
+        images: true,
+    })
+    .extend({
+        club: clubSchema.pick({
+            name: true,
+        }),
+    });
+
+// export const performanceRecordsSchema = z.object({
+//     id: z.number(),
+//     title: z.string().nullable(),
+//     performDate: z.string().nullable(),
+//     artists: z.array(artistSchema).nullable(),
+//     createdAt: z.string().nullable(),
+//     club: z.object({
+//         name: z.string().nullable(),
+//     }),
+//     images: z.array(imageSchema).optional().nullable(),
+// });
 
 // 공연 관람기록 페이지 응답 스키마
 export const performanceRecordsListResponseSchema = z.object({
@@ -127,8 +145,8 @@ export const getPerformanceByDateRangeSchema = z.object({
 });
 
 // 응답 스키마
-export const performDetailRes = successResponseSchema(performanceSchema);
-export const performListRes = paginatedResponseSchema(performanceSchema);
+export const performDetailRes = successResponseSchema(performanceDefaultSchema);
+export const performListRes = paginatedResponseSchema(performanceDefaultSchema);
 export const performRecordsRes = paginatedResponseSchema(performanceRecordsSchema);
 export const attendRes = successResponseSchema(z.boolean());
 
@@ -139,7 +157,7 @@ export const performDetailResJson = generateSchema(performDetailRes);
 export const performanceRecordsResJson = generateSchema(performRecordsRes);
 
 // 타입 추출
-export type PerformanceType = z.infer<typeof performanceSchema>;
+export type PerformanceType = z.infer<typeof performanceDefaultSchema>;
 export type PerformanceListType = z.infer<typeof performListRes>;
 export type GetPerformanceByDateRangeType = z.infer<typeof getPerformanceByDateRangeSchema>;
 export type PerformanceListResponseType = z.infer<typeof performanceListResponseSchema>;

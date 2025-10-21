@@ -13,26 +13,6 @@ export const performanceReviewSchema = z.object({
         profile_path: z.string().nullable(),
     }),
 });
-export const getPerformanceReviewsSchema = z.object({
-    offset: z
-        .preprocess((val) => {
-            if (typeof val === 'string') return parseInt(val, 10);
-            return val;
-        }, z.number().min(0).default(0))
-        .openapi({
-            description: '페이징 오프셋',
-            example: 0,
-        }),
-    limit: z
-        .preprocess((val) => {
-            if (typeof val === 'string') return parseInt(val, 10);
-            return val;
-        }, z.number().min(1).max(1000).default(1000))
-        .openapi({
-            description: '페이징 제한',
-            example: 1000,
-        }),
-});
 
 export const performanceReviewListResponseSchema = z.object({
     items: z.array(performanceReviewSchema),
@@ -73,7 +53,6 @@ export const performanceReviewListResJson = generateSchema(performanceReviewList
 export const performanceReviewResJson = generateSchema(performanceReviewRes);
 export const createPerformanceReviewJson = generateSchema(createPerformanceReviewSchema);
 export const performanceReviewLikeResJson = generateSchema(performanceReviewLikeRes);
-export const performanceReviewQueryJson = generateSchema(getPerformanceReviewsSchema);
 
 // 타입 추출
 export type PerformanceReviewType = z.infer<typeof performanceReviewSchema>;
