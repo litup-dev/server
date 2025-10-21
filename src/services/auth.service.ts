@@ -46,11 +46,7 @@ export class AuthService {
                 profile_path: true,
                 created_at: true,
                 updated_at: true,
-                social_code: {
-                    select: {
-                        code: true,
-                    },
-                },
+                bio: true,
             },
         });
 
@@ -60,7 +56,7 @@ export class AuthService {
             profilePath: newUser.profile_path ?? null,
             createdAt: newUser.created_at ? newUser.created_at.toISOString() : null,
             updatedAt: newUser.updated_at ? newUser.updated_at.toISOString() : null,
-            provider: newUser.social_code.code,
+            bio: newUser.bio ?? null,
         };
     }
 
