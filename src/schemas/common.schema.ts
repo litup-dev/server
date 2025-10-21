@@ -68,8 +68,8 @@ export const operationSuccessRes = successResponseSchema(operationSuccessRespons
 
 // JSON 스키마
 export const successResponseJson = generateSchema(operationSuccessRes);
-export const errorResponseJsonSchema = generateSchema(errorResponseSchema);
-export const booleanSuccessResponseJsonSchema = generateSchema(successResponseSchema(z.boolean()));
+export const errorResponseJson = generateSchema(errorResponseSchema);
+export const booleanSuccessResponseJson = generateSchema(successResponseSchema(z.boolean()));
 
 // 타입 추출
 export type OperationSuccessType = z.infer<typeof operationSuccessResponseSchema>;

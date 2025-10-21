@@ -52,7 +52,7 @@ export class AuthService {
 
         return {
             id: newUser.id,
-            nickname: newUser.nickname!,
+            nickname: newUser.nickname,
             profilePath: newUser.profile_path ?? null,
             createdAt: newUser.created_at ? newUser.created_at.toISOString() : null,
             updatedAt: newUser.updated_at ? newUser.updated_at.toISOString() : null,

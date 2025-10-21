@@ -10,8 +10,8 @@ import {
 import {
     idParamSchema,
     idParamJson,
-    errorResponseJsonSchema,
-    booleanSuccessResponseJsonSchema,
+    errorResponseJson,
+    booleanSuccessResponseJson,
 } from '@/schemas/common.schema.js';
 import { BadRequestError } from '@/common/error.js';
 
@@ -26,8 +26,8 @@ export async function performanceRoutes(fastify: FastifyInstance) {
                 description: '공연 목록 조회',
                 response: {
                     200: performanceListResJson,
-                    400: errorResponseJsonSchema,
-                    500: errorResponseJsonSchema,
+                    400: errorResponseJson,
+                    500: errorResponseJson,
                 },
             },
         },
@@ -53,10 +53,10 @@ export async function performanceRoutes(fastify: FastifyInstance) {
                 summary: '공연 참석/취소',
                 description: '공연 참석/취소',
                 response: {
-                    200: booleanSuccessResponseJsonSchema,
-                    201: booleanSuccessResponseJsonSchema,
-                    400: errorResponseJsonSchema,
-                    500: errorResponseJsonSchema,
+                    200: booleanSuccessResponseJson,
+                    201: booleanSuccessResponseJson,
+                    400: errorResponseJson,
+                    500: errorResponseJson,
                 },
             },
         },
@@ -89,10 +89,10 @@ export async function performanceRoutes(fastify: FastifyInstance) {
                 summary: '공연 참석확인',
                 description: '공연 참석확인',
                 response: {
-                    200: booleanSuccessResponseJsonSchema,
-                    201: booleanSuccessResponseJsonSchema,
-                    400: errorResponseJsonSchema,
-                    500: errorResponseJsonSchema,
+                    200: booleanSuccessResponseJson,
+                    201: booleanSuccessResponseJson,
+                    400: errorResponseJson,
+                    500: errorResponseJson,
                 },
             },
         },
@@ -126,9 +126,9 @@ export async function performanceRoutes(fastify: FastifyInstance) {
                 description: '공연 상세정보',
                 response: {
                     200: performDetailResJson,
-                    400: errorResponseJsonSchema,
-                    404: errorResponseJsonSchema,
-                    500: errorResponseJsonSchema,
+                    400: errorResponseJson,
+                    404: errorResponseJson,
+                    500: errorResponseJson,
                 },
             },
         },
