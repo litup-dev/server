@@ -1,5 +1,5 @@
 import { NotFoundError } from '@/common/error.js';
-import { PerformanceListType, PerformanceRecordsType } from '@/schemas/performance.schema';
+import { PerformanceListType, PerformanceRecordsType } from '@/schemas/performance.schema.js';
 import { UserInfoType, UserStatsType } from '@/schemas/user.schema.js';
 import { PrismaClient } from '@prisma/client';
 

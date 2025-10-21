@@ -3,9 +3,9 @@ import {
     DefaultPaginationType,
     errorResponseJson,
 } from '@/schemas/common.schema';
-import { performanceRecordsResJson } from '@/schemas/performance.schema';
-import { userInfoResJson, userStatsResJson } from '@/schemas/user.schema';
-import { UserService } from '@/services/user.service';
+import { performanceRecordsResJson } from '@/schemas/performance.schema.js';
+import { userInfoResJson, userStatsResJson } from '@/schemas/user.schema.js';
+import { UserService } from '@/services/user.service.js';
 import { FastifyInstance } from 'fastify';
 
 export async function userRoutes(fastify: FastifyInstance) {
