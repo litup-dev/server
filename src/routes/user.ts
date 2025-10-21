@@ -1,8 +1,8 @@
 import {
     defaultPaginationJson,
     DefaultPaginationType,
-    errorResponseJson,
-} from '@/schemas/common.schema';
+    errorResJson,
+} from '@/schemas/common.schema.js';
 import { performanceRecordsResJson } from '@/schemas/performance.schema.js';
 import { userInfoResJson, userStatsResJson } from '@/schemas/user.schema.js';
 import { UserService } from '@/services/user.service.js';
@@ -19,8 +19,8 @@ export async function userRoutes(fastify: FastifyInstance) {
                 description: '유저 정보 조회',
                 response: {
                     200: userInfoResJson,
-                    400: errorResponseJson,
-                    500: errorResponseJson,
+                    400: errorResJson,
+                    500: errorResJson,
                 },
             },
         },
@@ -43,8 +43,8 @@ export async function userRoutes(fastify: FastifyInstance) {
                 description: '유저 통계 조회',
                 response: {
                     200: userStatsResJson,
-                    400: errorResponseJson,
-                    500: errorResponseJson,
+                    400: errorResJson,
+                    500: errorResJson,
                 },
             },
         },
@@ -67,8 +67,8 @@ export async function userRoutes(fastify: FastifyInstance) {
                 description: '유저 관람 기록 조회',
                 response: {
                     200: performanceRecordsResJson,
-                    400: errorResponseJson,
-                    500: errorResponseJson,
+                    400: errorResJson,
+                    500: errorResJson,
                 },
             },
         },

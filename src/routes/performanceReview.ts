@@ -2,8 +2,8 @@ import { FastifyInstance } from 'fastify';
 import { PerformanceReviewService } from '@/services/performanceReview.service.js';
 import {
     idParamJson,
-    successResponseJson,
-    errorResponseJson,
+    successResJson,
+    errorResJson,
     IdParamType,
     idParamSchema,
 } from '@/schemas/common.schema.js';
@@ -28,8 +28,8 @@ export async function performanceReviewRoutes(fastify: FastifyInstance) {
                 description: '공연 한줄평 목록 조회',
                 response: {
                     200: performanceReviewListResJson,
-                    400: errorResponseJson,
-                    500: errorResponseJson,
+                    400: errorResJson,
+                    500: errorResJson,
                 },
             },
         },
@@ -55,9 +55,9 @@ export async function performanceReviewRoutes(fastify: FastifyInstance) {
                 description: '공연 한줄평 작성',
                 response: {
                     201: performanceReviewResJson,
-                    400: errorResponseJson,
-                    409: errorResponseJson,
-                    500: errorResponseJson,
+                    400: errorResJson,
+                    409: errorResJson,
+                    500: errorResJson,
                 },
             },
         },
@@ -84,9 +84,9 @@ export async function performanceReviewRoutes(fastify: FastifyInstance) {
                 description: '공연 한줄평 수정',
                 response: {
                     201: performanceReviewResJson,
-                    400: errorResponseJson,
-                    409: errorResponseJson,
-                    500: errorResponseJson,
+                    400: errorResJson,
+                    409: errorResJson,
+                    500: errorResJson,
                 },
             },
         },
@@ -111,10 +111,10 @@ export async function performanceReviewRoutes(fastify: FastifyInstance) {
                 summary: '공연 한줄평 삭제',
                 description: '공연 한줄평 삭제',
                 response: {
-                    200: successResponseJson,
-                    400: errorResponseJson,
-                    409: errorResponseJson,
-                    500: errorResponseJson,
+                    200: successResJson,
+                    400: errorResJson,
+                    409: errorResJson,
+                    500: errorResJson,
                 },
             },
         },
@@ -137,8 +137,8 @@ export async function performanceReviewRoutes(fastify: FastifyInstance) {
                 description: '공연 한줄평 좋아요/취소',
                 response: {
                     200: performanceReviewLikeResJson,
-                    400: errorResponseJson,
-                    500: errorResponseJson,
+                    400: errorResJson,
+                    500: errorResJson,
                 },
             },
         },

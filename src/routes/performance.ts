@@ -10,8 +10,8 @@ import {
 import {
     idParamSchema,
     idParamJson,
-    errorResponseJson,
-    booleanSuccessResponseJson,
+    errorResJson,
+    booleanSuccessResJson,
 } from '@/schemas/common.schema.js';
 import { BadRequestError } from '@/common/error.js';
 
@@ -26,8 +26,8 @@ export async function performanceRoutes(fastify: FastifyInstance) {
                 description: '공연 목록 조회',
                 response: {
                     200: performanceListResJson,
-                    400: errorResponseJson,
-                    500: errorResponseJson,
+                    400: errorResJson,
+                    500: errorResJson,
                 },
             },
         },
@@ -53,10 +53,10 @@ export async function performanceRoutes(fastify: FastifyInstance) {
                 summary: '공연 참석/취소',
                 description: '공연 참석/취소',
                 response: {
-                    200: booleanSuccessResponseJson,
-                    201: booleanSuccessResponseJson,
-                    400: errorResponseJson,
-                    500: errorResponseJson,
+                    200: booleanSuccessResJson,
+                    201: booleanSuccessResJson,
+                    400: errorResJson,
+                    500: errorResJson,
                 },
             },
         },
@@ -89,10 +89,10 @@ export async function performanceRoutes(fastify: FastifyInstance) {
                 summary: '공연 참석확인',
                 description: '공연 참석확인',
                 response: {
-                    200: booleanSuccessResponseJson,
-                    201: booleanSuccessResponseJson,
-                    400: errorResponseJson,
-                    500: errorResponseJson,
+                    200: booleanSuccessResJson,
+                    201: booleanSuccessResJson,
+                    400: errorResJson,
+                    500: errorResJson,
                 },
             },
         },
@@ -126,9 +126,9 @@ export async function performanceRoutes(fastify: FastifyInstance) {
                 description: '공연 상세정보',
                 response: {
                     200: performDetailResJson,
-                    400: errorResponseJson,
-                    404: errorResponseJson,
-                    500: errorResponseJson,
+                    400: errorResJson,
+                    404: errorResJson,
+                    500: errorResJson,
                 },
             },
         },
