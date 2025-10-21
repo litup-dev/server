@@ -13,6 +13,17 @@ export const idParamSchema = z.object({
         }),
 });
 
+// 여러 ID를 바디로 받는 스키마
+export const bodyIdsSchema = z.object({
+    entityIds: z
+        .array(z.number().int().positive())
+        .min(1)
+        .openapi({
+            description: '엔티티 ID 배열',
+            example: [1, 2, 3],
+        }),
+});
+
 // 페이지네이션 공통 스키마
 export const defaultPaginationSchema = z.object({
     offset: z
@@ -90,6 +101,7 @@ export const successResJson = generateSchema(operationSuccessRes);
 export const errorResJson = generateSchema(errorResponseSchema);
 export const booleanSuccessResJson = generateSchema(successResponseSchema(z.boolean()));
 export const idParamJson = generateSchema(idParamSchema);
+export const bodyIdsJson = generateSchema(bodyIdsSchema);
 export const defaultPaginationJson = generateSchema(defaultPaginationSchema);
 
 // 타입 추출

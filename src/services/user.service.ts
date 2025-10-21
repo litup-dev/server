@@ -1,5 +1,6 @@
 import { NotFoundError } from '@/common/error.js';
-import { PerformanceListType, PerformanceRecordsType } from '@/schemas/performance.schema.js';
+import { OperationSuccessType } from '@/schemas/common.schema.js';
+import { PerformanceRecordsType } from '@/schemas/performance.schema.js';
 import { UserInfoType, UserStatsType } from '@/schemas/user.schema.js';
 import { PrismaClient } from '@prisma/client';
 
@@ -127,6 +128,57 @@ export class UserService {
             total: total,
             offset: offset,
             limit: limit,
+        };
+    }
+
+    async deleteUserAttendanceRecords(
+        userId: number,
+        ids: number[]
+    ): Promise<OperationSuccessType> {
+        await this.prisma.attend_tb.deleteMany({
+            where: {
+                user_id: userId,
+                perform_id: { in: ids },
+            },
+        });
+        return {
+            success: true,
+            operation: 'deleted',
+        };
+    }
+
+    async getUserFavoriteClubs(userId: number, offset: number, limit: number): Promise<any> {
+        const [clubs, total] = await this.prisma.$transaction([
+            this.prisma.favorite_tb.findMany({
+                where: { user_id: userId },
+                select: {
+                    club_tb: {
+                        select: {
+                            id: true,
+                            name: true,
+                            address: true,
+                            club_img_tb: {
+                                where: { is_main: true },
+                                select: {
+                                    id: true,
+                                    file_path: true,
+                                    is_main: true,
+                                },
+                            },
+                        },
+                    },
+                },
+                skip: offset,
+                take: limit,
+            }),
+            this.prisma.favorite_tb.count({ where: { user_id: userId } }),
+        ]);
+
+        return {
+            items: clubs,
+            total: total,
+            offset,
+            limit,
         };
     }
 }

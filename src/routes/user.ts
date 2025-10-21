@@ -1,7 +1,9 @@
 import {
+    bodyIdsJson,
     defaultPaginationJson,
     DefaultPaginationType,
     errorResJson,
+    successResJson,
 } from '@/schemas/common.schema.js';
 import { performanceRecordsResJson } from '@/schemas/performance.schema.js';
 import { userInfoResJson, userStatsResJson } from '@/schemas/user.schema.js';
@@ -9,7 +11,6 @@ import { UserService } from '@/services/user.service.js';
 import { FastifyInstance } from 'fastify';
 
 export async function userRoutes(fastify: FastifyInstance) {
-    // 유저 정보 조회
     fastify.get(
         '/user/me',
         {
@@ -33,7 +34,6 @@ export async function userRoutes(fastify: FastifyInstance) {
         }
     );
 
-    // 참석여부, 개시글 수(1차때는 없음), 댓글 수(1차때는 없음)
     fastify.get(
         '/user/me/stats',
         {
@@ -56,7 +56,6 @@ export async function userRoutes(fastify: FastifyInstance) {
         }
     );
 
-    // 관람기록 (참석여부체크한 공연 중 오늘 시간 이전의 공연 나열)
     fastify.get(
         '/user/me/attendance-records',
         {
@@ -82,28 +81,55 @@ export async function userRoutes(fastify: FastifyInstance) {
         }
     );
 
-    // fastify.delete(
-    //     '/user/me/attendance-records',
-    //     {
-    //         schema: {
-    //             tags: ['User'],
-    //             summary: '유저 관람 기록 삭제',
-    //             description: '유저 관람 기록 삭제',
-    //             // response: {
-    //         },
-    //     },
-    //     async (request, reply) => {
-    //         const { offset, limit } = request.query as DefaultPaginationType;
-    //         const service = new UserService(request.server.prisma);
-    //         const userId = 1; // 임시 추출
-    //         const result = await service.getUserAttendanceRecords(userId, offset, limit);
+    fastify.delete(
+        '/user/me/attendance-records',
+        {
+            schema: {
+                tags: ['User'],
+                summary: '유저 관람 기록 삭제',
+                description: '유저 관람 기록 삭제',
+                body: bodyIdsJson,
+                response: {
+                    200: successResJson,
+                    400: errorResJson,
+                    500: errorResJson,
+                },
+            },
+        },
+        async (request, reply) => {
+            const { entityIds } = request.body as { entityIds: number[] };
+            const service = new UserService(request.server.prisma);
+            const userId = 1; // 임시 추출
+            const result = await service.deleteUserAttendanceRecords(userId, entityIds);
 
-    //         return { data: result };
-    //     }
-    // );
+            return { data: result };
+        }
+    );
+
+    fastify.get(
+        '/user/me/favorite-clubs',
+        {
+            schema: {
+                tags: ['User'],
+                querystring: defaultPaginationJson,
+                summary: '유저 관심 클럽 조회',
+                description: '유저 관심 클럽 조회',
+                response: {
+                    // 200: successResJson,
+                    400: errorResJson,
+                    500: errorResJson,
+                },
+            },
+        },
+        async (request, reply) => {
+            const { offset, limit } = request.query as DefaultPaginationType;
+            const service = new UserService(request.server.prisma);
+            const userId = 1; // 임시 추출
+            const result = await service.getUserFavoriteClubs(userId, offset, limit);
+
+            return { data: result };
+        }
+    );
 
     // TODO: 유저 정보 수정
-    // 관심있는 공연
-    // get
-    // 관심있는 클럽
 }
