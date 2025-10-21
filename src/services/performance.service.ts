@@ -81,6 +81,11 @@ export class PerformanceService {
             }),
             this.prisma.perform.count({ where }),
         ]);
+
+        if (performances.length === 0) {
+            return { items: [], total: total, offset, limit };
+        }
+
         return {
             items: performances.map((p) => ({
                 id: p.id,

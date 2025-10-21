@@ -61,39 +61,47 @@ export class UserService {
         if (performanceIds.length === 0) {
             throw new NotFoundError('참석 기록이 없습니다.');
         }
-        const performances = await this.prisma.perform.findMany({
-            where: {
-                id: { in: performanceIds },
-                perform_date: { lt: new Date() },
-            },
-            orderBy: {
-                perform_date: 'desc',
-            },
-            skip: offset,
-            take: limit,
-            select: {
-                id: true,
-                title: true,
-                perform_date: true,
-                artists: true,
-                created_at: true,
-                club_tb: {
-                    select: {
-                        name: true,
+        const [performances, total] = await this.prisma.$transaction([
+            this.prisma.perform.findMany({
+                where: {
+                    id: { in: performanceIds },
+                    perform_date: { lt: new Date() },
+                },
+                orderBy: {
+                    perform_date: 'desc',
+                },
+                select: {
+                    id: true,
+                    title: true,
+                    perform_date: true,
+                    artists: true,
+                    created_at: true,
+                    club_tb: {
+                        select: {
+                            name: true,
+                        },
+                    },
+                    perform_img_tb: {
+                        select: {
+                            id: true,
+                            file_path: true,
+                            is_main: true,
+                        },
                     },
                 },
-                perform_img_tb: {
-                    select: {
-                        id: true,
-                        file_path: true,
-                        is_main: true,
-                    },
+                skip: offset,
+                take: limit,
+            }),
+            this.prisma.perform.count({
+                where: {
+                    id: { in: performanceIds },
+                    perform_date: { lt: new Date() },
                 },
-            },
-        });
+            }),
+        ]);
 
         if (performances.length === 0) {
-            throw new NotFoundError('공연을 찾을 수 없습니다.');
+            return { items: [], total: total, offset, limit };
         }
 
         return {
@@ -116,7 +124,7 @@ export class UserService {
                     isMain: img.is_main ?? false,
                 })),
             })),
-            total: performances.length,
+            total: total,
             offset: offset,
             limit: limit,
         };

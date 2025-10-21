@@ -103,6 +103,7 @@ export async function userRoutes(fastify: FastifyInstance) {
     // );
 
     // TODO: 유저 정보 수정
-    // 관심 있는 공연
+    // 관심있는 공연
     // get
+    // 관심있는 클럽
 }

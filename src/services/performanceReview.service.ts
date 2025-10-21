@@ -39,6 +39,10 @@ export class PerformanceReviewService {
             this.prisma.perform_review_tb.count({ where: { perform_id: performId } }),
         ]);
 
+        if (reviews.length === 0) {
+            return { items: [], total: total, offset, limit };
+        }
+
         return {
             items: reviews.map((r) => ({
                 id: r.id,
