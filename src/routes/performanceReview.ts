@@ -4,7 +4,7 @@ import {
     idParamJson,
     successResponseJson,
     errorResponseJson,
-    idParamType,
+    IdParamType,
     idParamSchema,
 } from '@/schemas/common.schema.js';
 import {
@@ -34,7 +34,7 @@ export async function performanceReviewRoutes(fastify: FastifyInstance) {
             },
         },
         async (request, reply) => {
-            const { entityId } = request.params as idParamType;
+            const { entityId } = request.params as IdParamType;
             const { offset, limit } = request.query as { offset: number; limit: number };
             const service = new PerformanceReviewService(request.server.prisma);
             const result = await service.getReviewsByPerformanceId(entityId, offset, limit);
@@ -62,7 +62,7 @@ export async function performanceReviewRoutes(fastify: FastifyInstance) {
             },
         },
         async (request, reply) => {
-            const { entityId } = request.params as idParamType;
+            const { entityId } = request.params as IdParamType;
             const service = new PerformanceReviewService(request.server.prisma);
             const { content } = request.body as { content: string };
             const userId = 1; // 임시 ID
@@ -91,7 +91,7 @@ export async function performanceReviewRoutes(fastify: FastifyInstance) {
             },
         },
         async (request, reply) => {
-            const { entityId } = request.params as idParamType;
+            const { entityId } = request.params as IdParamType;
             const service = new PerformanceReviewService(request.server.prisma);
             const { content } = request.body as { content: string };
             const userId = 1; // 임시 ID
@@ -119,7 +119,7 @@ export async function performanceReviewRoutes(fastify: FastifyInstance) {
             },
         },
         async (request, reply) => {
-            const { entityId } = request.params as idParamType;
+            const { entityId } = request.params as IdParamType;
             const service = new PerformanceReviewService(request.server.prisma);
             const userId = 1; // 임시 ID
             const result = await service.deleteReview(entityId, userId);

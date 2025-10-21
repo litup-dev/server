@@ -61,6 +61,20 @@ export const userInfoSchema = z.object({
     }),
 });
 
+export const userStatsSchema = z.object({
+    attendCount: z.number().int().nonnegative().openapi({
+        type: 'number',
+        description: '참여한 공연 수',
+        example: 42,
+    }),
+    performReviewCount: z.number().int().nonnegative().openapi({
+        type: 'number',
+        description: '작성한 공연 한줄평 수',
+        example: 15,
+    }),
+    // 추후 커뮤니티 기능이 들어오면 추가될 예정(ex.게시글 수 등)
+});
+
 // 유저 목록 응답
 export const userListResponseSchema = z.object({
     items: z.array(userSchema),
@@ -73,11 +87,15 @@ export const userListResponseSchema = z.object({
 export const userRes = successResponseSchema(userSchema);
 export const userListRes = successResponseSchema(userListResponseSchema);
 export const userInfoRes = successResponseSchema(userInfoSchema);
+export const userStatsRes = successResponseSchema(userStatsSchema);
 
 // Json 스키마
 export const userJson = generateSchema(userSchema);
 export const userInfoJson = generateSchema(userInfoSchema);
+export const userInfoResJson = generateSchema(userInfoRes);
+export const userStatsResJson = generateSchema(userStatsRes);
 
 // 타입 추출
 export type UserType = z.infer<typeof userSchema>;
 export type UserInfoType = z.infer<typeof userInfoSchema>;
+export type UserStatsType = z.infer<typeof userStatsSchema>;

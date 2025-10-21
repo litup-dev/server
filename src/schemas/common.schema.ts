@@ -13,8 +13,27 @@ export const idParamSchema = z.object({
         }),
 });
 
-export type idParamType = z.infer<typeof idParamSchema>;
-export const idParamJson = generateSchema(idParamSchema);
+// 페이지네이션 공통 스키마
+export const defaultPaginationSchema = z.object({
+    offset: z
+        .preprocess((val) => {
+            if (typeof val === 'string') return parseInt(val, 10);
+            return val;
+        }, z.number().min(0).default(0))
+        .openapi({
+            description: '페이징 오프셋',
+            example: 0,
+        }),
+    limit: z
+        .preprocess((val) => {
+            if (typeof val === 'string') return parseInt(val, 10);
+            return val;
+        }, z.number().min(1).max(1000).default(1000))
+        .openapi({
+            description: '페이징 제한',
+            example: 1000,
+        }),
+});
 
 // 요청 성공 응답 스키마
 export const operationSuccessResponseSchema = z
@@ -70,6 +89,10 @@ export const operationSuccessRes = successResponseSchema(operationSuccessRespons
 export const successResponseJson = generateSchema(operationSuccessRes);
 export const errorResponseJson = generateSchema(errorResponseSchema);
 export const booleanSuccessResponseJson = generateSchema(successResponseSchema(z.boolean()));
+export const idParamJson = generateSchema(idParamSchema);
+export const defaultPaginationJson = generateSchema(defaultPaginationSchema);
 
 // 타입 추출
 export type OperationSuccessType = z.infer<typeof operationSuccessResponseSchema>;
+export type IdParamType = z.infer<typeof idParamSchema>;
+export type DefaultPaginationType = z.infer<typeof defaultPaginationSchema>;

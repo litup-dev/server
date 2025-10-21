@@ -46,6 +46,27 @@ export const performanceListResponseSchema = z.object({
     limit: z.number(),
 });
 
+// 공연 관람기록 조회용 스키마
+export const performanceRecordsSchema = z.object({
+    id: z.number(),
+    title: z.string().nullable(),
+    performDate: z.string().nullable(),
+    artists: z.array(artistSchema).nullable(),
+    createdAt: z.string().nullable(),
+    club: z.object({
+        name: z.string().nullable(),
+    }),
+    images: z.array(imageSchema).optional().nullable(),
+});
+
+// 공연 관람기록 페이지 응답 스키마
+export const performanceRecordsListResponseSchema = z.object({
+    items: z.array(performanceRecordsSchema),
+    total: z.number(),
+    offset: z.number(),
+    limit: z.number(),
+});
+
 // 공연 목록 조회 쿼리 파라미터 스키마
 export const getPerformanceByDateRangeSchema = z.object({
     startDate: z
@@ -108,15 +129,18 @@ export const getPerformanceByDateRangeSchema = z.object({
 // 응답 스키마
 export const performDetailRes = successResponseSchema(performanceSchema);
 export const performListRes = paginatedResponseSchema(performanceSchema);
+export const performRecordsRes = paginatedResponseSchema(performanceRecordsSchema);
 export const attendRes = successResponseSchema(z.boolean());
 
 // JSON Schema
 export const getPerformanceByDateRangeJson = generateSchema(getPerformanceByDateRangeSchema);
 export const performanceListResJson = generateSchema(performListRes);
 export const performDetailResJson = generateSchema(performDetailRes);
+export const performanceRecordsResJson = generateSchema(performRecordsRes);
 
 // 타입 추출
 export type PerformanceType = z.infer<typeof performanceSchema>;
 export type PerformanceListType = z.infer<typeof performListRes>;
 export type GetPerformanceByDateRangeType = z.infer<typeof getPerformanceByDateRangeSchema>;
 export type PerformanceListResponseType = z.infer<typeof performanceListResponseSchema>;
+export type PerformanceRecordsType = z.infer<typeof performanceRecordsListResponseSchema>;

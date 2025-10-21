@@ -1,5 +1,6 @@
 import { NotFoundError } from '@/common/error.js';
-import { UserInfoType } from '@/schemas/user.schema.js';
+import { PerformanceListType, PerformanceRecordsType } from '@/schemas/performance.schema';
+import { UserInfoType, UserStatsType } from '@/schemas/user.schema.js';
 import { PrismaClient } from '@prisma/client';
 
 export class UserService {
@@ -25,6 +26,99 @@ export class UserService {
             nickname: user.nickname,
             profilePath: user.profile_path ?? null,
             bio: user.bio ?? null,
+        };
+    }
+
+    async getUserStats(userId: number): Promise<UserStatsType> {
+        const attendCount = await this.prisma.attend_tb.count({
+            where: { user_id: userId },
+        });
+
+        const performReviewCount = await this.prisma.perform_review_tb.count({
+            where: { user_id: userId },
+        });
+
+        return {
+            attendCount,
+            performReviewCount,
+        };
+    }
+
+    async getUserAttendanceRecords(
+        userId: number,
+        offset: number,
+        limit: number
+    ): Promise<PerformanceRecordsType> {
+        const attendances = await this.prisma.attend_tb.findMany({
+            where: {
+                user_id: userId,
+            },
+            select: {
+                perform_id: true,
+            },
+        });
+        const performanceIds = attendances.map((a) => a.perform_id);
+        if (performanceIds.length === 0) {
+            throw new NotFoundError('참석 기록이 없습니다.');
+        }
+        const performances = await this.prisma.perform.findMany({
+            where: {
+                id: { in: performanceIds },
+                perform_date: { lt: new Date() },
+            },
+            orderBy: {
+                perform_date: 'desc',
+            },
+            skip: offset,
+            take: limit,
+            select: {
+                id: true,
+                title: true,
+                perform_date: true,
+                artists: true,
+                created_at: true,
+                club_tb: {
+                    select: {
+                        name: true,
+                    },
+                },
+                perform_img_tb: {
+                    select: {
+                        id: true,
+                        file_path: true,
+                        is_main: true,
+                    },
+                },
+            },
+        });
+
+        if (performances.length === 0) {
+            throw new NotFoundError('공연을 찾을 수 없습니다.');
+        }
+
+        return {
+            items: performances.map((performance) => ({
+                id: performance.id,
+                title: performance.title,
+                performDate: performance.perform_date
+                    ? performance.perform_date.toISOString()
+                    : null,
+                artists: Array.isArray(performance.artists)
+                    ? performance.artists
+                          .filter((artist): artist is string => typeof artist === 'string')
+                          .map((artistName: string) => ({ name: artistName }))
+                    : null,
+                createdAt: performance.created_at ? performance.created_at.toISOString() : null,
+                club: { name: performance.club_tb.name ?? null },
+                images: performance.perform_img_tb.map((img) => ({
+                    id: img.id,
+                    filePath: img.file_path ?? null,
+                    isMain: img.is_main ?? false,
+                })),
+            })),
+            total: performances.length,
+            offset: offset,
+            limit: limit,
         };
     }
 }
