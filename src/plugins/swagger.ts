@@ -6,7 +6,7 @@ import fastifySwaggerUi from '@fastify/swagger-ui';
 export async function registerSwagger(fastify: FastifyInstance) {
     await fastify.register(fastifySwagger, {
         openapi: {
-            openapi: '3.0.0',
+            openapi: '3.1.0',
             info: {
                 title: 'LitUp API',
                 description: 'API documentation',
