@@ -72,6 +72,8 @@ export class AuthService {
         await this.prisma.user_tb.delete({
             where: { id: userId },
         });
+        // 관련 파일들도 삭제해야함.
+        // 리뷰 image, profile 등
         return {
             success: true,
             operation: 'deleted',

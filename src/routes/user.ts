@@ -1,3 +1,4 @@
+import { BadRequestError } from '@/common/error';
 import {
     bodyIdsJson,
     defaultPaginationJson,
@@ -131,5 +132,26 @@ export async function userRoutes(fastify: FastifyInstance) {
         }
     );
 
+    fastify.post(
+        '/user/me/avatar',
+        {
+            schema: {
+                tags: ['User'],
+                summary: '유저 프로필 이미지 업로드',
+                description: '유저 프로필 이미지 업로드',
+                consumes: ['multipart/form-data'],
+            },
+        },
+        async (request, reply) => {
+            const parts = request.parts();
+            for await (const part of parts) {
+                if (part.type === 'file') {
+                    console.log(part.filename);
+                } else {
+                    console.log(part);
+                }
+            }
+        }
+    );
     // TODO: 유저 정보 수정
 }

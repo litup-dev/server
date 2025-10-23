@@ -1,5 +1,5 @@
 import { z, generateSchema } from '@/common/zod.js';
-import { successResponseSchema, paginatedResponseSchema } from '@/schemas/common.schema.js';
+import { successResponseSchema } from '@/schemas/common.schema.js';
 
 export const userDefaultSchema = z.object({
     id: z.number().int().positive().openapi({

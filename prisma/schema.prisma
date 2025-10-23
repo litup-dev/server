@@ -113,13 +113,14 @@ model keyword_tb {
 }
 
 model perform_img_tb {
-  id         Int       @id @default(autoincrement())
-  perform_id Int
-  file_path  String?   @db.VarChar(255)
-  created_at DateTime? @default(now()) @db.Timestamp(6)
-  updated_at DateTime? @db.Timestamp(6)
-  is_main    Boolean?
-  perform_tb Perform   @relation(fields: [perform_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id            Int       @id @default(autoincrement())
+  perform_id    Int
+  file_path     String?   @db.VarChar(255)
+  created_at    DateTime? @default(now()) @db.Timestamp(6)
+  updated_at    DateTime? @db.Timestamp(6)
+  is_main       Boolean?
+  original_name String?   @db.VarChar(255)
+  perform_tb    Perform   @relation(fields: [perform_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model perform_review_tb {
@@ -202,6 +203,7 @@ model review_img_tb {
   created_at     DateTime?      @default(now()) @db.Timestamp(6)
   updated_at     DateTime?      @db.Timestamp(6)
   is_main        Boolean?
+  original_name  String?        @db.VarChar(255)
   club_review_tb club_review_tb @relation(fields: [review_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
@@ -231,6 +233,7 @@ model user_tb {
   role                   String?                  @db.VarChar(20)
   provider_id            String?                  @db.VarChar(255)
   bio                    String?
+  original_name          String?                  @db.VarChar(255)
   attend_tb              attend_tb[]
   club_img_tb            club_img_tb[]
   club_review_tb         club_review_tb[]
