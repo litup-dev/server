@@ -6,8 +6,10 @@ import { performanceReviewRoutes } from './performanceReview.js';
 import { authRoutes } from './auth.js';
 import { userRoutes } from './user.js';
 import { API_PREFIX } from '../common/constants.js';
+import { uploadRoutes } from './upload.js';
 
 export async function registerRoutes(fastify: FastifyInstance) {
+    await fastify.register(uploadRoutes, { prefix: API_PREFIX });
     await fastify.register(clubRoutes, { prefix: API_PREFIX });
     await fastify.register(reviewRoutes, { prefix: API_PREFIX });
     await fastify.register(performanceRoutes, { prefix: API_PREFIX });
