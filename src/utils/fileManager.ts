@@ -1,7 +1,6 @@
 import { IStorageAdapter } from '@/adapters/storage';
-import { BadRequestError } from '@/common/error';
-import { SavedFileInfo, UPLOAD_CONFIGS, UploadedFileInfo, UploadType } from '@/types/file.types';
-import { MultipartFile } from '@fastify/multipart';
+import { BadRequestError } from '@/common/error.js';
+import { SavedFileInfo, UPLOAD_CONFIGS, UploadedFileInfo, UploadType } from '@/types/file.types.js';
 import { randomUUID } from 'crypto';
 import path from 'path';
 
