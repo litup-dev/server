@@ -1,7 +1,7 @@
 import { createStorageAdapter } from '@/adapters/storage/index.js';
 import { BadRequestError, NotFoundError } from '@/common/error.js';
 import { errorResJson, idParamJson, IdParamType, successResJson } from '@/schemas/common.schema.js';
-import { ClubService } from '@/services/club.service';
+import { ClubService } from '@/services/club.service.js';
 import { PerformanceService } from '@/services/performance.service.js';
 import { ReviewService } from '@/services/review.service.js';
 import { UserService } from '@/services/user.service.js';
