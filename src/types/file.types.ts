@@ -31,6 +31,7 @@ export interface SavedFileInfo {
     filePath: string;
     size: number;
     mimeType: string;
+    order?: number;
 }
 
 export const UPLOAD_CONFIGS: Record<UploadType, UploadConfig> = {

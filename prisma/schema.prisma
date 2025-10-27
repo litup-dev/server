@@ -10,7 +10,7 @@ datasource db {
 model Club {
   id                   Int                       @id @default(autoincrement())
   userId               Int                       @map("user_id")
-  createdAt            DateTime?                 @default(now()) @map("created_at") @db.Timestamp(6)
+  createdAt            DateTime?                 @default(now()) @map("created_at") @db.Timestamptz(6)
   name                 String?                   @db.VarChar(20)
   location             Unsupported("geography")?
   phone                String?                   @db.VarChar(15)
@@ -21,6 +21,7 @@ model Club {
   description          String?
   avgRating            Float?                    @map("avg_rating")
   reviewCnt            Int?                      @map("review_cnt")
+  updated_at           DateTime?                 @db.Timestamptz(6)
   club_img_tb          club_img_tb[]
   club_keyword_summary club_keyword_summary[]
   club_review_tb       club_review_tb[]
@@ -34,7 +35,7 @@ model Club {
 model attend_tb {
   perform_id Int
   user_id    Int
-  created_at DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+  created_at DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
   perform_tb Perform   @relation(fields: [perform_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   user_tb    user_tb   @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
@@ -42,15 +43,17 @@ model attend_tb {
 }
 
 model club_img_tb {
-  id         Int       @id @default(autoincrement())
-  club_id    Int
-  user_id    Int
-  file_path  String?   @db.VarChar(255)
-  created_at DateTime? @default(now()) @db.Timestamp(6)
-  updated_at DateTime? @db.Timestamp(6)
-  is_main    Boolean?
-  club_tb    Club      @relation(fields: [club_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  user_tb    user_tb   @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id            Int       @id @default(autoincrement())
+  club_id       Int
+  user_id       Int
+  file_path     String?   @db.VarChar(255)
+  created_at    DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime? @db.Timestamptz(6)
+  is_main       Boolean?
+  file_size     BigInt?
+  original_name String?   @db.VarChar(255)
+  club_tb       Club      @relation(fields: [club_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user_tb       user_tb   @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model club_keyword_summary {
@@ -76,8 +79,8 @@ model club_review_tb {
   club_id                Int
   user_id                Int
   rating                 Float?
-  created_at             DateTime?                @default(now()) @db.Timestamp(6)
-  updated_at             DateTime?                @db.Timestamp(6)
+  created_at             DateTime?                @default(now()) @db.Timestamptz(6)
+  updated_at             DateTime?                @db.Timestamptz(6)
   content                String?
   club_keyword_summary   club_keyword_summary[]
   club_review_keyword_tb club_review_keyword_tb[]
@@ -116,10 +119,11 @@ model perform_img_tb {
   id            Int       @id @default(autoincrement())
   perform_id    Int
   file_path     String?   @db.VarChar(255)
-  created_at    DateTime? @default(now()) @db.Timestamp(6)
-  updated_at    DateTime? @db.Timestamp(6)
+  created_at    DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime? @db.Timestamptz(6)
   is_main       Boolean?
   original_name String?   @db.VarChar(255)
+  file_size     BigInt?
   perform_tb    Perform   @relation(fields: [perform_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
@@ -127,8 +131,8 @@ model perform_review_tb {
   id                     Int                      @id @default(autoincrement())
   perform_id             Int
   user_id                Int
-  created_at             DateTime?                @default(now()) @db.Timestamp(6)
-  updated_at             DateTime?                @db.Timestamp(6)
+  created_at             DateTime?                @default(now()) @db.Timestamptz(6)
+  updated_at             DateTime?                @db.Timestamptz(6)
   content                String                   @db.VarChar(100)
   like_count             Int                      @default(0)
   perform_review_like_tb perform_review_like_tb[]
@@ -144,10 +148,10 @@ model Perform {
   user_id           Int
   title             String?             @db.VarChar(100)
   description       String?
-  perform_date      DateTime?           @db.Timestamp(6)
+  perform_date      DateTime?           @db.Timestamptz(6)
   price             Int?
-  created_at        DateTime?           @default(now()) @db.Timestamp(6)
-  updated_at        DateTime?           @db.Timestamp(6)
+  created_at        DateTime?           @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime?           @db.Timestamptz(6)
   is_cancelled      Boolean?
   artists           Json?
   sns_links         Json?
@@ -181,7 +185,7 @@ model report_tb {
   type_id              Int
   status_id            Int
   entity_id            Int
-  created_at           DateTime?            @default(now()) @db.Timestamp(6)
+  created_at           DateTime?            @default(now()) @db.Timestamptz(6)
   content              String?
   report_category_code report_category_code @relation(fields: [category_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   report_status_code   report_status_code   @relation(fields: [status_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -200,10 +204,11 @@ model review_img_tb {
   id             Int            @id @default(autoincrement())
   review_id      Int
   file_path      String?
-  created_at     DateTime?      @default(now()) @db.Timestamp(6)
-  updated_at     DateTime?      @db.Timestamp(6)
+  created_at     DateTime?      @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime?      @db.Timestamptz(6)
   is_main        Boolean?
   original_name  String?        @db.VarChar(255)
+  file_size      BigInt?
   club_review_tb club_review_tb @relation(fields: [review_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
@@ -227,8 +232,8 @@ model user_tb {
   id                     Int                      @id @default(autoincrement())
   social_id              Int
   nickname               String?                  @db.VarChar(20)
-  created_at             DateTime?                @default(now()) @db.Timestamp(6)
-  updated_at             DateTime?                @db.Timestamp(6)
+  created_at             DateTime?                @default(now()) @db.Timestamptz(6)
+  updated_at             DateTime?                @db.Timestamptz(6)
   profile_path           String?
   role                   String?                  @db.VarChar(20)
   provider_id            String?                  @db.VarChar(255)
@@ -252,7 +257,7 @@ model perform_review_like_tb {
   id                Int               @id @default(autoincrement())
   review_id         Int
   user_id           Int
-  created_at        DateTime?         @default(now()) @db.Timestamp(6)
+  created_at        DateTime?         @default(now()) @db.Timestamptz(6)
   perform_review_tb perform_review_tb @relation(fields: [review_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   user_tb           user_tb           @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 

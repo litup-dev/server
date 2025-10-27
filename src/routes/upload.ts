@@ -1,6 +1,9 @@
 import { createStorageAdapter } from '@/adapters/storage/index.js';
-import { BadRequestError } from '@/common/error.js';
+import { BadRequestError, NotFoundError } from '@/common/error.js';
 import { errorResJson, idParamJson, IdParamType, successResJson } from '@/schemas/common.schema.js';
+import { ClubService } from '@/services/club.service';
+import { PerformanceService } from '@/services/performance.service.js';
+import { ReviewService } from '@/services/review.service';
 import { UserService } from '@/services/user.service';
 import { MultiFileWithBuffer, UploadedFileInfo, UploadType } from '@/types/file.types.js';
 import { FileManager } from '@/utils/fileManager.js';
@@ -71,7 +74,7 @@ export async function uploadRoutes(fastify: FastifyInstance) {
                 const result = await service.updateUserAvatar(userId, savedFiles[0].filePath);
                 return reply.send({ data: result });
             } catch (error: any) {
-                if (error instanceof BadRequestError) {
+                if (error instanceof BadRequestError || error instanceof NotFoundError) {
                     throw error;
                 }
                 throw new Error(`파일 업로드에 실패하였습니다: ${error.message}`);
@@ -87,6 +90,11 @@ export async function uploadRoutes(fastify: FastifyInstance) {
                 tags: ['Upload'],
                 summary: '아바타 업로드',
                 description: '사용자 아바타 이미지를 업로드합니다.',
+                response: {
+                    200: successResJson,
+                    400: errorResJson,
+                    500: errorResJson,
+                },
             },
         },
         async (request, reply) => {
@@ -112,11 +120,10 @@ export async function uploadRoutes(fastify: FastifyInstance) {
             }
 
             try {
-                const savedFiles = await handleFileUpload(fileArray, UploadType.POSTER, userId);
-
-                // 공연 프로필 업로드 서비스 로직 추가
-                // 1. 기존 이미지 있으면 모두 삭제
-                // 2. 새로 업로드된 이미지들로 insert
+                const savedFiles = await handleFileUpload(fileArray, UploadType.POSTER, entityId);
+                const service = new PerformanceService(request.server.prisma);
+                const result = await service.savePerformancePosters(userId, entityId, savedFiles);
+                return reply.send({ data: result });
             } catch (error: any) {
                 try {
                     await fileManager.deleteFolder(UploadType.POSTER, entityId);
@@ -124,7 +131,7 @@ export async function uploadRoutes(fastify: FastifyInstance) {
                     console.error('업로드 실패로 인한 폴더 삭제 중 오류 발생:', rollbackError);
                 }
 
-                if (error instanceof BadRequestError) {
+                if (error instanceof BadRequestError || error instanceof NotFoundError) {
                     throw error;
                 }
 
@@ -141,6 +148,11 @@ export async function uploadRoutes(fastify: FastifyInstance) {
                 tags: ['Upload'],
                 summary: '클럽 리뷰 이미지 업로드',
                 description: '사용자 클럽 리뷰 이미지를 업로드합니다.',
+                response: {
+                    200: successResJson,
+                    400: errorResJson,
+                    500: errorResJson,
+                },
             },
         },
         async (request, reply) => {
@@ -168,19 +180,20 @@ export async function uploadRoutes(fastify: FastifyInstance) {
                 const savedFiles = await handleFileUpload(
                     fileArray,
                     UploadType.CLUB_REVIEW,
-                    userId
+                    entityId
                 );
 
-                // 클럽 리뷰 이미지 등록 서비스 추가
-                // 1. 기존 이미지 있으면 모두 삭제
-                // 2. 새로 업로드된 이미지들로 insert
+                const service = new ReviewService(request.server.prisma);
+                const result = await service.saveReviewImages(userId, entityId, savedFiles);
+                return reply.send({ data: result });
             } catch (error: any) {
                 try {
                     await fileManager.deleteFolder(UploadType.CLUB_REVIEW, entityId);
                 } catch (rollbackError) {
                     console.error('업로드 실패로 인한 폴더 삭제 중 오류 발생:', rollbackError);
                 }
-                if (error instanceof BadRequestError) {
+
+                if (error instanceof BadRequestError || error instanceof NotFoundError) {
                     throw error;
                 }
                 throw new Error(`파일 업로드에 실패하였습니다: ${error.message}`);
@@ -196,6 +209,11 @@ export async function uploadRoutes(fastify: FastifyInstance) {
                 tags: ['Upload'],
                 summary: '클럽 리뷰 이미지 업로드',
                 description: '사용자 클럽 리뷰 이미지를 업로드합니다.',
+                response: {
+                    200: successResJson,
+                    400: errorResJson,
+                    500: errorResJson,
+                },
             },
         },
         async (request, reply) => {
@@ -220,11 +238,11 @@ export async function uploadRoutes(fastify: FastifyInstance) {
             }
 
             try {
-                const savedFiles = await handleFileUpload(fileArray, UploadType.CLUB, userId);
+                const savedFiles = await handleFileUpload(fileArray, UploadType.CLUB, entityId);
+                const service = new ClubService(request.server.prisma);
+                const result = await service.saveClubImages(userId, entityId, savedFiles);
 
-                // 클럽 이미지 서비스 추가
-                // 1. 기존 이미지 있으면 모두 삭제
-                // 2. 새로 업로드된 이미지들로 insert
+                return reply.send({ data: result });
             } catch (error: any) {
                 try {
                     await fileManager.deleteFolder(UploadType.CLUB, entityId);
@@ -232,7 +250,7 @@ export async function uploadRoutes(fastify: FastifyInstance) {
                     console.error('업로드 실패로 인한 폴더 삭제 중 오류 발생:', rollbackError);
                 }
 
-                if (error instanceof BadRequestError) {
+                if (error instanceof BadRequestError || error instanceof NotFoundError) {
                     throw error;
                 }
                 throw new Error(`파일 업로드에 실패하였습니다: ${error.message}`);

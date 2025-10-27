@@ -1,6 +1,8 @@
 import { PrismaClient } from '@prisma/client';
 import type { CreateClubDto, UpdateClubDto } from '../dto/club.dto.js';
 import { ForbiddenError, NotFoundError } from '@/common/error.js';
+import { SavedFileInfo } from '@/types/file.types.js';
+import { OperationSuccessType } from '@/schemas/common.schema.js';
 
 export class ClubService {
     constructor(private prisma: PrismaClient) {}
@@ -359,5 +361,42 @@ export class ClubService {
                 message: 'Favorite added',
             };
         }
+    }
+
+    async saveClubImages(
+        userId: number,
+        clubId: number,
+        files: SavedFileInfo[]
+    ): Promise<OperationSuccessType> {
+        // 클럽을 등록한 사람이 맞는지 확인
+        const performance = await this.prisma.club.findUnique({
+            where: { id: clubId, userId: userId },
+        });
+
+        if (!performance) {
+            throw new NotFoundError('해당 클럽을 찾을 수 없거나 권한이 없습니다.');
+        }
+
+        await this.prisma.$transaction(async (tx) => {
+            // 기존 클럽 이미지 삭제
+            await tx.club_img_tb.deleteMany({
+                where: { club_id: clubId },
+            });
+
+            // 그리고 저장
+            await this.prisma.club_img_tb.createMany({
+                data: files.map((file) => ({
+                    club_id: clubId,
+                    user_id: userId,
+                    file_path: file.filePath,
+                    is_main: file.order === 0,
+                    original_name: file.originalName,
+                    file_size: file.size,
+                    updated_at: new Date(),
+                })),
+            });
+        });
+
+        return { success: true, operation: 'saved' };
     }
 }

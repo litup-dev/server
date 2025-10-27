@@ -99,7 +99,8 @@ export class FileManager {
 
         // 파일 저장
         const savedFiles: SavedFileInfo[] = [];
-        for (const file of files) {
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i]!;
             const storedName = this.generateFileName(file.fileName);
             const filePath = `${folderPath}/${storedName}`;
 
@@ -111,13 +112,13 @@ export class FileManager {
                     filePath,
                     size: file.size,
                     mimeType: file.mimeType,
+                    order: i,
                 });
             } catch (error: any) {
                 await this.rollbackFiles(savedFiles);
                 throw new Error(`파일 저장에 실패하였습니다: ${error.message}`);
             }
         }
-
         return savedFiles;
     }
 

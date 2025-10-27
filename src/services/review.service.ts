@@ -1,6 +1,8 @@
 import { PrismaClient } from '@prisma/client';
 import { CreateReviewDto, UpdateReviewDto } from '../dto/review.dto.js';
 import { ForbiddenError, NotFoundError } from '@/common/error.js';
+import { SavedFileInfo } from '@/types/file.types.js';
+import { OperationSuccessType } from '@/schemas/common.schema.js';
 
 export class ReviewService {
     constructor(private prisma: PrismaClient) {}
@@ -319,5 +321,40 @@ export class ReviewService {
                 },
             });
         });
+    }
+
+    async saveReviewImages(
+        userId: number,
+        reviewId: number,
+        files: SavedFileInfo[]
+    ): Promise<OperationSuccessType> {
+        // 리뷰를 등록한 사람이 맞는지 확인
+        const performance = await this.prisma.club_review_tb.findUnique({
+            where: { id: reviewId, user_id: userId },
+        });
+
+        if (!performance) {
+            throw new NotFoundError('해당 리뷰를 찾을 수 없거나 권한이 없습니다.');
+        }
+
+        await this.prisma.$transaction(async (tx) => {
+            // 기존 리뷰 이미지 삭제
+            await tx.review_img_tb.deleteMany({
+                where: { review_id: reviewId },
+            });
+
+            // 그리고 저장
+            await this.prisma.review_img_tb.createMany({
+                data: files.map((file) => ({
+                    review_id: reviewId,
+                    file_path: file.filePath,
+                    is_main: file.order === 0,
+                    original_name: file.originalName,
+                    file_size: file.size,
+                    updated_at: new Date(),
+                })),
+            });
+        });
+        return { success: true, operation: 'saved' };
     }
 }

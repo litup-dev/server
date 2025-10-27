@@ -1,9 +1,11 @@
 import { NotFoundError } from '@/common/error.js';
+import { OperationSuccessType } from '@/schemas/common.schema.js';
 import {
     GetPerformanceByDateRangeType,
     PerformanceListResponseType,
     PerformanceType,
 } from '@/schemas/performance.schema.js';
+import { SavedFileInfo } from '@/types/file.types.js';
 import { PrismaClient } from '@prisma/client';
 import { Prisma } from '@prisma/client';
 
@@ -221,5 +223,41 @@ export class PerformanceService {
                 isMain: img.is_main ?? null,
             })),
         };
+    }
+
+    async savePerformancePosters(
+        userId: number,
+        performId: number,
+        files: SavedFileInfo[]
+    ): Promise<OperationSuccessType> {
+        // 공연을 등록한 사람이 맞는지 확인
+        const performance = await this.prisma.perform.findUnique({
+            where: { id: performId, user_id: userId },
+        });
+
+        if (!performance) {
+            throw new NotFoundError('해당 공연을 찾을 수 없거나 권한이 없습니다.');
+        }
+
+        await this.prisma.$transaction(async (tx) => {
+            // 기존 포스터 삭제
+            await tx.perform_img_tb.deleteMany({
+                where: { perform_id: performId },
+            });
+
+            // 그리고 저장
+            await this.prisma.perform_img_tb.createMany({
+                data: files.map((file) => ({
+                    perform_id: performId,
+                    file_path: file.filePath,
+                    is_main: file.order === 0,
+                    original_name: file.originalName,
+                    file_size: file.size,
+                    updated_at: new Date(),
+                })),
+            });
+        });
+
+        return { success: true, operation: 'saved' };
     }
 }
