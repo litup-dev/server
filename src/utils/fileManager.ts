@@ -1,6 +1,7 @@
 import { IStorageAdapter } from '@/adapters/storage';
 import { BadRequestError } from '@/common/error.js';
 import { SavedFileInfo, UPLOAD_CONFIGS, UploadedFileInfo, UploadType } from '@/types/file.types.js';
+import moment from 'moment';
 import { randomUUID } from 'crypto';
 import path from 'path';
 
@@ -42,7 +43,7 @@ export class FileManager {
      */
     generateFileName(originalName: string): string {
         const ext = path.extname(originalName);
-        const timestamp = new Date().toISOString().replace(/[-:T]/g, '').split('.')[0]; // YYYYMMDDHHmmss
+        const timestamp = moment().format('YYYYMMDDHHmmss');
         const uuid = randomUUID();
         return `${timestamp}_${uuid}${ext}`;
     }
@@ -89,6 +90,8 @@ export class FileManager {
         files.forEach((file) => this.validateFile(file));
 
         // 기존 폴더 삭제
+        // 한장씩 수정가능하게 두는 것보다 업로드 시 기존 사진을 삭제하며 관리하는 편이 좋을 듯함.
+        // 사용자가 리뷰 수정 시 기존 이미지가 날아가는 단점이 있음.
         const folderPath = this.getUploadPath(type, entityId);
         await this.storage.deleteFolder(folderPath);
 
@@ -96,7 +99,6 @@ export class FileManager {
         const savedFiles: SavedFileInfo[] = [];
         for (const file of files) {
             const storedName = this.generateFileName(file.fileName);
-            console.log('filePath test:', folderPath, storedName);
             const filePath = `${folderPath}/${storedName}`;
 
             try {

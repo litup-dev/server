@@ -1,3 +1,8 @@
+import { MultipartFile } from '@fastify/multipart';
+
+export interface MultiFileWithBuffer extends MultipartFile {
+    buffer: Buffer;
+}
 export enum UploadType {
     AVATAR = 'AVATAR',
     POSTER = 'POSTER',
