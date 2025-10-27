@@ -1,6 +1,7 @@
 import { createStorageAdapter } from '@/adapters/storage/index.js';
 import { BadRequestError } from '@/common/error.js';
-import { idParamJson, IdParamType } from '@/schemas/common.schema.js';
+import { errorResJson, idParamJson, IdParamType, successResJson } from '@/schemas/common.schema.js';
+import { UserService } from '@/services/user.service';
 import { MultiFileWithBuffer, UploadedFileInfo, UploadType } from '@/types/file.types.js';
 import { FileManager } from '@/utils/fileManager.js';
 import { MultipartFile } from '@fastify/multipart';
@@ -34,10 +35,15 @@ export async function uploadRoutes(fastify: FastifyInstance) {
                 tags: ['Upload'],
                 summary: '아바타 업로드',
                 description: '사용자 아바타 이미지를 업로드합니다.',
+                response: {
+                    200: successResJson,
+                    400: errorResJson,
+                    500: errorResJson,
+                },
             },
         },
         async (request, reply) => {
-            const userId = 1; // 임시 추출
+            const userId = 2; // 임시 추출
 
             const parts = request.parts();
 
@@ -55,12 +61,15 @@ export async function uploadRoutes(fastify: FastifyInstance) {
             if (fileArray.length === 0) {
                 throw new BadRequestError('업로드할 파일이 없습니다.');
             }
-            console.log('fileArray test:', fileArray);
 
             try {
                 const savedFiles = await handleFileUpload(fileArray, UploadType.AVATAR, userId);
-
-                // 유저 프로필 서비스 로직 추가
+                if (!savedFiles[0]) {
+                    throw new Error('파일 저장에 실패했습니다.');
+                }
+                const service = new UserService(request.server.prisma);
+                const result = await service.updateUserAvatar(userId, savedFiles[0].filePath);
+                return reply.send({ data: result });
             } catch (error: any) {
                 if (error instanceof BadRequestError) {
                     throw error;

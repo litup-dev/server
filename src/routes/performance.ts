@@ -4,7 +4,6 @@ import {
     getPerformanceByDateRangeJson,
     GetPerformanceByDateRangeType,
     performanceListResJson,
-    attendRes,
     performDetailResJson,
 } from '@/schemas/performance.schema.js';
 import {

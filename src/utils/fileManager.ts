@@ -4,6 +4,8 @@ import { SavedFileInfo, UPLOAD_CONFIGS, UploadedFileInfo, UploadType } from '@/t
 import moment from 'moment';
 import { randomUUID } from 'crypto';
 import path from 'path';
+import { get } from 'http';
+import { getCompactKoreaTimestamp } from './time';
 
 export class FileManager {
     private storage: IStorageAdapter;
@@ -43,7 +45,7 @@ export class FileManager {
      */
     generateFileName(originalName: string): string {
         const ext = path.extname(originalName);
-        const timestamp = moment().format('YYYYMMDDHHmmss');
+        const timestamp = getCompactKoreaTimestamp();
         const uuid = randomUUID();
         return `${timestamp}_${uuid}${ext}`;
     }

@@ -2,6 +2,7 @@ import { NotFoundError } from '@/common/error.js';
 import { OperationSuccessType } from '@/schemas/common.schema.js';
 import { PerformanceRecordsType } from '@/schemas/performance.schema.js';
 import { UserInfoType, UserStatsType } from '@/schemas/user.schema.js';
+import { getCurrentTimestamp } from '@/utils/time';
 import { PrismaClient } from '@prisma/client';
 
 export class UserService {
@@ -179,6 +180,26 @@ export class UserService {
             total: total,
             offset,
             limit,
+        };
+    }
+
+    async updateUserAvatar(userId: number, avatarPath: string): Promise<OperationSuccessType> {
+        console.log('userId:', userId, 'avatarPath:', avatarPath);
+        const user = await this.prisma.user_tb.findUnique({
+            where: { id: userId },
+        });
+
+        if (!user) {
+            throw new NotFoundError('사용자를 찾을 수 없습니다.');
+        }
+
+        await this.prisma.user_tb.update({
+            where: { id: userId },
+            data: { profile_path: avatarPath, updated_at: getCurrentTimestamp() },
+        });
+        return {
+            success: true,
+            operation: 'updated',
         };
     }
 }
