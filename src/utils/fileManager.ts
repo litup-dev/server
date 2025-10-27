@@ -1,11 +1,9 @@
 import { IStorageAdapter } from '@/adapters/storage';
 import { BadRequestError } from '@/common/error.js';
 import { SavedFileInfo, UPLOAD_CONFIGS, UploadedFileInfo, UploadType } from '@/types/file.types.js';
-import moment from 'moment';
 import { randomUUID } from 'crypto';
 import path from 'path';
-import { get } from 'http';
-import { getCompactKoreaTimestamp } from './time';
+import { getCompactKoreaTimestamp } from './time.js';
 
 export class FileManager {
     private storage: IStorageAdapter;
