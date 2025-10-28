@@ -16,6 +16,7 @@ export function createStorageAdapter(type?: StorageType): IStorageAdapter {
                 accountId: process.env.R2_ACCOUNT_ID || '',
                 accessKeyId: process.env.R2_ACCESS_KEY_ID || '',
                 secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || '',
+                s3EndpointUrl: process.env.R2_S3_ENDPOINT_URL || '',
             });
         default:
             throw new Error(`지원되지 않는 스토리지 타입입니다: ${storageType}`);

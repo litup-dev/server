@@ -92,8 +92,12 @@ export class FileManager {
         // 기존 폴더 삭제
         // 한장씩 수정가능하게 두는 것보다 업로드 시 기존 사진을 삭제하며 관리하는 편이 좋을 듯함.
         // 사용자가 리뷰 수정 시 기존 이미지가 날아가는 단점이 있음.
+        // 기존 폴더가 있는지 확인 후 삭제
         const folderPath = this.getUploadPath(type, entityId);
-        await this.storage.deleteFolder(folderPath);
+        const isExist = await this.storage.exists(folderPath);
+        if (isExist) {
+            await this.storage.deleteFolder(folderPath);
+        }
 
         // 파일 저장
         const savedFiles: SavedFileInfo[] = [];
