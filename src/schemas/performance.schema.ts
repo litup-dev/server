@@ -140,7 +140,7 @@ export const getPerformanceByDateRangeSchema = z.object({
         }, z.number().min(1).max(1000).default(1000))
         .openapi({
             description: '페이징 제한',
-            example: 1000,
+            example: 20,
         }),
 });
 

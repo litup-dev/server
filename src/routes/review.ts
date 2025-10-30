@@ -1,77 +1,116 @@
 import { FastifyInstance } from 'fastify';
-import { ReviewService } from '../services/review.service.js';
+import { ReviewService } from '@/services/review.service.js';
 import {
-    createReviewSchema,
-    updateReviewSchema,
-    getReviewSchema,
-    getReviewsSchema,
-} from '../schemas/review.schema.js';
-import type { CreateReviewDto, UpdateReviewDto } from '../dto/review.dto.js';
-import { NotFoundError } from '@/common/error.js';
+    createReviewJson,
+    CreateReviewType,
+    updateReviewJson,
+    UpdateReviewType,
+    getReviewsJson,
+    GetReviewsType,
+    reviewDetailResJson,
+    reviewListResJson,
+} from '@/schemas/review.schema.js';
+import { idParamSchema, idParamJson, errorResJson } from '@/schemas/common.schema.js';
+import { BadRequestError, NotFoundError } from '@/common/error.js';
 
 export async function reviewRoutes(fastify: FastifyInstance) {
     fastify.get(
-        '/clubs/:id/reviews',
+        '/clubs/:entityId/reviews',
         {
             schema: {
-                ...getReviewsSchema,
+                params: idParamJson,
+                querystring: getReviewsJson,
                 tags: ['Reviews'],
                 summary: '클럽의 리뷰 목록 조회',
                 description: '클럽의 리뷰 목록 조회',
+                response: {
+                    200: reviewListResJson,
+                    400: errorResJson,
+                    500: errorResJson,
+                },
             },
         },
         async (request, reply) => {
-            const { id } = request.params as { id: string };
-            const { offset = 0, limit = 10 } = request.query as {
-                offset?: number;
-                limit?: number;
-            };
+            const parsed = idParamSchema.safeParse(request.params);
+            if (!parsed.success) {
+                throw new BadRequestError(`허용되지 않은 파라미터입니다. ${parsed.error.message}`);
+            }
+
+            const { entityId } = parsed.data;
+            const query = request.query as GetReviewsType;
 
             const service = new ReviewService(request.server.prisma);
-            const result = await service.getReviewsByClubId(parseInt(id), offset, limit);
+            const result = await service.getReviewsByClubId(entityId, query.offset, query.limit);
 
-            request.log.info(`Found ${result.reviews.length} reviews for club ${id}`);
-            return result;
+            request.log.info(`Found ${result.items.length} reviews for club ${entityId}`);
+
+            return reply.send({
+                data: result,
+            });
         }
     );
 
     fastify.get(
-        '/reviews/:id',
+        '/reviews/:entityId',
         {
             schema: {
-                ...getReviewSchema,
+                params: idParamJson,
                 tags: ['Reviews'],
                 summary: '리뷰 상세 조회',
                 description: '리뷰 상세 조회',
+                response: {
+                    200: reviewDetailResJson,
+                    400: errorResJson,
+                    404: errorResJson,
+                    500: errorResJson,
+                },
             },
         },
         async (request, reply) => {
-            const { id } = request.params as { id: string };
-            const service = new ReviewService(request.server.prisma);
-            const review = await service.getById(parseInt(id));
+            const parsed = idParamSchema.safeParse(request.params);
+            if (!parsed.success) {
+                throw new BadRequestError(`허용되지 않은 파라미터입니다. ${parsed.error.message}`);
+            }
 
-            request.log.info(`Found review with ID ${id}`);
-            return review;
+            const { entityId } = parsed.data;
+
+            const service = new ReviewService(request.server.prisma);
+            const result = await service.getById(entityId);
+
+            request.log.info(`Found review with ID ${entityId}`);
+
+            return reply.send({ data: result });
         }
     );
 
     fastify.post(
-        '/clubs/:id/reviews',
+        '/clubs/:entityId/reviews',
         {
             schema: {
-                ...createReviewSchema,
+                params: idParamJson,
+                body: createReviewJson,
                 tags: ['Reviews'],
                 summary: '리뷰 등록',
-                description: '리뷰 상세 조회',
+                description: '리뷰 등록',
+                response: {
+                    201: reviewDetailResJson,
+                    400: errorResJson,
+                    404: errorResJson,
+                    500: errorResJson,
+                },
             },
         },
         async (request, reply) => {
-            const { id } = request.params as { id: string };
-            const clubId = parseInt(id);
+            const parsed = idParamSchema.safeParse(request.params);
+            if (!parsed.success) {
+                throw new BadRequestError(`허용되지 않은 파라미터입니다. ${parsed.error.message}`);
+            }
+
+            const { entityId: clubId } = parsed.data;
+            const body = request.body as CreateReviewType;
 
             // TODO: 실제로는 인증된 사용자 ID를 사용
-            // const userId = request.user.id;
-            const userId = 1; // 임시로 하드코딩
+            const userId = 1;
 
             const service = new ReviewService(request.server.prisma);
 
@@ -81,68 +120,88 @@ export async function reviewRoutes(fastify: FastifyInstance) {
             });
 
             if (!club) {
-                throw new NotFoundError('Club not found');
+                throw new NotFoundError('클럽을 찾을 수 없습니다.');
             }
 
-            const review = await service.create(clubId, userId, request.body as CreateReviewDto);
+            const result = await service.create(clubId, userId, body);
 
-            request.log.info(`Created review with ID ${review.id} for club ${clubId}`);
-            return review;
+            request.log.info(`Created review with ID ${result.id} for club ${clubId}`);
+
+            return reply.status(201).send({ data: result });
         }
     );
 
     fastify.patch(
-        '/reviews/:id',
+        '/reviews/:entityId',
         {
             schema: {
-                ...updateReviewSchema,
+                params: idParamJson,
+                body: updateReviewJson,
                 tags: ['Reviews'],
                 summary: '리뷰 수정',
                 description: '리뷰 수정',
+                response: {
+                    200: reviewDetailResJson,
+                    400: errorResJson,
+                    404: errorResJson,
+                    500: errorResJson,
+                },
             },
         },
         async (request, reply) => {
-            const { id } = request.params as { id: string };
+            const parsed = idParamSchema.safeParse(request.params);
+            if (!parsed.success) {
+                throw new BadRequestError(`허용되지 않은 파라미터입니다. ${parsed.error.message}`);
+            }
+
+            const { entityId } = parsed.data;
+            const body = request.body as UpdateReviewType;
 
             // TODO: 실제로는 인증된 사용자 ID를 사용
-            // const userId = request.user.id;
-            const userId = 1; // 임시로 하드코딩
+            const userId = 1;
 
             const service = new ReviewService(request.server.prisma);
-            const updated = await service.update(
-                parseInt(id),
-                userId,
-                request.body as UpdateReviewDto
-            );
+            const result = await service.update(entityId, userId, body);
 
-            request.log.info(`Updated review with ID ${id}`);
-            return updated;
+            request.log.info(`Updated review with ID ${entityId}`);
+
+            return reply.send({ data: result });
         }
     );
 
-    // 리뷰 삭제
     fastify.delete(
-        '/reviews/:id',
+        '/reviews/:entityId',
         {
             schema: {
-                ...getReviewSchema,
+                params: idParamJson,
                 tags: ['Reviews'],
                 summary: '리뷰 삭제',
                 description: '리뷰 삭제',
+                response: {
+                    204: { type: 'null', description: '삭제 성공' },
+                    400: errorResJson,
+                    404: errorResJson,
+                    500: errorResJson,
+                },
             },
         },
         async (request, reply) => {
-            const { id } = request.params as { id: string };
+            const parsed = idParamSchema.safeParse(request.params);
+            if (!parsed.success) {
+                throw new BadRequestError(`허용되지 않은 파라미터입니다. ${parsed.error.message}`);
+            }
+
+            const { entityId } = parsed.data;
 
             // TODO: 실제로는 인증된 사용자 ID를 사용
-            // const userId = request.user.id;
-            const userId = 1; // 임시로 하드코딩
+            const userId = 1;
 
             const service = new ReviewService(request.server.prisma);
-            await service.delete(parseInt(id), userId);
+            await service.delete(entityId, userId);
 
-            request.log.info(`Deleted review with ID ${id}`);
-            return;
+            request.log.info(`Deleted review with ID ${entityId}`);
+
+            return reply.status(204).send();
         }
     );
 }
