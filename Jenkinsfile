@@ -22,7 +22,7 @@ pipeline {
         stage('Install & Build') {
             steps {
                 sh 'git clean -fdx || true' 
-                sh 'yarn install --immutable'
+                sh 'yarn install'
                 // sh 'yarn prisma generate'
                 sh 'yarn build'
             }
