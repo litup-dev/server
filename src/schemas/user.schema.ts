@@ -58,6 +58,19 @@ export const userStatsSchema = z.object({
     // 추후 커뮤니티 기능이 들어오면 추가될 예정(ex.게시글 수 등)
 });
 
+export const userProfileEditSchema = z.object({
+    nickname: z.string().min(1).max(20).openapi({
+        type: 'string',
+        description: '사용자 닉네임',
+        example: '반려동물타조',
+    }),
+    bio: z.string().max(255).nullable().openapi({
+        type: 'string',
+        description: '사용자 소개',
+        example: '안녕하세요! 저는 반려동물타조입니다.',
+    }),
+});
+
 // 유저 목록 응답
 export const userListResponseSchema = z.object({
     items: z.array(userDefaultSchema),
@@ -77,8 +90,10 @@ export const userDefaultJson = generateSchema(userDefaultSchema);
 export const userInfoJson = generateSchema(userInfoSchema);
 export const userInfoResJson = generateSchema(userInfoRes);
 export const userStatsResJson = generateSchema(userStatsRes);
+export const userProfileEditJson = generateSchema(userProfileEditSchema);
 
 // 타입 추출
 export type UserDefaultType = z.infer<typeof userDefaultSchema>;
 export type UserInfoType = z.infer<typeof userInfoSchema>;
 export type UserStatsType = z.infer<typeof userStatsSchema>;
+export type UserProfileEditType = z.infer<typeof userProfileEditSchema>;

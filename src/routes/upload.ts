@@ -88,8 +88,8 @@ export async function uploadRoutes(fastify: FastifyInstance) {
             schema: {
                 params: idParamJson,
                 tags: ['Upload'],
-                summary: '아바타 업로드',
-                description: '사용자 아바타 이미지를 업로드합니다.',
+                summary: '공연 포스터 업로드',
+                description: '공연 포스터 이미지를 업로드합니다.',
                 response: {
                     200: successResJson,
                     400: errorResJson,
@@ -109,7 +109,7 @@ export async function uploadRoutes(fastify: FastifyInstance) {
                     const file = part as MultipartFile;
                     const buffer = await part.toBuffer();
                     fileArray.push({
-                        ...part,
+                        ...file,
                         buffer,
                     } as MultiFileWithBuffer);
                 }
@@ -166,7 +166,7 @@ export async function uploadRoutes(fastify: FastifyInstance) {
                     const file = part as MultipartFile;
                     const buffer = await part.toBuffer();
                     fileArray.push({
-                        ...part,
+                        ...file,
                         buffer,
                     } as MultiFileWithBuffer);
                 }
@@ -227,7 +227,7 @@ export async function uploadRoutes(fastify: FastifyInstance) {
                     const file = part as MultipartFile;
                     const buffer = await part.toBuffer();
                     fileArray.push({
-                        ...part,
+                        ...file,
                         buffer,
                     } as MultiFileWithBuffer);
                 }

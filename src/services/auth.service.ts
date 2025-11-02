@@ -56,7 +56,6 @@ export class AuthService {
                 created_at: true,
                 updated_at: true,
                 bio: true,
-                email: true,
             },
         });
 

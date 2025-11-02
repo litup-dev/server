@@ -7,7 +7,12 @@ import {
     successResJson,
 } from '@/schemas/common.schema.js';
 import { performanceRecordsResJson } from '@/schemas/performance.schema.js';
-import { userInfoResJson, userStatsResJson } from '@/schemas/user.schema.js';
+import {
+    userInfoResJson,
+    userProfileEditJson,
+    UserProfileEditType,
+    userStatsResJson,
+} from '@/schemas/user.schema.js';
 import { UserService } from '@/services/user.service.js';
 import { FastifyInstance } from 'fastify';
 
@@ -31,7 +36,7 @@ export async function userRoutes(fastify: FastifyInstance) {
             const userId = 1; // 임시 추출
             const result = await service.getUserById(userId);
 
-            return { data: result };
+            return reply.send({ data: result });
         }
     );
 
@@ -53,7 +58,7 @@ export async function userRoutes(fastify: FastifyInstance) {
             const service = new UserService(request.server.prisma);
             const userId = 1; // 임시 추출
             const result = await service.getUserStats(userId);
-            return { data: result };
+            return reply.send({ data: result });
         }
     );
 
@@ -78,7 +83,7 @@ export async function userRoutes(fastify: FastifyInstance) {
             const userId = 1; // 임시 추출
             const result = await service.getUserAttendanceRecords(userId, offset, limit);
 
-            return { data: result };
+            return reply.send({ data: result });
         }
     );
 
@@ -103,7 +108,7 @@ export async function userRoutes(fastify: FastifyInstance) {
             const userId = 1; // 임시 추출
             const result = await service.deleteUserAttendanceRecords(userId, entityIds);
 
-            return { data: result };
+            return reply.send({ data: result });
         }
     );
 
@@ -128,29 +133,26 @@ export async function userRoutes(fastify: FastifyInstance) {
             const userId = 1; // 임시 추출
             const result = await service.getUserFavoriteClubs(userId, offset, limit);
 
-            return { data: result };
+            return reply.send({ data: result });
         }
     );
 
-    fastify.post(
-        '/user/me/avatar',
+    fastify.patch(
+        '/user/me/info',
         {
             schema: {
                 tags: ['User'],
-                summary: '유저 프로필 이미지 업로드',
-                description: '유저 프로필 이미지 업로드',
-                consumes: ['multipart/form-data'],
+                summary: '유저 프로필 수정',
+                description: '유저 프로필 수정',
+                body: userProfileEditJson,
             },
         },
         async (request, reply) => {
-            const parts = request.parts();
-            for await (const part of parts) {
-                if (part.type === 'file') {
-                    console.log(part.filename);
-                } else {
-                    console.log(part);
-                }
-            }
+            const service = new UserService(request.server.prisma);
+            const userId = 1;
+            const profileData = request.body as UserProfileEditType;
+            const result = await service.updateUserProfile(userId, profileData);
+            return reply.send({ data: result });
         }
     );
     // TODO: 유저 정보 수정

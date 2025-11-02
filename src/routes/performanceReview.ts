@@ -123,7 +123,7 @@ export async function performanceReviewRoutes(fastify: FastifyInstance) {
             const service = new PerformanceReviewService(request.server.prisma);
             const userId = 1; // 임시 ID
             const result = await service.deleteReview(entityId, userId);
-            return { data: result };
+            return reply.send({ data: result });
         }
     );
 
