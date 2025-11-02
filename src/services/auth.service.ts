@@ -1,4 +1,4 @@
-import { ConflictError, NotFoundError } from '@/common/error.js';
+import { NotFoundError } from '@/common/error.js';
 import { CreateUserType } from '@/schemas/auth.schema.js';
 import { OperationSuccessType } from '@/schemas/common.schema.js';
 import { UserDefaultType } from '@/schemas/user.schema.js';
@@ -8,8 +8,8 @@ import { randomUUID } from 'crypto';
 export class AuthService {
     constructor(private prisma: PrismaClient) {}
 
-    async registerUser(body: CreateUserType): Promise<UserDefaultType> {
-        const { provider, providerId } = body;
+    async verifyUser(body: CreateUserType): Promise<UserDefaultType> {
+        const { provider, providerId, email } = body;
 
         const socialCode = await this.prisma.social_code.findFirst({
             where: { code: provider },
@@ -24,11 +24,22 @@ export class AuthService {
             where: {
                 social_id: socialCode.id,
                 provider_id: providerId,
+                email: email,
             },
         });
 
         if (existingUser) {
-            throw new ConflictError('이미 존재하는 사용자입니다.');
+            // throw new ConflictError('이미 존재하는 사용자입니다.');
+            // 소셜 로그인만 존재해 로그인, 회원가입에 대한 구분이 애매함.
+            return {
+                id: existingUser.id,
+                nickname: existingUser.nickname,
+                profilePath: existingUser.profile_path ?? null,
+                createdAt: existingUser.created_at ? existingUser.created_at.toISOString() : null,
+                updatedAt: existingUser.updated_at ? existingUser.updated_at.toISOString() : null,
+                bio: existingUser.bio ?? null,
+                email: existingUser.email ?? null,
+            };
         }
 
         // 추후 닉네임 로직 생성필요
@@ -39,6 +50,7 @@ export class AuthService {
                 social_id: socialCode.id,
                 nickname: generateNickname,
                 provider_id: providerId,
+                email: email,
             },
             select: {
                 id: true,
@@ -47,6 +59,7 @@ export class AuthService {
                 created_at: true,
                 updated_at: true,
                 bio: true,
+                email: true,
             },
         });
 
@@ -57,6 +70,7 @@ export class AuthService {
             createdAt: newUser.created_at ? newUser.created_at.toISOString() : null,
             updatedAt: newUser.updated_at ? newUser.updated_at.toISOString() : null,
             bio: newUser.bio ?? null,
+            email: newUser.email ?? null,
         };
     }
 
@@ -74,6 +88,13 @@ export class AuthService {
         });
         // 관련 파일들도 삭제해야함.
         // 리뷰 image, profile 등
+        // 삭제 해야하는 데이터
+        // 일반
+        //     이미지 : 클럽 리뷰 이미지, 클럽 이미지, 프로필 이미지, 공연 이미지
+        //     데이터 : 클럽 리뷰, 한줄평, 참석의사, 관심클럽,
+        // 매니저
+        // 한줄평, 클럽 리뷰 이미지, 클럽 이미지, 프로필 이미지, 공연 이미지
+
         return {
             success: true,
             operation: 'deleted',

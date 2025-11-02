@@ -1,18 +1,18 @@
 import { createUserJson } from '@/schemas/auth.schema.js';
-import { errorResJson, idParamJson, successResJson } from '@/schemas/common.schema.js';
+import { errorResJson, successResJson } from '@/schemas/common.schema.js';
 import { userDefaultJson } from '@/schemas/user.schema.js';
 import { AuthService } from '@/services/auth.service.js';
 import { FastifyInstance } from 'fastify';
 
 export async function authRoutes(fastify: FastifyInstance) {
     fastify.post(
-        '/auth/register',
+        '/auth/verify',
         {
             schema: {
                 body: createUserJson,
                 tags: ['Auth'],
-                summary: '회원가입',
-                description: '회원가입',
+                summary: '회원가입 & 로그인',
+                description: '회원가입 & 로그인',
                 response: {
                     201: userDefaultJson,
                     400: errorResJson,
@@ -22,12 +22,13 @@ export async function authRoutes(fastify: FastifyInstance) {
         },
         async (request, reply) => {
             const service = new AuthService(request.server.prisma);
-            const { provider, providerId } = request.body as {
+            const { provider, providerId, email } = request.body as {
                 provider: string;
                 providerId: string;
+                email: string;
             };
-            const user = await service.registerUser({ provider, providerId });
-            return { data: user };
+            const user = await service.verifyUser({ provider, providerId, email });
+            return reply.send({ data: user });
         }
     );
 
@@ -56,12 +57,12 @@ export async function authRoutes(fastify: FastifyInstance) {
     );
 
     fastify.post(
-        '/auth/dummy/register',
+        '/auth/dummy/verify',
         {
             schema: {
                 tags: ['Auth'],
-                summary: '회원가입',
-                description: '회원가입',
+                summary: '회원가입 & 로그인',
+                description: '회원가입 & 로그인',
             },
         },
         async (request, reply) => {
@@ -74,7 +75,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         }
     );
     fastify.delete(
-        '/auth/dummy/withdraw',
+        '/auth/dummy/verify',
         {
             schema: {
                 tags: ['Auth'],

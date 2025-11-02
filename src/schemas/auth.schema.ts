@@ -11,6 +11,12 @@ export const createUserSchema = z.object({
         description: '인증 제공자 ID',
         example: '123456789',
     }),
+    email: z.string().email().openapi({
+        type: 'string',
+        format: 'email',
+        description: '사용자 이메일',
+        example: 'user@example.com',
+    }),
 });
 
 // Json 스키마

@@ -238,7 +238,7 @@ model user_tb {
   role                   String?                  @db.VarChar(20)
   provider_id            String?                  @db.VarChar(255)
   bio                    String?
-  original_name          String?                  @db.VarChar(255)
+  email                  String?                  @db.VarChar(255)
   attend_tb              attend_tb[]
   club_img_tb            club_img_tb[]
   club_review_tb         club_review_tb[]
