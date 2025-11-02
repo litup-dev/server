@@ -9,7 +9,7 @@ export class AuthService {
     constructor(private prisma: PrismaClient) {}
 
     async verifyUser(body: CreateUserType): Promise<UserDefaultType> {
-        const { provider, providerId, email } = body;
+        const { provider, providerId } = body;
 
         const socialCode = await this.prisma.social_code.findFirst({
             where: { code: provider },
@@ -24,7 +24,6 @@ export class AuthService {
             where: {
                 social_id: socialCode.id,
                 provider_id: providerId,
-                email: email,
             },
         });
 
@@ -38,7 +37,6 @@ export class AuthService {
                 createdAt: existingUser.created_at ? existingUser.created_at.toISOString() : null,
                 updatedAt: existingUser.updated_at ? existingUser.updated_at.toISOString() : null,
                 bio: existingUser.bio ?? null,
-                email: existingUser.email ?? null,
             };
         }
 
@@ -50,7 +48,6 @@ export class AuthService {
                 social_id: socialCode.id,
                 nickname: generateNickname,
                 provider_id: providerId,
-                email: email,
             },
             select: {
                 id: true,
@@ -70,7 +67,6 @@ export class AuthService {
             createdAt: newUser.created_at ? newUser.created_at.toISOString() : null,
             updatedAt: newUser.updated_at ? newUser.updated_at.toISOString() : null,
             bio: newUser.bio ?? null,
-            email: newUser.email ?? null,
         };
     }
 
