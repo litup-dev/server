@@ -4,7 +4,6 @@ import { loggerOptions } from './common/loggerOptions.js';
 import { registerPlugins } from './plugins/index.js';
 import { registerRoutes } from './routes/index.js';
 import { setupErrorHandler } from './common/errorHandler.js';
-import schedulePerformanceReviewTasks from './schedule/performanceReview.schedule.js';
 
 const app = Fastify({
     logger: loggerOptions,
