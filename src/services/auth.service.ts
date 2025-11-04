@@ -1,4 +1,3 @@
-import { user_setting_tb } from './../../node_modules/.prisma/client/index.d';
 import { NotFoundError } from '@/common/error.js';
 import { CreateUserType } from '@/schemas/auth.schema.js';
 import { OperationSuccessType } from '@/schemas/common.schema.js';
