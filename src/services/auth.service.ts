@@ -1,3 +1,4 @@
+import { user_setting_tb } from './../../node_modules/.prisma/client/index.d';
 import { NotFoundError } from '@/common/error.js';
 import { CreateUserType } from '@/schemas/auth.schema.js';
 import { OperationSuccessType } from '@/schemas/common.schema.js';
@@ -57,6 +58,27 @@ export class AuthService {
                 updated_at: true,
                 bio: true,
             },
+        });
+
+        // 사용자 환경설정 초기값 생성
+        await this.prisma.user_setting_tb.createMany({
+            data: [
+                {
+                    user_id: newUser.id,
+                    setting_key: 'attend',
+                    setting_value: 'public',
+                },
+                {
+                    user_id: newUser.id,
+                    setting_key: 'favorite_club',
+                    setting_value: 'public',
+                },
+                {
+                    user_id: newUser.id,
+                    setting_key: 'perform_history',
+                    setting_value: 'public',
+                },
+            ],
         });
 
         return {
