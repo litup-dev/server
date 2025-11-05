@@ -247,7 +247,7 @@ model user_tb {
   perform_review_tb      perform_review_tb[]
   perform_tb             Perform[]
   report_tb              report_tb[]
-  user_setting_tb        user_setting_tb[]
+  user_settings_tb       user_settings_tb?
   social_code            social_code              @relation(fields: [social_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@unique([social_id, provider_id], map: "uq_user_tb_socialid_providerid")
@@ -264,13 +264,17 @@ model perform_review_like_tb {
   @@unique([review_id, user_id])
 }
 
-model user_setting_tb {
-  user_id       Int
-  setting_key   String    @db.VarChar(50)
-  setting_value String    @db.VarChar(50)
-  created_at    DateTime? @default(now()) @db.Timestamptz(6)
-  updated_at    DateTime? @default(now()) @db.Timestamptz(6)
-  user_tb       user_tb   @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model user_settings_tb {
+  user_id                 Int      @id
+  favorite_clubs_privacy  String   @default("public") @db.VarChar(20)
+  attendance_privacy      String   @default("public") @db.VarChar(20)
+  perform_history_privacy String   @default("public") @db.VarChar(20)
+  created_at              DateTime @default(now()) @db.Timestamptz(6)
+  updated_at              DateTime @default(now()) @db.Timestamptz(6)
+  user_tb                 user_tb  @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_user_settings_user")
 
-  @@id([user_id, setting_key])
+  @@index([attendance_privacy], map: "idx_user_settings_attendance_privacy")
+  @@index([favorite_clubs_privacy], map: "idx_user_settings_favorite_privacy")
+  @@index([perform_history_privacy], map: "idx_user_settings_perform_history_privacy")
 }

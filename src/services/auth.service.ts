@@ -2,6 +2,7 @@ import { NotFoundError } from '@/common/error.js';
 import { CreateUserType } from '@/schemas/auth.schema.js';
 import { OperationSuccessType } from '@/schemas/common.schema.js';
 import { UserDefaultType } from '@/schemas/user.schema.js';
+import { PrivacyLevel } from '@/types/privacy.types';
 import { PrismaClient } from '@prisma/client';
 import { randomUUID } from 'crypto';
 
@@ -60,24 +61,13 @@ export class AuthService {
         });
 
         // 사용자 환경설정 초기값 생성
-        await this.prisma.user_setting_tb.createMany({
-            data: [
-                {
-                    user_id: newUser.id,
-                    setting_key: 'attend',
-                    setting_value: 'public',
-                },
-                {
-                    user_id: newUser.id,
-                    setting_key: 'favorite_club',
-                    setting_value: 'public',
-                },
-                {
-                    user_id: newUser.id,
-                    setting_key: 'perform_history',
-                    setting_value: 'public',
-                },
-            ],
+        await this.prisma.user_settings_tb.create({
+            data: {
+                user_id: newUser.id,
+                favorite_clubs_privacy: PrivacyLevel.PUBLIC,
+                attendance_privacy: PrivacyLevel.PUBLIC,
+                perform_history_privacy: PrivacyLevel.PUBLIC,
+            },
         });
 
         return {
