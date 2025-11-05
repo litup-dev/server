@@ -2,7 +2,7 @@ import { NotFoundError } from '@/common/error.js';
 import { CreateUserType } from '@/schemas/auth.schema.js';
 import { OperationSuccessType } from '@/schemas/common.schema.js';
 import { UserDefaultType } from '@/schemas/user.schema.js';
-import { PrivacyLevel } from '@/types/privacy.types';
+import { PrivacyLevel } from '@/types/privacy.types.js';
 import { PrismaClient } from '@prisma/client';
 import { randomUUID } from 'crypto';
 
