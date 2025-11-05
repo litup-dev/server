@@ -4447,7 +4447,7 @@ __metadata:
     prisma: "npm:6.16.2"
     ts-node: "npm:10.9.2"
     ts-node-dev: "npm:2.0.0"
-    tsc-alias: "npm:1.8.16"
+    tsc-alias: "npm:^1.8.16"
     tsx: "npm:4.20.6"
     typescript: "npm:5.9.2"
     typescript-eslint: "npm:8.44.0"
@@ -6580,7 +6580,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tsc-alias@npm:1.8.16":
+"tsc-alias@npm:^1.8.16":
   version: 1.8.16
   resolution: "tsc-alias@npm:1.8.16"
   dependencies:

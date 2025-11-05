@@ -13,6 +13,7 @@
         "sourceMap": true,
         "declaration": true,
         "declarationMap": true,
+        "allowImportingTsExtensions": false,
         "noUncheckedIndexedAccess": true,
         // 인터페이스 혹은 타입의 opational필드에 대한 타입 안정성 확보
         // 예시
@@ -29,6 +30,7 @@
         // u.name = undefined;
         "strict": true,
         "skipLibCheck": true,
+        "allowJs": true,
         "baseUrl": "./",
         "paths": {
             "@/*": ["./src/*"]
