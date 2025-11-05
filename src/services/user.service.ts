@@ -1,7 +1,13 @@
 import { NotFoundError } from '@/common/error.js';
 import { OperationSuccessType } from '@/schemas/common.schema.js';
 import { PerformanceRecordsType } from '@/schemas/performance.schema.js';
-import { UserInfoType, UserProfileEditType, UserStatsType } from '@/schemas/user.schema.js';
+import {
+    UserInfoType,
+    UserPrivacySettingType,
+    UserProfileEditType,
+    UserStatsType,
+} from '@/schemas/user.schema.js';
+import { PrivacyLevelType } from '@/types/privacy.types';
 import { PrismaClient } from '@prisma/client';
 
 export class UserService {
@@ -226,6 +232,50 @@ export class UserService {
             nickname: updatedUser.nickname,
             profilePath: updatedUser.profile_path ?? null,
             bio: updatedUser.bio ?? null,
+        };
+    }
+
+    async getUserPrivacySettings(userId: number): Promise<UserPrivacySettingType> {
+        const settings = await this.prisma.user_settings_tb.findUnique({
+            where: { user_id: userId },
+            select: {
+                favorite_clubs_privacy: true,
+                attendance_privacy: true,
+                perform_history_privacy: true,
+            },
+        });
+
+        if (!settings) {
+            throw new NotFoundError('사용자 설정을 찾을 수 없습니다.');
+        }
+
+        return {
+            favoriteClubs: settings.favorite_clubs_privacy as PrivacyLevelType,
+            attendance: settings.attendance_privacy as PrivacyLevelType,
+            performHistory: settings.perform_history_privacy as PrivacyLevelType,
+        };
+    }
+
+    async updateUserPrivacySettings(
+        userId: number,
+        settings: UserPrivacySettingType
+    ): Promise<OperationSuccessType> {
+        await this.prisma.user_settings_tb.update({
+            where: { user_id: userId },
+            data: {
+                ...(settings.favoriteClubs && { favorite_clubs_privacy: settings.favoriteClubs }),
+                ...(settings.attendance && { attendance_privacy: settings.attendance }),
+                ...(settings.performHistory && {
+                    perform_history_privacy: settings.performHistory,
+                }),
+                updated_at: new Date(),
+            },
+        });
+
+        return {
+            success: true,
+            operation: 'updated',
+            message: '유저 정보 공개 여부가 업데이트되었습니다.',
         };
     }
 }

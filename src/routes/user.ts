@@ -1,4 +1,3 @@
-import { BadRequestError } from '@/common/error';
 import {
     bodyIdsJson,
     defaultPaginationJson,
@@ -9,9 +8,12 @@ import {
 import { performanceRecordsResJson } from '@/schemas/performance.schema.js';
 import {
     userInfoResJson,
+    userPrivacySettingJson,
+    UserPrivacySettingType,
     userProfileEditJson,
     UserProfileEditType,
     userStatsResJson,
+    userPrivacyResJson,
 } from '@/schemas/user.schema.js';
 import { UserService } from '@/services/user.service.js';
 import { FastifyInstance } from 'fastify';
@@ -155,5 +157,45 @@ export async function userRoutes(fastify: FastifyInstance) {
             return reply.send({ data: result });
         }
     );
-    // TODO: 유저 정보 수정
+
+    fastify.patch(
+        '/user/me/settings/privacy',
+        {
+            schema: {
+                tags: ['User'],
+                summary: '유저 개인정보 보호 설정 수정',
+                description: '유저 개인정보 보호 설정 수정',
+                body: userPrivacySettingJson,
+            },
+        },
+        async (request, reply) => {
+            const service = new UserService(request.server.prisma);
+            const userId = 1;
+            const privacySettings = request.body as UserPrivacySettingType;
+            const result = await service.updateUserPrivacySettings(userId, privacySettings);
+            return reply.send({ data: result });
+        }
+    );
+
+    fastify.get(
+        '/user/me/settings/privacy',
+        {
+            schema: {
+                tags: ['User'],
+                summary: '유저 개인정보 보호 설정 조회',
+                description: '유저 개인정보 보호 설정 조회',
+                response: {
+                    200: userPrivacyResJson,
+                    400: errorResJson,
+                    500: errorResJson,
+                },
+            },
+        },
+        async (request, reply) => {
+            const service = new UserService(request.server.prisma);
+            const userId = 1;
+            const result = await service.getUserPrivacySettings(userId);
+            return reply.send({ data: result });
+        }
+    );
 }

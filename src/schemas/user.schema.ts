@@ -1,5 +1,6 @@
 import { z, generateSchema } from '@/common/zod.js';
 import { successResponseSchema } from '@/schemas/common.schema.js';
+import { PrivacyLevel } from '@/types/privacy.types';
 
 export const userDefaultSchema = z.object({
     id: z.number().int().positive().openapi({
@@ -79,11 +80,44 @@ export const userListResponseSchema = z.object({
     limit: z.number(),
 });
 
+// 유저 정보 공개 스키마
+export const userPrivacySettingSchema = z
+    .object({
+        favoriteClubs: z
+            .enum([PrivacyLevel.PUBLIC, PrivacyLevel.FRIENDS, PrivacyLevel.PRIVATE])
+            .optional()
+            .openapi({
+                type: 'string',
+                description: '관심 클럽 공개 범위',
+                example: PrivacyLevel.PUBLIC,
+            }),
+        attendance: z
+            .enum([PrivacyLevel.PUBLIC, PrivacyLevel.FRIENDS, PrivacyLevel.PRIVATE])
+            .optional()
+            .openapi({
+                type: 'string',
+                description: '참석 기록 공개 범위',
+                example: PrivacyLevel.FRIENDS,
+            }),
+        performHistory: z
+            .enum([PrivacyLevel.PUBLIC, PrivacyLevel.FRIENDS, PrivacyLevel.PRIVATE])
+            .optional()
+            .openapi({
+                type: 'string',
+                description: '공연 관람 기록 공개 범위',
+                example: PrivacyLevel.PRIVATE,
+            }),
+    })
+    .refine((data) => Object.keys(data).length > 0, {
+        message: '최소 하나 이상의 설정을 제공해야 합니다.',
+    });
+
 // 응답 스키마
 export const userDefaultRes = successResponseSchema(userDefaultSchema);
 export const userListRes = successResponseSchema(userListResponseSchema);
 export const userInfoRes = successResponseSchema(userInfoSchema);
 export const userStatsRes = successResponseSchema(userStatsSchema);
+export const userPrivacyRes = successResponseSchema(userPrivacySettingSchema);
 
 // Json 스키마
 export const userDefaultJson = generateSchema(userDefaultSchema);
@@ -91,9 +125,12 @@ export const userInfoJson = generateSchema(userInfoSchema);
 export const userInfoResJson = generateSchema(userInfoRes);
 export const userStatsResJson = generateSchema(userStatsRes);
 export const userProfileEditJson = generateSchema(userProfileEditSchema);
+export const userPrivacySettingJson = generateSchema(userPrivacySettingSchema);
+export const userPrivacyResJson = generateSchema(userPrivacyRes);
 
 // 타입 추출
 export type UserDefaultType = z.infer<typeof userDefaultSchema>;
 export type UserInfoType = z.infer<typeof userInfoSchema>;
 export type UserStatsType = z.infer<typeof userStatsSchema>;
 export type UserProfileEditType = z.infer<typeof userProfileEditSchema>;
+export type UserPrivacySettingType = z.infer<typeof userPrivacySettingSchema>;
