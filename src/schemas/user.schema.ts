@@ -1,6 +1,6 @@
 import { z, generateSchema } from '@/common/zod.js';
 import { successResponseSchema } from '@/schemas/common.schema.js';
-import { PrivacyLevel } from '@/types/privacy.types';
+import { PrivacyLevel } from '@/types/privacy.types.js';
 
 export const userDefaultSchema = z.object({
     id: z.number().int().positive().openapi({

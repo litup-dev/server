@@ -7,7 +7,7 @@ import {
     UserProfileEditType,
     UserStatsType,
 } from '@/schemas/user.schema.js';
-import { PrivacyLevelType } from '@/types/privacy.types';
+import { PrivacyLevelType } from '@/types/privacy.types.js';
 import { PrismaClient } from '@prisma/client';
 
 export class UserService {
