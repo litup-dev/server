@@ -10,7 +10,7 @@
         "allowSyntheticDefaultImports": true, // default export가 없어도 default import 허용
         "forceConsistentCasingInFileNames": true, // 파일 이름 대소문자 일관성 강제
         "resolveJsonModule": true, // JSON 파일을 모듈로 import 가능
-        "sourceMap": true,
+        "sourceMap": false,
         "declaration": true,
         "declarationMap": true,
         "allowImportingTsExtensions": false,

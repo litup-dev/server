@@ -1,3 +1,4 @@
+import { club_img_tb } from './../../node_modules/.prisma/client/index.d';
 import { NotFoundError } from '@/common/error.js';
 import { OperationSuccessType } from '@/schemas/common.schema.js';
 import { PerformanceRecordsType } from '@/schemas/performance.schema.js';
@@ -52,13 +53,31 @@ export class UserService {
     }
 
     async getUserAttendanceRecords(
-        userId: number,
+        targetUserId: number,
+        requesterId: number | null,
         offset: number,
         limit: number
     ): Promise<PerformanceRecordsType> {
+        const isSelf = requesterId !== null && requesterId === targetUserId;
+        if (!isSelf) {
+            const privacyRule = await this.prisma.user_settings_tb.findFirst({
+                where: { user_id: targetUserId },
+                select: { attendance_privacy: true },
+            });
+            const privacy = privacyRule?.attendance_privacy;
+            if (privacy === 'private') {
+                throw new NotFoundError('비공개 상태입니다.');
+            } else if (privacy === 'friends') {
+                if (requesterId === null) {
+                    throw new NotFoundError('비공개 상태입니다.');
+                }
+                // 추후 친구 관계 생기면 로직 추가
+            }
+        }
+
         const attendances = await this.prisma.attend_tb.findMany({
             where: {
-                user_id: userId,
+                user_id: targetUserId,
             },
             select: {
                 perform_id: true,
@@ -153,36 +172,68 @@ export class UserService {
         };
     }
 
-    async getUserFavoriteClubs(userId: number, offset: number, limit: number): Promise<any> {
+    async getUserFavoriteClubs(
+        targetUserId: number,
+        requesterId: number | null,
+        offset: number,
+        limit: number
+    ): Promise<any> {
+        const isSelf = requesterId !== null && requesterId === targetUserId;
+        console.log(requesterId, targetUserId, isSelf);
+        if (!isSelf) {
+            const privacyRule = await this.prisma.user_settings_tb.findFirst({
+                where: { user_id: targetUserId },
+                select: { favorite_clubs_privacy: true },
+            });
+            const privacy = privacyRule?.favorite_clubs_privacy;
+            if (privacy === 'private') {
+                throw new NotFoundError('비공개 상태입니다.');
+            } else if (privacy === 'friends') {
+                if (requesterId === null) {
+                    throw new NotFoundError('비공개 상태입니다.');
+                }
+                // 추후 친구 관계 생기면 로직 추가
+            }
+        }
+
+        const favoriteClubIds = await this.prisma.favorite_tb.findMany({
+            where: { user_id: targetUserId },
+            select: { club_id: true },
+            skip: offset,
+            take: limit,
+        });
+        const clubIds = favoriteClubIds.map((ids) => ids.club_id);
+
+        console.log('Favorite club IDs:', clubIds);
+        if (clubIds.length === 0) {
+            throw new NotFoundError('관심 클럽이 없습니다.');
+        }
+
         const [clubs, total] = await this.prisma.$transaction([
-            this.prisma.favorite_tb.findMany({
-                where: { user_id: userId },
+            this.prisma.club.findMany({
+                where: { id: { in: clubIds } },
                 select: {
-                    club_tb: {
+                    id: true,
+                    name: true,
+                    address: true,
+                    club_img_tb: {
+                        where: { is_main: true },
                         select: {
                             id: true,
-                            name: true,
-                            address: true,
-                            club_img_tb: {
-                                where: { is_main: true },
-                                select: {
-                                    id: true,
-                                    file_path: true,
-                                    is_main: true,
-                                },
-                            },
+                            file_path: true,
+                            is_main: true,
                         },
                     },
                 },
-                skip: offset,
-                take: limit,
             }),
-            this.prisma.favorite_tb.count({ where: { user_id: userId } }),
+            this.prisma.favorite_tb.count({ where: { user_id: targetUserId } }),
         ]);
+
+        console.log('Fetched clubs:', clubs);
 
         return {
             items: clubs,
-            total: total,
+            total,
             offset,
             limit,
         };
