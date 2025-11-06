@@ -1,4 +1,4 @@
-import { BadRequestError } from '@/common/error';
+import { BadRequestError } from '@/common/error.js';
 import {
     bodyIdsJson,
     defaultPaginationJson,
