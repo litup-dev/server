@@ -65,18 +65,6 @@ export const performanceRecordsSchema = performanceDefaultSchema
         }),
     });
 
-// export const performanceRecordsSchema = z.object({
-//     id: z.number(),
-//     title: z.string().nullable(),
-//     performDate: z.string().nullable(),
-//     artists: z.array(artistSchema).nullable(),
-//     createdAt: z.string().nullable(),
-//     club: z.object({
-//         name: z.string().nullable(),
-//     }),
-//     images: z.array(imageSchema).optional().nullable(),
-// });
-
 // 공연 관람기록 페이지 응답 스키마
 export const performanceRecordsListResponseSchema = z.object({
     items: z.array(performanceRecordsSchema),

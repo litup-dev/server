@@ -52,7 +52,7 @@ export class UserService {
         };
     }
 
-    async getUserAttendanceRecords(
+    async getUserPerformHistory(
         targetUserId: number,
         requesterId: number | null,
         offset: number,
@@ -62,9 +62,9 @@ export class UserService {
         if (!isSelf) {
             const privacyRule = await this.prisma.user_settings_tb.findFirst({
                 where: { user_id: targetUserId },
-                select: { attendance_privacy: true },
+                select: { perform_history_privacy: true },
             });
-            const privacy = privacyRule?.attendance_privacy;
+            const privacy = privacyRule?.perform_history_privacy;
             if (privacy === 'private') {
                 throw new NotFoundError('비공개 상태입니다.');
             } else if (privacy === 'friends') {
@@ -246,6 +246,19 @@ export class UserService {
             total,
             offset,
             limit,
+        };
+    }
+
+    async deleteUserFavoriteClubs(userId: number, ids: number[]): Promise<OperationSuccessType> {
+        await this.prisma.favorite_tb.deleteMany({
+            where: {
+                user_id: userId,
+                club_id: { in: ids },
+            },
+        });
+        return {
+            success: true,
+            operation: 'deleted',
         };
     }
 

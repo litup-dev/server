@@ -75,7 +75,7 @@ export async function userRoutes(fastify: FastifyInstance) {
     );
 
     fastify.get(
-        '/users/attendance-records/:entityId',
+        '/users/perform-history/:entityId',
         {
             schema: {
                 params: idParamJson,
@@ -99,14 +99,14 @@ export async function userRoutes(fastify: FastifyInstance) {
             const { entityId } = parsed.data;
             const userId = 2; // 임시 추출
             const service = new UserService(request.server.prisma);
-            const result = await service.getUserAttendanceRecords(entityId, userId, offset, limit);
+            const result = await service.getUserPerformHistory(entityId, userId, offset, limit);
 
             return reply.send({ data: result });
         }
     );
 
     fastify.delete(
-        '/users/attendance-records',
+        '/users/perform-history',
         {
             schema: {
                 tags: ['User'],
@@ -156,6 +156,31 @@ export async function userRoutes(fastify: FastifyInstance) {
             const userId = 2; // 임시 추출
             const service = new UserService(request.server.prisma);
             const result = await service.getUserFavoriteClubs(entityId, userId, offset, limit);
+
+            return reply.send({ data: result });
+        }
+    );
+
+    fastify.delete(
+        '/users/favorite-clubs',
+        {
+            schema: {
+                tags: ['User'],
+                summary: '유저 관심 클럽 삭제',
+                description: '유저 관심 클럽 삭제',
+                body: bodyIdsJson,
+                response: {
+                    200: successResJson,
+                    400: errorResJson,
+                    500: errorResJson,
+                },
+            },
+        },
+        async (request, reply) => {
+            const { entityIds } = request.body as { entityIds: number[] };
+            const service = new UserService(request.server.prisma);
+            const userId = 1; // 임시 추출
+            const result = await service.deleteUserAttendanceRecords(userId, entityIds);
 
             return reply.send({ data: result });
         }
