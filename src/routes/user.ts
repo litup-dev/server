@@ -8,6 +8,7 @@ import {
     idParamSchema,
     successResJson,
 } from '@/schemas/common.schema.js';
+import { clubListSimpleResJson } from '@/schemas/club.schema.js';
 import { performanceRecordsResJson } from '@/schemas/performance.schema.js';
 import {
     userInfoResJson,
@@ -139,7 +140,7 @@ export async function userRoutes(fastify: FastifyInstance) {
                 summary: '유저 관심 클럽 조회',
                 description: '유저 관심 클럽 조회',
                 response: {
-                    200: successResJson,
+                    200: clubListSimpleResJson,
                     400: errorResJson,
                     500: errorResJson,
                 },

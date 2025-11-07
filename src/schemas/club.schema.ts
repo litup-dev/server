@@ -50,6 +50,13 @@ export const clubSchema = z.object({
     upcomingPerforms: z.array(upcomingPerformSchema).optional().nullable(),
 });
 
+// 클럽 정보 간소화 스키마
+export const clubSimpleSchema = clubSchema.pick({
+    id: true,
+    name: true,
+    mainImage: true,
+});
+
 // 클럽 목록 조회 쿼리 파라미터 스키마
 export const getClubsSchema = z.object({
     offset: z
@@ -80,15 +87,24 @@ export const clubListResponseSchema = z.object({
     limit: z.number(),
 });
 
+export const clubListSimpleResponseSchema = z.object({
+    items: z.array(clubSimpleSchema),
+    total: z.number(),
+    offset: z.number(),
+    limit: z.number(),
+});
+
 // 응답 스키마
 export const clubDetailRes = successResponseSchema(clubSchema);
 export const clubListRes = paginatedResponseSchema(clubSchema);
+export const clubListSimpleRes = paginatedResponseSchema(clubSimpleSchema);
 export const toggleFavoriteRes = successResponseSchema(z.boolean());
 
 // JSON Schema
 export const getClubsJson = generateSchema(getClubsSchema);
 export const clubDetailResJson = generateSchema(clubDetailRes);
 export const clubListResJson = generateSchema(clubListRes);
+export const clubListSimpleResJson = generateSchema(clubListSimpleRes);
 export const toggleFavoriteResJson = generateSchema(toggleFavoriteRes);
 
 // 타입 추출
@@ -96,3 +112,4 @@ export type ClubType = z.infer<typeof clubSchema>;
 export type GetClubsType = z.infer<typeof getClubsSchema>;
 export type ClubDetailResponseType = z.infer<typeof clubDetailRes>;
 export type ClubListResponseType = z.infer<typeof clubListResponseSchema>;
+export type ClubListSimpleResponseType = z.infer<typeof clubListSimpleResponseSchema>;

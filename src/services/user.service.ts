@@ -1,5 +1,5 @@
-import { club_img_tb } from './../../node_modules/.prisma/client/index.d';
 import { NotFoundError } from '@/common/error.js';
+import { ClubListSimpleResponseType } from '@/schemas/club.schema.js';
 import { OperationSuccessType } from '@/schemas/common.schema.js';
 import { PerformanceRecordsType } from '@/schemas/performance.schema.js';
 import {
@@ -177,7 +177,7 @@ export class UserService {
         requesterId: number | null,
         offset: number,
         limit: number
-    ): Promise<any> {
+    ): Promise<ClubListSimpleResponseType> {
         const isSelf = requesterId !== null && requesterId === targetUserId;
         console.log(requesterId, targetUserId, isSelf);
         if (!isSelf) {
@@ -223,16 +223,26 @@ export class UserService {
                             file_path: true,
                             is_main: true,
                         },
+                        take: 1,
                     },
                 },
+                orderBy: { name: 'asc' },
             }),
             this.prisma.favorite_tb.count({ where: { user_id: targetUserId } }),
         ]);
 
-        console.log('Fetched clubs:', clubs);
-
         return {
-            items: clubs,
+            items: clubs.map((club) => ({
+                id: club.id,
+                name: club.name ?? null,
+                mainImage: club.club_img_tb[0]
+                    ? {
+                          id: club.club_img_tb[0].id,
+                          filePath: club.club_img_tb[0].file_path,
+                          isMain: club.club_img_tb[0].is_main,
+                      }
+                    : null,
+            })),
             total,
             offset,
             limit,
