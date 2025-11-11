@@ -36,6 +36,12 @@ export const userDefaultSchema = z.object({
         description: '프로필 이미지 경로',
         example: 'https://example.com/profile.jpg',
     }),
+    email: z.string().email().openapi({
+        type: 'string',
+        format: 'email',
+        description: '사용자 이메일',
+        example: 'user@example.com',
+    }),
 });
 
 export const userInfoSchema = userDefaultSchema.pick({

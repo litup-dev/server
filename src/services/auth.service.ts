@@ -10,7 +10,7 @@ export class AuthService {
     constructor(private prisma: PrismaClient) {}
 
     async verifyUser(body: CreateUserType): Promise<UserDefaultType> {
-        const { provider, providerId } = body;
+        const { provider, providerId, email } = body;
 
         const socialCode = await this.prisma.social_code.findFirst({
             where: { code: provider },
@@ -34,6 +34,7 @@ export class AuthService {
             return {
                 id: existingUser.id,
                 nickname: existingUser.nickname,
+                email: existingUser.email!,
                 profilePath: existingUser.profile_path ?? null,
                 createdAt: existingUser.created_at ? existingUser.created_at.toISOString() : null,
                 updatedAt: existingUser.updated_at ? existingUser.updated_at.toISOString() : null,
@@ -53,6 +54,7 @@ export class AuthService {
             select: {
                 id: true,
                 nickname: true,
+                email: true,
                 profile_path: true,
                 created_at: true,
                 updated_at: true,
@@ -73,6 +75,7 @@ export class AuthService {
         return {
             id: newUser.id,
             nickname: newUser.nickname,
+            email: newUser.email!,
             profilePath: newUser.profile_path ?? null,
             createdAt: newUser.created_at ? newUser.created_at.toISOString() : null,
             updatedAt: newUser.updated_at ? newUser.updated_at.toISOString() : null,

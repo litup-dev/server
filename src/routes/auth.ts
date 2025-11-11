@@ -22,11 +22,12 @@ export async function authRoutes(fastify: FastifyInstance) {
         },
         async (request, reply) => {
             const service = new AuthService(request.server.prisma);
-            const { provider, providerId } = request.body as {
+            const { provider, providerId, email } = request.body as {
                 provider: string;
                 providerId: string;
+                email: string;
             };
-            const user = await service.verifyUser({ provider, providerId });
+            const user = await service.verifyUser({ provider, providerId, email });
             return reply.send({ data: user });
         }
     );
