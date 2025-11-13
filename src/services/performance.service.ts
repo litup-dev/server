@@ -120,13 +120,7 @@ export class PerformanceService {
                     p.perform_date instanceof Date ? p.perform_date.toISOString() : p.perform_date,
                 price: p.price,
                 isCanceled: p.is_cancelled,
-                artists: Array.isArray(p.artists)
-                    ? p.artists
-                          .filter((artist): artist is string => typeof artist === 'string')
-                          .map((artistName: string) => ({
-                              name: artistName,
-                          }))
-                    : null,
+                artists: Array.isArray(p.artists) ? (p.artists as { name: string }[]) : null,
                 snsLinks: p.sns_links as { instagram?: string; youtube?: string }[] | null,
                 createdAt: p.created_at instanceof Date ? p.created_at.toISOString() : p.created_at,
                 club: {
@@ -221,7 +215,7 @@ export class PerformanceService {
         if (performances.length === 0) {
             return { items: [], total: total, offset, limit };
         }
-
+        console.log(performances[0]?.artists);
         return {
             items: performances.map((p) => ({
                 id: p.id,
@@ -231,13 +225,7 @@ export class PerformanceService {
                     p.perform_date instanceof Date ? p.perform_date.toISOString() : p.perform_date,
                 price: p.price,
                 isCanceled: p.is_cancelled,
-                artists: Array.isArray(p.artists)
-                    ? p.artists
-                          .filter((artist): artist is string => typeof artist === 'string')
-                          .map((artistName: string) => ({
-                              name: artistName,
-                          }))
-                    : null,
+                artists: Array.isArray(p.artists) ? (p.artists as { name: string }[]) : null,
                 snsLinks: p.sns_links as { instagram?: string; youtube?: string }[] | null,
                 createdAt: p.created_at instanceof Date ? p.created_at.toISOString() : p.created_at,
                 club: {
@@ -333,11 +321,7 @@ export class PerformanceService {
             price: performance.price ?? null,
             isCanceled: performance.is_cancelled ?? null,
             artists: Array.isArray(performance.artists)
-                ? performance.artists
-                      .filter((artist): artist is string => typeof artist === 'string')
-                      .map((artistName: string) => ({
-                          name: artistName,
-                      }))
+                ? (performance.artists as { name: string }[])
                 : null,
             snsLinks:
                 (performance.sns_links as { instagram?: string; youtube?: string }[] | null) ??
