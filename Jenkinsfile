@@ -48,7 +48,7 @@ pipeline {
                             ${REMOTE_USER}@${REMOTE_SERVER} 'bash -s' <<'DEPLOY'
 
 set -e
-cd ${APP_PATH}
+cd ${REMOTE_PATH}
 
 # 백업 디렉토리 생성
 mkdir -p backup
