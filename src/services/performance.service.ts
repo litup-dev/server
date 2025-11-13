@@ -3,6 +3,7 @@ import { OperationSuccessType } from '@/schemas/common.schema.js';
 import {
     GetPerformanceByDateRangeType,
     PerformanceListResponseType,
+    SearchPerformancesType,
     PerformanceType,
 } from '@/schemas/performance.schema.js';
 import { SavedFileInfo } from '@/types/file.types.js';
@@ -11,6 +12,139 @@ import { Prisma } from '@prisma/client';
 
 export class PerformanceService {
     constructor(private prisma: PrismaClient) {}
+
+    async getSearchPerformances(
+        query: SearchPerformancesType
+    ): Promise<PerformanceListResponseType> {
+        const { keyword, timeFilter, area } = query;
+
+        const offset = query.offset ?? 0;
+        const limit = query.limit ?? 1000;
+        const where: Prisma.PerformWhereInput = {};
+
+        // 키워드
+        if (keyword) {
+            const searchKeyword = keyword.trim();
+            where.OR = [
+                { title: { contains: searchKeyword, mode: 'insensitive' } },
+                {
+                    artists: {
+                        string_contains: searchKeyword,
+                    },
+                },
+            ];
+        }
+
+        // 시간
+        const now = new Date();
+        if (timeFilter === 'upcoming') {
+            where.perform_date = { gte: now };
+        } else if (timeFilter === 'past') {
+            where.perform_date = { lt: now };
+        }
+
+        // 지역
+        if (area) {
+            const a = area.trim();
+            if (a === 'hongdae') {
+                where.club_tb = {
+                    is: { address: { contains: '마포' } },
+                };
+            } else if (a === 'seoul') {
+                where.club_tb = {
+                    is: {
+                        AND: [
+                            { address: { contains: '서울' } },
+                            { NOT: { address: { contains: '마포' } } },
+                        ],
+                    },
+                };
+            } else if (a === 'busan') {
+                where.club_tb = {
+                    is: { address: { contains: '부산' } },
+                };
+            } else if (a === 'other') {
+                where.club_tb = {
+                    is: {
+                        AND: [
+                            { NOT: { address: { contains: '서울' } } },
+                            { NOT: { address: { contains: '부산' } } },
+                            { NOT: { address: { contains: '마포' } } },
+                        ],
+                    },
+                };
+            }
+        }
+
+        // 쿼리 실행
+        const [performances, total] = await Promise.all([
+            this.prisma.perform.findMany({
+                where,
+                include: {
+                    club_tb: {
+                        select: {
+                            id: true,
+                            name: true,
+                            address: true,
+                        },
+                    },
+                    perform_img_tb: {
+                        where: { is_main: true },
+                        select: {
+                            id: true,
+                            file_path: true,
+                            is_main: true,
+                        },
+                        take: 1,
+                    },
+                },
+                orderBy: {
+                    perform_date: timeFilter === 'past' ? 'desc' : 'asc',
+                },
+                skip: offset,
+                take: limit,
+            }),
+            this.prisma.perform.count({ where }),
+        ]);
+
+        if (performances.length === 0) {
+            return { items: [], total: total, offset, limit };
+        }
+
+        return {
+            items: performances.map((p) => ({
+                id: p.id,
+                title: p.title,
+                description: p.description,
+                performDate:
+                    p.perform_date instanceof Date ? p.perform_date.toISOString() : p.perform_date,
+                price: p.price,
+                isCanceled: p.is_cancelled,
+                artists: Array.isArray(p.artists)
+                    ? p.artists
+                          .filter((artist): artist is string => typeof artist === 'string')
+                          .map((artistName: string) => ({
+                              name: artistName,
+                          }))
+                    : null,
+                snsLinks: p.sns_links as { instagram?: string; youtube?: string }[] | null,
+                createdAt: p.created_at instanceof Date ? p.created_at.toISOString() : p.created_at,
+                club: {
+                    id: p.club_tb.id,
+                    name: p.club_tb.name,
+                    address: p.club_tb.address,
+                },
+                images: p.perform_img_tb.map((img) => ({
+                    id: img.id,
+                    filePath: img.file_path,
+                    isMain: img.is_main,
+                })),
+            })),
+            total: total,
+            offset: offset ?? 0,
+            limit: limit ?? 1000,
+        };
+    }
 
     async getPerformancesByDateRange(
         query: GetPerformanceByDateRangeType
@@ -36,11 +170,11 @@ export class PerformanceService {
 
         if (area) {
             const a = area.trim();
-            if (a === '홍대') {
+            if (a === 'hongdae') {
                 where.club_tb = {
                     is: { address: { contains: '마포' } },
                 };
-            } else if (a === '서울') {
+            } else if (a === 'seoul') {
                 where.club_tb = {
                     is: {
                         AND: [
@@ -49,7 +183,7 @@ export class PerformanceService {
                         ],
                     },
                 };
-            } else if (a === '부산') {
+            } else if (a === 'busan') {
                 where.club_tb = {
                     is: { address: { contains: '부산' } },
                 };

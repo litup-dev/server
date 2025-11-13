@@ -74,7 +74,7 @@ export const performanceRecordsListResponseSchema = z.object({
 });
 
 // 공연 목록 조회 쿼리 파라미터 스키마
-export const getPerformanceByDateRangeSchema = z.object({
+export const getPerformancesByDateRangeSchema = z.object({
     startDate: z
         .string()
         .regex(/^\d{4}-\d{2}-\d{2}$/, '기간 조회 포맷 YYYY-MM-DD')
@@ -110,7 +110,44 @@ export const getPerformanceByDateRangeSchema = z.object({
         .optional()
         .openapi({
             description: '지역 필터',
-            enum: ['홍대', '서울', '부산'],
+            enum: ['hongdae', 'seoul', 'busan'],
+        }),
+    offset: z
+        .preprocess((val) => {
+            if (typeof val === 'string') return parseInt(val, 10);
+            return val;
+        }, z.number().min(0).default(0))
+        .openapi({
+            description: '페이징 오프셋',
+            example: 0,
+        }),
+    limit: z
+        .preprocess((val) => {
+            if (typeof val === 'string') return parseInt(val, 10);
+            return val;
+        }, z.number().min(1).max(1000).default(1000))
+        .openapi({
+            description: '페이징 제한',
+            example: 20,
+        }),
+});
+
+// 전체 공연 검색 스키마
+export const searchPerformancesSchema = z.object({
+    keyword: z.string().optional().openapi({
+        description: '공연 검색어',
+        example: '이영훈',
+    }),
+    timeFilter: z.enum(['upcoming', 'past']).optional().openapi({
+        description: '시간 필터',
+        example: 'upcoming',
+    }),
+    area: z
+        .string()
+        .optional()
+        .openapi({
+            description: '지역 필터',
+            enum: ['hongdae', 'seoul', 'busan', 'other'],
         }),
     offset: z
         .preprocess((val) => {
@@ -139,7 +176,8 @@ export const performRecordsRes = paginatedResponseSchema(performanceRecordsSchem
 export const attendRes = successResponseSchema(z.boolean());
 
 // JSON Schema
-export const getPerformanceByDateRangeJson = generateSchema(getPerformanceByDateRangeSchema);
+export const getPerformancesByDateRangeJson = generateSchema(getPerformancesByDateRangeSchema);
+export const searchPerformancesJson = generateSchema(searchPerformancesSchema);
 export const performanceListResJson = generateSchema(performListRes);
 export const performDetailResJson = generateSchema(performDetailRes);
 export const performanceRecordsResJson = generateSchema(performRecordsRes);
@@ -147,6 +185,7 @@ export const performanceRecordsResJson = generateSchema(performRecordsRes);
 // 타입 추출
 export type PerformanceType = z.infer<typeof performanceDefaultSchema>;
 export type PerformanceListType = z.infer<typeof performListRes>;
-export type GetPerformanceByDateRangeType = z.infer<typeof getPerformanceByDateRangeSchema>;
+export type GetPerformanceByDateRangeType = z.infer<typeof getPerformancesByDateRangeSchema>;
+export type SearchPerformancesType = z.infer<typeof searchPerformancesSchema>;
 export type PerformanceListResponseType = z.infer<typeof performanceListResponseSchema>;
 export type PerformanceRecordsType = z.infer<typeof performanceRecordsListResponseSchema>;

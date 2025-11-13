@@ -1,10 +1,12 @@
 import { FastifyInstance } from 'fastify';
 import { PerformanceService } from '@/services/performance.service.js';
 import {
-    getPerformanceByDateRangeJson,
+    getPerformancesByDateRangeJson,
     GetPerformanceByDateRangeType,
     performanceListResJson,
     performDetailResJson,
+    searchPerformancesJson,
+    SearchPerformancesType,
 } from '@/schemas/performance.schema.js';
 import {
     idParamSchema,
@@ -16,13 +18,40 @@ import { BadRequestError } from '@/common/error.js';
 
 export async function performanceRoutes(fastify: FastifyInstance) {
     fastify.get(
+        '/performances/search',
+        {
+            schema: {
+                querystring: searchPerformancesJson,
+                tags: ['Performances'],
+                summary: '공연 목록 전체 조회',
+                description: '공연 목록 전체 조회',
+                response: {
+                    200: performanceListResJson,
+                    400: errorResJson,
+                    500: errorResJson,
+                },
+            },
+        },
+        async (request, reply) => {
+            const query = request.query as SearchPerformancesType;
+
+            const service = new PerformanceService(request.server.prisma);
+
+            const result = await service.getSearchPerformances(query);
+
+            return reply.send({
+                data: result,
+            });
+        }
+    );
+    fastify.get(
         '/performances',
         {
             schema: {
-                querystring: getPerformanceByDateRangeJson,
+                querystring: getPerformancesByDateRangeJson,
                 tags: ['Performances'],
-                summary: '공연 목록 조회',
-                description: '공연 목록 조회',
+                summary: '메인 페이지 공연 목록 기간별 조회',
+                description: '메인 페이지 공연 목록 기간별 조회',
                 response: {
                     200: performanceListResJson,
                     400: errorResJson,
