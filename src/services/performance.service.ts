@@ -20,96 +20,108 @@ export class PerformanceService {
 
         const offset = query.offset ?? 0;
         const limit = query.limit ?? 1000;
-        const where: Prisma.PerformWhereInput = {};
 
-        // 키워드
-        if (keyword) {
-            const searchKeyword = keyword.trim();
-            where.OR = [
-                { title: { contains: searchKeyword, mode: 'insensitive' } },
-                {
-                    artists: {
-                        string_contains: searchKeyword,
-                    },
-                },
-            ];
+        const conditions: string[] = [];
+        const params: any[] = [];
+        let paramIndex = 1;
+
+        if (keyword && keyword.trim()) {
+            const searchKeyword = `%${keyword.trim()}%`;
+            conditions.push(`(
+            p.title ILIKE $${paramIndex} OR 
+            EXISTS (
+                SELECT 1 
+                FROM jsonb_array_elements(p.artists) AS artist
+                WHERE artist->>'name' ILIKE $${paramIndex}
+            )
+        )`);
+            params.push(searchKeyword);
+            paramIndex++;
         }
 
-        // 시간
         const now = new Date();
         if (timeFilter === 'upcoming') {
-            where.perform_date = { gte: now };
+            conditions.push(`p.perform_date >= $${paramIndex}`);
+            params.push(now);
+            paramIndex++;
         } else if (timeFilter === 'past') {
-            where.perform_date = { lt: now };
+            conditions.push(`p.perform_date < $${paramIndex}`);
+            params.push(now);
+            paramIndex++;
         }
 
-        // 지역
         if (area) {
             const a = area.trim();
             if (a === 'hongdae') {
-                where.club_tb = {
-                    is: { address: { contains: '마포' } },
-                };
+                conditions.push(`c.address LIKE '%마포%'`);
             } else if (a === 'seoul') {
-                where.club_tb = {
-                    is: {
-                        AND: [
-                            { address: { contains: '서울' } },
-                            { NOT: { address: { contains: '마포' } } },
-                        ],
-                    },
-                };
+                conditions.push(`c.address LIKE '%서울%' AND c.address NOT LIKE '%마포%'`);
             } else if (a === 'busan') {
-                where.club_tb = {
-                    is: { address: { contains: '부산' } },
-                };
+                conditions.push(`c.address LIKE '%부산%'`);
             } else if (a === 'other') {
-                where.club_tb = {
-                    is: {
-                        AND: [
-                            { NOT: { address: { contains: '서울' } } },
-                            { NOT: { address: { contains: '부산' } } },
-                            { NOT: { address: { contains: '마포' } } },
-                        ],
-                    },
-                };
+                conditions.push(
+                    `c.address NOT LIKE '%서울%' AND c.address NOT LIKE '%부산%' AND c.address NOT LIKE '%마포%'`
+                );
             }
         }
 
-        // 쿼리 실행
-        const [performances, total] = await Promise.all([
-            this.prisma.perform.findMany({
-                where,
-                include: {
-                    club_tb: {
-                        select: {
-                            id: true,
-                            name: true,
-                            address: true,
-                        },
-                    },
-                    perform_img_tb: {
-                        where: { is_main: true },
-                        select: {
-                            id: true,
-                            file_path: true,
-                            is_main: true,
-                        },
-                        take: 1,
-                    },
-                },
-                orderBy: {
-                    perform_date: timeFilter === 'past' ? 'desc' : 'asc',
-                },
-                skip: offset,
-                take: limit,
-            }),
-            this.prisma.perform.count({ where }),
+        const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''; // 조건 AND 절로 결합
+        const orderBy = timeFilter === 'past' ? 'DESC' : 'ASC';
+
+        const countSql = `
+            SELECT COUNT(*)::int as total
+            FROM perform_tb p
+            LEFT JOIN club_tb c ON p.club_id = c.id
+            ${whereClause}
+        `;
+
+        const dataSql = `
+            SELECT 
+                p.id, p.title, p.description, p.perform_date, p.price, 
+                p.is_cancelled, p.artists, p.sns_links, p.created_at,
+                c.id as club_id, c.name as club_name, c.address as club_address
+            FROM perform_tb p
+            LEFT JOIN club_tb c ON p.club_id = c.id
+            ${whereClause}
+            ORDER BY p.perform_date ${orderBy}
+            LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+        `;
+
+        params.push(limit, offset);
+
+        const [countResult, performances] = await Promise.all([
+            this.prisma.$queryRawUnsafe<{ total: number }[]>(countSql, ...params.slice(0, -2)), // 마지막 두 개는 limit, offset
+            this.prisma.$queryRawUnsafe<any[]>(dataSql, ...params),
         ]);
 
+        const total = countResult[0]?.total ?? 0;
+
         if (performances.length === 0) {
-            return { items: [], total: total, offset, limit };
+            return { items: [], total, offset, limit };
         }
+
+        const performIds = performances.map((p) => p.id);
+        const images = await this.prisma.perform_img_tb.findMany({
+            where: {
+                perform_id: { in: performIds },
+                is_main: true,
+            },
+            select: {
+                perform_id: true,
+                id: true,
+                file_path: true,
+                is_main: true,
+            },
+        });
+
+        const imagesByPerformId = images.reduce(
+            (acc, img) => {
+                if (!acc[img.perform_id]) acc[img.perform_id] = [];
+                acc[img.perform_id]!.push(img);
+                return acc;
+            },
+            {} as Record<number, typeof images>
+        );
 
         return {
             items: performances.map((p) => ({
@@ -124,19 +136,19 @@ export class PerformanceService {
                 snsLinks: p.sns_links as { instagram?: string; youtube?: string }[] | null,
                 createdAt: p.created_at instanceof Date ? p.created_at.toISOString() : p.created_at,
                 club: {
-                    id: p.club_tb.id,
-                    name: p.club_tb.name,
-                    address: p.club_tb.address,
+                    id: p.club_id,
+                    name: p.club_name,
+                    address: p.club_address,
                 },
-                images: p.perform_img_tb.map((img) => ({
+                images: (imagesByPerformId[p.id] || []).map((img) => ({
                     id: img.id,
                     filePath: img.file_path,
                     isMain: img.is_main,
                 })),
             })),
-            total: total,
-            offset: offset ?? 0,
-            limit: limit ?? 1000,
+            total,
+            offset,
+            limit,
         };
     }
 
