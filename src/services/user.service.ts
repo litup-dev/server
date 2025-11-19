@@ -296,7 +296,7 @@ export class UserService {
         const updatedUser = await this.prisma.user_tb.update({
             where: { id: userId },
             data: {
-                nickname: profileData.nickname,
+                nickname: profileData.nickname.replace(' ', ''),
                 bio: profileData.bio,
                 updated_at: new Date(),
             },
