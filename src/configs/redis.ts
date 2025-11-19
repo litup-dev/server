@@ -1,5 +1,5 @@
 import Redis from 'ioredis';
-import { REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, REDIS_DATABASE } from '../common/constants';
+import { REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, REDIS_DATABASE } from '../common/constants.js';
 
 export const redis = new Redis({
     host: REDIS_HOST,
