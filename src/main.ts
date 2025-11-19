@@ -5,7 +5,6 @@ import { registerPlugins } from './plugins/index.js';
 import { registerRoutes } from './routes/index.js';
 import { setupErrorHandler } from './common/errorHandler.js';
 import { NicknameService } from './services/nickname.service.js';
-import { redis } from './configs/redis.js';
 
 const app = Fastify({
     logger: loggerOptions,
@@ -34,7 +33,7 @@ app.addHook('onClose', async (instance) => {
 
 const start = async () => {
     try {
-        const commonService = new NicknameService(app.prisma, redis);
+        const commonService = new NicknameService(app.prisma);
         await commonService.init();
 
         await app.listen({ port: PORT, host: HOST });
