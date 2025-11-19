@@ -279,3 +279,12 @@ model user_settings_tb {
   @@index([favorite_clubs_privacy], map: "idx_user_settings_favorite_privacy")
   @@index([perform_history_privacy], map: "idx_user_settings_perform_history_privacy")
 }
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model nickname_word_tb {
+  id       Int    @id @default(autoincrement())
+  category String @db.VarChar(10)
+  word     String @db.VarChar(10)
+
+  @@index([category], map: "idx_category")
+}

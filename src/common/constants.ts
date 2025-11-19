@@ -16,3 +16,7 @@ export const PORT = Number(process.env.PORT) || 11000;
 export const HOST = process.env.HOST || '0.0.0.0';
 export const DATABASE_URL = process.env.DATABASE_URL || '';
 export const API_PREFIX = process.env.API_PREFIX || '/api';
+export const REDIS_HOST = process.env.REDIS_HOST || 'localhost';
+export const REDIS_PORT = Number(process.env.REDIS_PORT) || 6379;
+export const REDIS_PASSWORD = process.env.REDIS_PASSWORD || '';
+export const REDIS_DATABASE = Number(process.env.REDIS_DATABASE) || 4;

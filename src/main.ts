@@ -4,6 +4,8 @@ import { loggerOptions } from './common/loggerOptions.js';
 import { registerPlugins } from './plugins/index.js';
 import { registerRoutes } from './routes/index.js';
 import { setupErrorHandler } from './common/errorHandler.js';
+import { NicknameService } from './services/nickname.service.js';
+import { redis } from './configs/redis.js';
 
 const app = Fastify({
     logger: loggerOptions,
@@ -22,7 +24,7 @@ await registerPlugins(app);
 await registerRoutes(app);
 
 app.get('/', async (request, reply) => {
-    return { hello: 'world' };
+    return reply.redirect('/docs');
 });
 
 // Graceful shutdown
@@ -32,6 +34,9 @@ app.addHook('onClose', async (instance) => {
 
 const start = async () => {
     try {
+        const commonService = new NicknameService(app.prisma, redis);
+        await commonService.init();
+
         await app.listen({ port: PORT, host: HOST });
         app.log.info(`****************************************************************`);
         app.log.info(`LitUp API Server Started and Listening at http://${HOST}:${PORT}/docs`);

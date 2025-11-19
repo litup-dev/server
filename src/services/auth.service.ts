@@ -4,7 +4,7 @@ import { OperationSuccessType } from '@/schemas/common.schema.js';
 import { UserDefaultType } from '@/schemas/user.schema.js';
 import { PrivacyLevel } from '@/types/privacy.types.js';
 import { PrismaClient } from '@prisma/client';
-import { randomUUID } from 'crypto';
+import { NicknameService } from '@/services/nickname.service.js';
 
 export class AuthService {
     constructor(private prisma: PrismaClient) {}
@@ -43,7 +43,8 @@ export class AuthService {
         }
 
         // 추후 닉네임 로직 생성필요
-        const generateNickname = randomUUID().slice(0, 8).toString();
+        const nicknameService = new NicknameService(this.prisma);
+        const generateNickname = await nicknameService.generateNickname(email);
 
         const newUser = await this.prisma.user_tb.create({
             data: {
