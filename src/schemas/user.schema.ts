@@ -66,7 +66,7 @@ export const userStatsSchema = z.object({
 });
 
 export const userProfileEditSchema = z.object({
-    nickname: z.string().min(1).max(20).openapi({
+    nickname: z.string().min(3).max(23).openapi({
         type: 'string',
         description: '사용자 닉네임',
         example: '반려동물타조',

@@ -64,7 +64,7 @@ export class NicknameService {
             const gIdx = Math.floor(Math.random() * genreList.length);
             const aIdx = Math.floor(Math.random() * adjectiveList.length);
             const sIdx = Math.floor(Math.random() * speciesList.length);
-            const nickname = `${genreList[gIdx]}${adjectiveList[aIdx]}${speciesList[sIdx]}`;
+            const nickname = `${genreList[gIdx]} ${adjectiveList[aIdx]} ${speciesList[sIdx]}`;
             pickedNicknames.push(nickname);
         }
         const checkedNickNames = await this.prisma.user_tb.findMany({
