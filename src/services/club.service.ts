@@ -128,7 +128,6 @@ export class ClubService {
                         id: true,
                         title: true,
                         perform_date: true,
-                        price: true,
                     },
                     orderBy: { perform_date: 'asc' },
                     take: 5,
@@ -173,7 +172,6 @@ export class ClubService {
                 id: perform.id,
                 title: perform.title,
                 performDate: perform.perform_date ? perform.perform_date.toISOString() : null,
-                price: perform.price,
             })),
         };
     }

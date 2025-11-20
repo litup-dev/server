@@ -27,7 +27,6 @@ const upcomingPerformSchema = z.object({
     id: z.number(),
     title: z.string().nullable(),
     performDate: z.string().nullable(),
-    price: z.number().nullable(),
 });
 
 // 클럽 스키마
