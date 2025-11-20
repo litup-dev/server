@@ -77,7 +77,7 @@ export class PerformanceService {
 
         const dataSql = `
             SELECT 
-                p.id, p.title, p.description, p.perform_date, p.price, 
+                p.id, p.title, p.description, p.perform_date, p.booking_price, p.onsite_price, p.booking_url, 
                 p.is_cancelled, p.artists, p.sns_links, p.created_at,
                 c.id as club_id, c.name as club_name, c.address as club_address
             FROM perform_tb p
@@ -130,7 +130,9 @@ export class PerformanceService {
                 description: p.description,
                 performDate:
                     p.perform_date instanceof Date ? p.perform_date.toISOString() : p.perform_date,
-                price: p.price,
+                bookingPrice: p.booking_price,
+                onsitePrice: p.onsite_price,
+                bookingUrl: p.booking_url,
                 isCanceled: p.is_cancelled,
                 artists: Array.isArray(p.artists) ? (p.artists as { name: string }[]) : null,
                 snsLinks: p.sns_links as { instagram?: string; youtube?: string }[] | null,
@@ -171,7 +173,7 @@ export class PerformanceService {
             },
         };
         if (isFree) {
-            where.price = { equals: 0 };
+            where.OR = [{ booking_price: { equals: 0 } }, { onsite_price: { equals: 0 } }];
         }
 
         if (area) {
@@ -235,7 +237,9 @@ export class PerformanceService {
                 description: p.description,
                 performDate:
                     p.perform_date instanceof Date ? p.perform_date.toISOString() : p.perform_date,
-                price: p.price,
+                bookingPrice: p.booking_price,
+                onsitePrice: p.onsite_price,
+                bookingUrl: p.booking_url,
                 isCanceled: p.is_cancelled,
                 artists: Array.isArray(p.artists) ? (p.artists as { name: string }[]) : null,
                 snsLinks: p.sns_links as { instagram?: string; youtube?: string }[] | null,
@@ -330,7 +334,9 @@ export class PerformanceService {
                 performance.perform_date instanceof Date
                     ? performance.perform_date.toISOString()
                     : (performance.perform_date ?? null),
-            price: performance.price ?? null,
+            bookingPrice: performance.booking_price ?? null,
+            onsitePrice: performance.onsite_price ?? null,
+            bookingUrl: performance.booking_url ?? null,
             isCanceled: performance.is_cancelled ?? null,
             artists: Array.isArray(performance.artists)
                 ? (performance.artists as { name: string }[])
