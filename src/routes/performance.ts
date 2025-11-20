@@ -7,6 +7,9 @@ import {
     performDetailResJson,
     searchPerformancesJson,
     SearchPerformancesType,
+    getPerformancesByMonthJson,
+    performanceMonthListResponseSchema,
+    GetPerformanceByMonthType,
 } from '@/schemas/performance.schema.js';
 import {
     idParamSchema,
@@ -65,6 +68,34 @@ export async function performanceRoutes(fastify: FastifyInstance) {
             const service = new PerformanceService(request.server.prisma);
 
             const result = await service.getPerformancesByDateRange(query);
+
+            return reply.send({
+                data: result,
+            });
+        }
+    );
+
+    fastify.get(
+        '/performances/calendar',
+        {
+            schema: {
+                querystring: getPerformancesByMonthJson,
+                tags: ['Performances'],
+                summary: '메인 페이지 공연 목록 월별 조회',
+                description: '메인 페이지 공연 목록 월별 조회',
+                response: {
+                    200: performanceMonthListResponseSchema,
+                    400: errorResJson,
+                    500: errorResJson,
+                },
+            },
+        },
+        async (request, reply) => {
+            const query = request.query as GetPerformanceByMonthType;
+
+            const service = new PerformanceService(request.server.prisma);
+
+            const result = await service.getPerformancesByMonth(query);
 
             return reply.send({
                 data: result,

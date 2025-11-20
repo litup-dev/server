@@ -3,8 +3,10 @@ import { OperationSuccessType } from '@/schemas/common.schema.js';
 import {
     GetPerformanceByDateRangeType,
     PerformanceListResponseType,
+    PerformanceMonthListResponseType,
     SearchPerformancesType,
     PerformanceType,
+    GetPerformanceByMonthType,
 } from '@/schemas/performance.schema.js';
 import { SavedFileInfo } from '@/types/file.types.js';
 import { PrismaClient } from '@prisma/client';
@@ -229,7 +231,6 @@ export class PerformanceService {
         if (performances.length === 0) {
             return { items: [], total: total, offset, limit };
         }
-        console.log(performances[0]?.artists);
         return {
             items: performances.map((p) => ({
                 id: p.id,
@@ -259,6 +260,72 @@ export class PerformanceService {
             offset: offset ?? 0,
             limit: limit ?? 1000,
         };
+    }
+
+    async getPerformancesByMonth(
+        query: GetPerformanceByMonthType
+    ): Promise<PerformanceMonthListResponseType> {
+        const { month } = query;
+        const startDate = new Date(`${month}-01`);
+        const endDate = new Date(startDate);
+        endDate.setMonth(endDate.getMonth() + 1);
+
+        console.log('startDate', startDate);
+        console.log('endDate', endDate);
+
+        const performances = await this.prisma.perform.findMany({
+            where: {
+                perform_date: {
+                    gte: startDate,
+                    lt: endDate,
+                },
+            },
+            include: {
+                club_tb: {
+                    select: {
+                        name: true,
+                    },
+                },
+                perform_img_tb: {
+                    where: { is_main: true },
+                    select: {
+                        file_path: true,
+                    },
+                    take: 1,
+                },
+            },
+            orderBy: {
+                perform_date: 'asc',
+            },
+        });
+
+        const result: Record<
+            string,
+            {
+                id: number;
+                clubName: string;
+                artists: string[] | null;
+                image: string | null;
+            }[]
+        > = {};
+
+        performances.forEach((p) => {
+            const dateKey = p.perform_date!.toISOString().split('T')[0]!;
+
+            if (!result[dateKey]) {
+                result[dateKey] = [];
+            }
+            result[dateKey].push({
+                id: p.id,
+                clubName: p.club_tb.name!,
+                artists: Array.isArray(p.artists)
+                    ? (p.artists as { name: string }[]).map((a) => a.name)
+                    : null,
+                image: p.perform_img_tb[0]?.file_path ?? null,
+            });
+        });
+
+        return result;
     }
 
     async attendPerformance(userId: number, performId: number): Promise<boolean> {

@@ -67,6 +67,29 @@ export const performanceRecordsSchema = performanceDefaultSchema
         }),
     });
 
+export const getPerformancesByMonthSchema = z.object({
+    month: z
+        .string()
+        .regex(/^\d{4}-\d{2}$/, '월 조회 포맷 YYYY-MM')
+        .openapi({
+            type: 'string',
+            description: '조회 월, 포맷 YYYY-MM',
+            example: '2025-11',
+        }),
+});
+
+export const performanceMonthItemSchema = z.object({
+    id: z.number(),
+    clubName: z.string().nullable(),
+    artists: z.array(z.string()).nullable(),
+    image: z.string().nullable(),
+});
+
+export const performanceMonthListResponseSchema = z.record(
+    z.string(),
+    z.array(performanceMonthItemSchema)
+);
+
 // 공연 관람기록 페이지 응답 스키마
 export const performanceRecordsListResponseSchema = z.object({
     items: z.array(performanceRecordsSchema),
@@ -179,6 +202,7 @@ export const attendRes = successResponseSchema(z.boolean());
 
 // JSON Schema
 export const getPerformancesByDateRangeJson = generateSchema(getPerformancesByDateRangeSchema);
+export const getPerformancesByMonthJson = generateSchema(getPerformancesByMonthSchema);
 export const searchPerformancesJson = generateSchema(searchPerformancesSchema);
 export const performanceListResJson = generateSchema(performListRes);
 export const performDetailResJson = generateSchema(performDetailRes);
@@ -188,6 +212,8 @@ export const performanceRecordsResJson = generateSchema(performRecordsRes);
 export type PerformanceType = z.infer<typeof performanceDefaultSchema>;
 export type PerformanceListType = z.infer<typeof performListRes>;
 export type GetPerformanceByDateRangeType = z.infer<typeof getPerformancesByDateRangeSchema>;
+export type GetPerformanceByMonthType = z.infer<typeof getPerformancesByMonthSchema>;
 export type SearchPerformancesType = z.infer<typeof searchPerformancesSchema>;
 export type PerformanceListResponseType = z.infer<typeof performanceListResponseSchema>;
+export type PerformanceMonthListResponseType = z.infer<typeof performanceMonthListResponseSchema>;
 export type PerformanceRecordsType = z.infer<typeof performanceRecordsListResponseSchema>;
