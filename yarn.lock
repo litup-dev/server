@@ -4460,7 +4460,7 @@ __metadata:
     eslint-plugin-promise: "npm:7.2.1"
     fastify: "npm:5.6.0"
     globals: "npm:16.4.0"
-    ioredis: "npm:^5.8.2"
+    ioredis: "npm:5.8.2"
     moment: "npm:2.30.1"
     node-cron: "npm:4.2.1"
     pino: "npm:9.12.0"
@@ -4469,7 +4469,7 @@ __metadata:
     prisma: "npm:6.16.2"
     ts-node: "npm:10.9.2"
     ts-node-dev: "npm:2.0.0"
-    tsc-alias: "npm:^1.8.16"
+    tsc-alias: "npm:1.8.16"
     tsx: "npm:4.20.6"
     typescript: "npm:5.9.2"
     typescript-eslint: "npm:8.44.0"
@@ -4488,7 +4488,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ioredis@npm:^5.8.2":
+"ioredis@npm:5.8.2":
   version: 5.8.2
   resolution: "ioredis@npm:5.8.2"
   dependencies:
@@ -6656,7 +6656,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tsc-alias@npm:^1.8.16":
+"tsc-alias@npm:1.8.16":
   version: 1.8.16
   resolution: "tsc-alias@npm:1.8.16"
   dependencies:
