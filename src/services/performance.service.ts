@@ -280,7 +280,11 @@ export class PerformanceService {
                     lt: endDate,
                 },
             },
-            include: {
+            select: {
+                id: true,
+                title: true,
+                perform_date: true,
+                artists: true,
                 club_tb: {
                     select: {
                         name: true,
@@ -304,6 +308,7 @@ export class PerformanceService {
             {
                 id: number;
                 clubName: string;
+                performName: string;
                 artists: string[] | null;
                 image: string | null;
             }[]
@@ -318,6 +323,7 @@ export class PerformanceService {
             result[dateKey].push({
                 id: p.id,
                 clubName: p.club_tb.name!,
+                performName: p.title!,
                 artists: Array.isArray(p.artists)
                     ? (p.artists as { name: string }[]).map((a) => a.name)
                     : null,

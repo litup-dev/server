@@ -81,6 +81,7 @@ export const getPerformancesByMonthSchema = z.object({
 export const performanceMonthItemSchema = z.object({
     id: z.number(),
     clubName: z.string().nullable(),
+    performName: z.string(),
     artists: z.array(z.string()).nullable(),
     image: z.string().nullable(),
 });
