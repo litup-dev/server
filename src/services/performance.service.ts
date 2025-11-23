@@ -243,7 +243,11 @@ export class PerformanceService {
                 bookingUrl: p.booking_url,
                 isCanceled: p.is_cancelled,
                 artists: Array.isArray(p.artists) ? (p.artists as { name: string }[]) : null,
-                snsLinks: p.sns_links as { instagram?: string; youtube?: string }[] | null,
+                snsLinks: p.sns_links
+                    ? Array.isArray(p.sns_links)
+                        ? (p.sns_links as { instagram?: string; youtube?: string }[])
+                        : [p.sns_links as { instagram?: string; youtube?: string }]
+                    : null,
                 createdAt: p.created_at instanceof Date ? p.created_at.toISOString() : p.created_at,
                 club: {
                     id: p.club_tb.id,
