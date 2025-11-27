@@ -41,6 +41,7 @@ export const clubSchema = z.object({
     closeTime: z.string().nullable(),
     avgRating: z.number().nullable(),
     reviewCnt: z.number().nullable(),
+    favoriteCount: z.number().nullable(),
     createdAt: z.string().nullable(),
     owner: clubUserSchema.optional().nullable(),
     mainImage: clubImageSchema.optional().nullable(),

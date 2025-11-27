@@ -39,6 +39,11 @@ export class ClubService {
                         },
                         take: 3,
                     },
+                    _count: {
+                        select: {
+                            favorite_tb: true,
+                        },
+                    },
                 },
                 orderBy: { createdAt: 'desc' },
                 skip: offset,
@@ -79,6 +84,7 @@ export class ClubService {
                     name: cks.keyword_tb.name,
                     iconPath: cks.keyword_tb.icon_path,
                 })),
+                favoriteCount: club._count.favorite_tb,
             })),
             total,
             offset,
@@ -132,6 +138,11 @@ export class ClubService {
                     orderBy: { perform_date: 'asc' },
                     take: 5,
                 },
+                _count: {
+                    select: {
+                        favorite_tb: true,
+                    },
+                },
             },
         });
 
@@ -173,6 +184,7 @@ export class ClubService {
                 title: perform.title,
                 performDate: perform.perform_date ? perform.perform_date.toISOString() : null,
             })),
+            favoriteCount: club._count.favorite_tb,
         };
     }
 
