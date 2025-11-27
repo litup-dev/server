@@ -2,6 +2,7 @@ import { createUserJson } from '@/schemas/auth.schema.js';
 import { errorResJson, successResJson } from '@/schemas/common.schema.js';
 import { userDefaultJson } from '@/schemas/user.schema.js';
 import { AuthService } from '@/services/auth.service.js';
+import { parseJwt } from '@/utils/jwt.js';
 import { FastifyInstance } from 'fastify';
 
 export async function authRoutes(fastify: FastifyInstance) {
@@ -48,7 +49,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         },
         async (request, reply) => {
             const service = new AuthService(request.server.prisma);
-            const userId = 6; // 임시 ID
+            const { userId } = parseJwt(request.headers, false);
             const result = await service.withdrawUser(userId);
             return reply.send({
                 data: result,

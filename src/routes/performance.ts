@@ -18,6 +18,7 @@ import {
     booleanSuccessResJson,
 } from '@/schemas/common.schema.js';
 import { BadRequestError } from '@/common/error.js';
+import { parseJwt } from '@/utils/jwt.js';
 
 export async function performanceRoutes(fastify: FastifyInstance) {
     fastify.get(
@@ -128,8 +129,7 @@ export async function performanceRoutes(fastify: FastifyInstance) {
             }
 
             const { entityId } = parsed.data;
-            // 임시 추출
-            const userId = 1;
+            const { userId } = parseJwt(request.headers, false);
 
             const service = new PerformanceService(request.server.prisma);
             const result = await service.attendPerformance(userId, entityId);
@@ -164,8 +164,7 @@ export async function performanceRoutes(fastify: FastifyInstance) {
             }
 
             const { entityId } = parsed.data;
-            // 임시 추출
-            const userId = 1;
+            const { userId } = parseJwt(request.headers, false);
 
             const service = new PerformanceService(request.server.prisma);
             const result = await service.isUserAttending(userId, entityId);

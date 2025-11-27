@@ -1,6 +1,7 @@
 import { errorResJson, successResJson } from '@/schemas/common.schema.js';
 import { createReportJson, CreateReportType } from '@/schemas/report.schema.js';
 import { ReportService } from '@/services/report.service.js';
+import { parseJwt } from '@/utils/jwt.js';
 import { FastifyInstance } from 'fastify';
 
 export async function reportRoutes(fastify: FastifyInstance) {
@@ -20,7 +21,7 @@ export async function reportRoutes(fastify: FastifyInstance) {
             },
         },
         async (request, reply) => {
-            const userId = 1; // 임시 ID
+            const { userId } = parseJwt(request.headers, false);
             const reportInfo = request.body as CreateReportType;
             const service = new ReportService(fastify.prisma);
             const result = await service.createReport(userId, reportInfo);

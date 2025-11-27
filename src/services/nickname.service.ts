@@ -10,16 +10,6 @@ export class NicknameService {
 
     constructor(private prisma: PrismaClient) {}
 
-    private groupByLength(words: string[]): Record<string, string[]> {
-        const groups: Record<string, string[]> = {};
-        words.forEach((word) => {
-            const len = word.replace(/\s+/g, '').length;
-            if (!groups[len]) groups[len] = [];
-            groups[len].push(word);
-        });
-        return groups;
-    }
-
     async init(): Promise<void> {
         console.log('Nickname cache initialization started.');
 
@@ -39,18 +29,9 @@ export class NicknameService {
         ]);
 
         await Promise.all([
-            redis.set(
-                this.GENRE_KEY,
-                JSON.stringify(this.groupByLength(genres.map((item) => item.word)))
-            ),
-            redis.set(
-                this.ADJECTIVE_KEY,
-                JSON.stringify(this.groupByLength(adjectives.map((item) => item.word)))
-            ),
-            redis.set(
-                this.SPECIES_KEY,
-                JSON.stringify(this.groupByLength(species.map((item) => item.word)))
-            ),
+            redis.set(this.GENRE_KEY, JSON.stringify(genres.map((item) => item.word))),
+            redis.set(this.ADJECTIVE_KEY, JSON.stringify(adjectives.map((item) => item.word))),
+            redis.set(this.SPECIES_KEY, JSON.stringify(species.map((item) => item.word))),
         ]);
 
         console.log('Nickname cache initialization completed.');
@@ -64,57 +45,28 @@ export class NicknameService {
     }
 
     // 닉네임 생성
+    // 15개 후보 생성 후 in 쿼리로 중복 검사
+    // 중복 안된 첫번째를 닉네임으로 반환.
     // 만약 모두 중복이면 이메일 기반 해시값에서 6자리 추출
     async generateNickname(email: string): Promise<string> {
-        // redis에서 그룹된 단어 리스트 불러오기
+        // redis에서 단어 리스트 불러오기
         const [genre, adjective, species] = await Promise.all([
             redis.get(this.GENRE_KEY),
             redis.get(this.ADJECTIVE_KEY),
             redis.get(this.SPECIES_KEY),
         ]);
-
-        if (!genre || !adjective || !species) {
-            console.error('닉네임 생성에 사용할 단어 리스트를 찾을 수 없습니다.');
-            return this.generateFallbackNickname(email);
-        }
-
-        const genreByLen: Record<string, string[]> = JSON.parse(genre!);
-        const adjectiveByLen: Record<string, string[]> = JSON.parse(adjective!);
-        const speciesByLen: Record<string, string[]> = JSON.parse(species!);
-
-        // 총 12글자가 되는 조합을 찾음
-        const validCombinations: [number, number, number][] = [];
-        for (const gLen of Object.keys(genreByLen)) {
-            for (const aLen of Object.keys(adjectiveByLen)) {
-                for (const sLen of Object.keys(speciesByLen)) {
-                    const totalLen = Number(gLen) + Number(aLen) + Number(sLen);
-                    if (totalLen <= 12) {
-                        validCombinations.push([Number(gLen), Number(aLen), Number(sLen)]);
-                    }
-                }
-            }
-        }
-
-        if (validCombinations.length === 0) {
-            console.error('닉네임 조합을 찾을 수 없습니다.');
-            return this.generateFallbackNickname(email);
-        }
+        const genreList: string[] = JSON.parse(genre!);
+        const adjectiveList: string[] = JSON.parse(adjective!);
+        const speciesList: string[] = JSON.parse(species!);
 
         const pickedNicknames: string[] = [];
         for (let i = 0; i < 15; i++) {
-            const comboIdx = Math.floor(Math.random() * validCombinations.length);
-            const [gLen, aLen, sLen] = validCombinations[comboIdx]!;
-
-            const gCandidates = genreByLen[gLen]!;
-            const aCandidates = adjectiveByLen[aLen]!;
-            const sCandidates = speciesByLen[sLen]!;
-
-            const genre = gCandidates[Math.floor(Math.random() * gCandidates.length)];
-            const adjective = aCandidates[Math.floor(Math.random() * aCandidates.length)];
-            const species = sCandidates[Math.floor(Math.random() * sCandidates.length)];
-            pickedNicknames.push(`${genre}${adjective}${species}`);
+            const gIdx = Math.floor(Math.random() * genreList.length);
+            const aIdx = Math.floor(Math.random() * adjectiveList.length);
+            const sIdx = Math.floor(Math.random() * speciesList.length);
+            const nickname = `${genreList[gIdx]} ${adjectiveList[aIdx]} ${speciesList[sIdx]}`;
+            pickedNicknames.push(nickname);
         }
-
         const checkedNickNames = await this.prisma.user_tb.findMany({
             where: {
                 nickname: { in: pickedNicknames },
@@ -131,3 +83,6 @@ export class NicknameService {
         return this.generateFallbackNickname(email);
     }
 }
+
+// 닉네임 생성은 띄어쓰기 제외 12자 이하로 조합해야함.
+// 펑크 음악듣는 너구리 -> 9자 (띄어쓰기 포함 11자)

@@ -18,6 +18,7 @@ import {
 } from '@/schemas/user.schema.js';
 import { UserService } from '@/services/user.service.js';
 import { FastifyInstance } from 'fastify';
+import { parseJwt } from '@/utils/jwt.js';
 
 export async function userRoutes(fastify: FastifyInstance) {
     fastify.get(
@@ -97,7 +98,7 @@ export async function userRoutes(fastify: FastifyInstance) {
                 throw new BadRequestError(`허용되지 않은 파라미터입니다. ${parsed.error.message}`);
             }
             const { entityId } = parsed.data;
-            const userId = 2; // 임시 추출
+            const { userId } = parseJwt(request.headers, true);
             const service = new UserService(request.server.prisma);
             const result = await service.getUserPerformHistory(entityId, userId, offset, limit);
 
@@ -123,7 +124,7 @@ export async function userRoutes(fastify: FastifyInstance) {
         async (request, reply) => {
             const { entityIds } = request.body as { entityIds: number[] };
             const service = new UserService(request.server.prisma);
-            const userId = 1; // 임시 추출
+            const { userId } = parseJwt(request.headers, false);
             const result = await service.deleteUserAttendanceRecords(userId, entityIds);
 
             return reply.send({ data: result });
@@ -153,7 +154,7 @@ export async function userRoutes(fastify: FastifyInstance) {
                 throw new BadRequestError(`허용되지 않은 파라미터입니다. ${parsed.error.message}`);
             }
             const { entityId } = parsed.data;
-            const userId = 2; // 임시 추출
+            const { userId } = parseJwt(request.headers, true);
             const service = new UserService(request.server.prisma);
             const result = await service.getUserFavoriteClubs(entityId, userId, offset, limit);
 
@@ -179,7 +180,7 @@ export async function userRoutes(fastify: FastifyInstance) {
         async (request, reply) => {
             const { entityIds } = request.body as { entityIds: number[] };
             const service = new UserService(request.server.prisma);
-            const userId = 1; // 임시 추출
+            const { userId } = parseJwt(request.headers, false);
             const result = await service.deleteUserAttendanceRecords(userId, entityIds);
 
             return reply.send({ data: result });
@@ -198,7 +199,7 @@ export async function userRoutes(fastify: FastifyInstance) {
         },
         async (request, reply) => {
             const service = new UserService(request.server.prisma);
-            const userId = 1;
+            const { userId } = parseJwt(request.headers, false);
             const profileData = request.body as UserProfileEditType;
             const result = await service.updateUserProfile(userId, profileData);
             return reply.send({ data: result });

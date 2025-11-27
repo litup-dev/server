@@ -179,7 +179,6 @@ export class UserService {
         limit: number
     ): Promise<ClubListSimpleResponseType> {
         const isSelf = requesterId !== null && requesterId === targetUserId;
-        console.log(requesterId, targetUserId, isSelf);
         if (!isSelf) {
             const privacyRule = await this.prisma.user_settings_tb.findFirst({
                 where: { user_id: targetUserId },

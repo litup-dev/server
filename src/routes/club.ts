@@ -9,6 +9,7 @@ import {
 } from '@/schemas/club.schema.js';
 import { idParamSchema, idParamJson, errorResJson } from '@/schemas/common.schema.js';
 import { BadRequestError } from '@/common/error.js';
+import { parseJwt } from '@/utils/jwt.js';
 
 export async function clubRoutes(fastify: FastifyInstance) {
     fastify.get(
@@ -93,8 +94,7 @@ export async function clubRoutes(fastify: FastifyInstance) {
 
             const { entityId } = parsed.data;
 
-            // TODO: JWT에서 실제 userId 추출
-            const userId = 1;
+            const { userId } = parseJwt(request.headers, false);
 
             const service = new ClubService(request.server.prisma);
             const result = await service.toggleFavorite(entityId, userId);

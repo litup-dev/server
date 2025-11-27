@@ -12,6 +12,7 @@ import {
 } from '@/schemas/review.schema.js';
 import { idParamSchema, idParamJson, errorResJson } from '@/schemas/common.schema.js';
 import { BadRequestError, NotFoundError } from '@/common/error.js';
+import { parseJwt } from '@/utils/jwt.js';
 
 export async function reviewRoutes(fastify: FastifyInstance) {
     fastify.get(
@@ -109,8 +110,7 @@ export async function reviewRoutes(fastify: FastifyInstance) {
             const { entityId: clubId } = parsed.data;
             const body = request.body as CreateReviewType;
 
-            // TODO: 실제로는 인증된 사용자 ID를 사용
-            const userId = 1;
+            const { userId } = parseJwt(request.headers, false);
 
             const service = new ReviewService(request.server.prisma);
 
@@ -157,8 +157,7 @@ export async function reviewRoutes(fastify: FastifyInstance) {
             const { entityId } = parsed.data;
             const body = request.body as UpdateReviewType;
 
-            // TODO: 실제로는 인증된 사용자 ID를 사용
-            const userId = 1;
+            const { userId } = parseJwt(request.headers, false);
 
             const service = new ReviewService(request.server.prisma);
             const result = await service.update(entityId, userId, body);
@@ -193,8 +192,7 @@ export async function reviewRoutes(fastify: FastifyInstance) {
 
             const { entityId } = parsed.data;
 
-            // TODO: 실제로는 인증된 사용자 ID를 사용
-            const userId = 1;
+            const { userId } = parseJwt(request.headers, false);
 
             const service = new ReviewService(request.server.prisma);
             await service.delete(entityId, userId);

@@ -4461,6 +4461,7 @@ __metadata:
     fastify: "npm:5.6.0"
     globals: "npm:16.4.0"
     ioredis: "npm:5.8.2"
+    jwt-decode: "npm:^4.0.0"
     moment: "npm:2.30.1"
     node-cron: "npm:4.2.1"
     pino: "npm:9.12.0"
@@ -4901,6 +4902,13 @@ __metadata:
   bin:
     json5: lib/cli.js
   checksum: 10c0/9ee316bf21f000b00752e6c2a3b79ecf5324515a5c60ee88983a1910a45426b643a4f3461657586e8aeca87aaf96f0a519b0516d2ae527a6c3e7eed80f68717f
+  languageName: node
+  linkType: hard
+
+"jwt-decode@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "jwt-decode@npm:4.0.0"
+  checksum: 10c0/de75bbf89220746c388cf6a7b71e56080437b77d2edb29bae1c2155048b02c6b8c59a3e5e8d6ccdfd54f0b8bda25226e491a4f1b55ac5f8da04cfbadec4e546c
   languageName: node
   linkType: hard
 
