@@ -51,6 +51,7 @@ export class AuthService {
                 social_id: socialCode.id,
                 nickname: generateNickname,
                 provider_id: providerId,
+                email: email,
             },
             select: {
                 id: true,

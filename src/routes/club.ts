@@ -98,6 +98,7 @@ export async function clubRoutes(fastify: FastifyInstance) {
 
             // "Bearer <token>" 형식에서 토큰만 추출
             const token = authorization.replace(/^Bearer\s+/i, '');
+            console.log('Extracted token from Authorization header:', token);
             let userId = 0;
             // JWT는 header.payload.signature 형식
             const parts = token.split('.');
@@ -107,6 +108,7 @@ export async function clubRoutes(fastify: FastifyInstance) {
 
             try {
                 const payload = JSON.parse(Buffer.from(parts[1]!, 'base64url').toString('utf-8'));
+                console.log('Extracted payload from JWT:', payload);
 
                 // userId 추출 (payload 구조에 따라 키 이름 조정 필요)
                 userId = Number(payload.userId) || Number(payload.sub) || Number(payload.id);
