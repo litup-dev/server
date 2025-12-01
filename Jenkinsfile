@@ -13,6 +13,9 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
+                // 워크스페이스 정리
+                deleteDir()
+                
                 git credentialsId: 'backend_credential', 
                     branch: 'main', 
                     url: 'https://github.com/litup-dev/server.git'
