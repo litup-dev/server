@@ -1,5 +1,5 @@
-import { UnauthorizedError } from '@/common/error';
-import { JwtTokenType } from '@/schemas/security.schema';
+import { UnauthorizedError } from '@/common/error.js';
+import { JwtTokenType } from '@/schemas/security.schema.js';
 import { FastifyRequest } from 'fastify';
 import { jwtDecode } from 'jwt-decode';
 
