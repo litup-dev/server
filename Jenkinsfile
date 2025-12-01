@@ -37,7 +37,7 @@ pipeline {
         stage('Transfer, Backup & Deploy') {
             steps {
                 script {
-                    sshagent(credentials: ['backend_credential']) {
+                    sshagent(credentials: ['litup-macmini']) {
                         sh """
                             echo "🚀 전송 시작: dist 폴더"
                             scp -P ${REMOTE_PORT} \
