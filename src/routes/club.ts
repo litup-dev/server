@@ -78,12 +78,12 @@ export async function clubRoutes(fastify: FastifyInstance) {
                 tags: ['Clubs'],
                 summary: '클럽 즐겨찾기 등록/해제',
                 description: '클럽 즐겨찾기 등록/해제',
-                response: {
-                    200: toggleFavoriteResJson,
-                    400: errorResJson,
-                    404: errorResJson,
-                    500: errorResJson,
-                },
+                // response: {
+                //     200: toggleFavoriteResJson,
+                //     400: errorResJson,
+                //     404: errorResJson,
+                //     500: errorResJson,
+                // },
             },
         },
         async (request, reply) => {

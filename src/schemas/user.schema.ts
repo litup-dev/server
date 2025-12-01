@@ -51,6 +51,12 @@ export const userInfoSchema = userDefaultSchema.pick({
     bio: true,
 });
 
+export const userSimpleSchema = userDefaultSchema.pick({
+    id: true,
+    nickname: true,
+    profilePath: true,
+});
+
 export const userStatsSchema = z.object({
     attendCount: z.number().int().nonnegative().openapi({
         type: 'number',
@@ -137,6 +143,7 @@ export const userPrivacyResJson = generateSchema(userPrivacyRes);
 // 타입 추출
 export type UserDefaultType = z.infer<typeof userDefaultSchema>;
 export type UserInfoType = z.infer<typeof userInfoSchema>;
+export type UserSimpleType = z.infer<typeof userSimpleSchema>;
 export type UserStatsType = z.infer<typeof userStatsSchema>;
 export type UserProfileEditType = z.infer<typeof userProfileEditSchema>;
 export type UserPrivacySettingType = z.infer<typeof userPrivacySettingSchema>;

@@ -1,7 +1,7 @@
 import { NotFoundError } from '@/common/error.js';
 import { CreateUserType } from '@/schemas/auth.schema.js';
 import { OperationSuccessType } from '@/schemas/common.schema.js';
-import { UserDefaultType } from '@/schemas/user.schema.js';
+import { UserSimpleType } from '@/schemas/user.schema.js';
 import { PrivacyLevel } from '@/types/privacy.types.js';
 import { PrismaClient } from '@prisma/client';
 import { NicknameService } from '@/services/nickname.service.js';
@@ -9,7 +9,7 @@ import { NicknameService } from '@/services/nickname.service.js';
 export class AuthService {
     constructor(private prisma: PrismaClient) {}
 
-    async verifyUser(body: CreateUserType): Promise<UserDefaultType> {
+    async verifyUser(body: CreateUserType): Promise<UserSimpleType> {
         const { provider, providerId, email } = body;
 
         const socialCode = await this.prisma.social_code.findFirst({
@@ -34,11 +34,7 @@ export class AuthService {
             return {
                 id: existingUser.id,
                 nickname: existingUser.nickname,
-                email: existingUser.email!,
                 profilePath: existingUser.profile_path ?? null,
-                createdAt: existingUser.created_at ? existingUser.created_at.toISOString() : null,
-                updatedAt: existingUser.updated_at ? existingUser.updated_at.toISOString() : null,
-                bio: existingUser.bio ?? null,
             };
         }
 
@@ -51,15 +47,12 @@ export class AuthService {
                 social_id: socialCode.id,
                 nickname: generateNickname,
                 provider_id: providerId,
+                email: email,
             },
             select: {
                 id: true,
                 nickname: true,
-                email: true,
                 profile_path: true,
-                created_at: true,
-                updated_at: true,
-                bio: true,
             },
         });
 
@@ -76,11 +69,7 @@ export class AuthService {
         return {
             id: newUser.id,
             nickname: newUser.nickname,
-            email: newUser.email!,
             profilePath: newUser.profile_path ?? null,
-            createdAt: newUser.created_at ? newUser.created_at.toISOString() : null,
-            updatedAt: newUser.updated_at ? newUser.updated_at.toISOString() : null,
-            bio: newUser.bio ?? null,
         };
     }
 
