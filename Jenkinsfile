@@ -13,6 +13,9 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
+                // Git safe directory 설정
+                sh 'git config --global --add safe.directory /var/jenkins_home/workspace/server || true'
+                
                 // 워크스페이스 정리
                 deleteDir()
                 
