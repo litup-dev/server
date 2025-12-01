@@ -31,21 +31,22 @@ pipeline {
         stage('Transfer, Backup & Deploy') {
             steps {
                 script {
-                    sh """
-                        echo "🚀 전송 시작: dist 폴더"
-                        scp -P ${REMOTE_PORT} \
-                            -o StrictHostKeyChecking=no \
-                            -r dist ${REMOTE_USER}@${REMOTE_SERVER}:${APP_PATH}/dist_new
+                    sshagent(credentials: ['backend_credential']) {
+                        sh """
+                            echo "🚀 전송 시작: dist 폴더"
+                            scp -P ${REMOTE_PORT} \
+                                -o StrictHostKeyChecking=no \
+                                -r dist ${REMOTE_USER}@${REMOTE_SERVER}:${APP_PATH}/dist_new
 
-                        scp -P ${REMOTE_PORT} \
-                            -o StrictHostKeyChecking=no \
-                            -r package.json .yarnrc.yml yarn.lock prisma \
-                            ${REMOTE_USER}@${REMOTE_SERVER}:${APP_PATH}/
+                            scp -P ${REMOTE_PORT} \
+                                -o StrictHostKeyChecking=no \
+                                -r package.json .yarnrc.yml yarn.lock prisma \
+                                ${REMOTE_USER}@${REMOTE_SERVER}:${APP_PATH}/
 
-                        echo "📦 원격 서버에서 배포 및 백업 진행"
-                        ssh -p ${REMOTE_PORT} \
-                            -o StrictHostKeyChecking=no \
-                            ${REMOTE_USER}@${REMOTE_SERVER} 'bash -s' <<'DEPLOY'
+                            echo "📦 원격 서버에서 배포 및 백업 진행"
+                            ssh -p ${REMOTE_PORT} \
+                                -o StrictHostKeyChecking=no \
+                                ${REMOTE_USER}@${REMOTE_SERVER} 'bash -s' <<'DEPLOY'
 
 set -e
 cd ${APP_PATH}
@@ -75,7 +76,8 @@ echo "🔄 Docker 컨테이너 재시작"
 echo "✅ Docker 컨테이너 재시작 완료"
 
 DEPLOY
-                    """
+                        """
+                    }
                 }
             }
         }
