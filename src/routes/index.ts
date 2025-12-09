@@ -8,8 +8,10 @@ import { userRoutes } from './user.js';
 import { reportRoutes } from './report.js';
 import { API_PREFIX } from '../common/constants.js';
 import { uploadRoutes } from './upload.js';
+import { commonRoutes } from './common.js';
 
 export async function registerRoutes(fastify: FastifyInstance) {
+    await fastify.register(commonRoutes, { prefix: API_PREFIX + '/common' });
     await fastify.register(uploadRoutes, { prefix: API_PREFIX });
     await fastify.register(clubRoutes, { prefix: API_PREFIX });
     await fastify.register(reviewRoutes, { prefix: API_PREFIX });

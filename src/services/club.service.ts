@@ -2,10 +2,116 @@ import { PrismaClient } from '@prisma/client';
 import { ForbiddenError, NotFoundError } from '@/common/error.js';
 import { SavedFileInfo } from '@/types/file.types.js';
 import { OperationSuccessType } from '@/schemas/common.schema.js';
-import { ClubType, ClubListResponseType } from '@/schemas/club.schema.js';
+import { ClubType, ClubListResponseType, GetClubsType } from '@/schemas/club.schema.js';
+import { ClubSearchArea } from '@/types/search.types';
 
 export class ClubService {
     constructor(private prisma: PrismaClient) {}
+
+    async getSearch(parameters: GetClubsType): Promise<ClubListResponseType> {
+        const { keyword, area, latitude, longitude, sort, offset, limit } = parameters;
+
+        const whereConditions: any = {};
+        if (keyword) {
+            whereConditions.clubName = {
+                contains: keyword,
+            };
+        }
+        if (area && area !== 'nearby') {
+            if (area == ClubSearchArea.SEOUL) {
+                whereConditions.address = '서울';
+            } else if (area == ClubSearchArea.BUSAN) {
+                whereConditions.address = '부산';
+            } else if (area == ClubSearchArea.OTHER) {
+                whereConditions.address = {
+                    notIn: ['서울', '부산'],
+                };
+            }
+        }
+
+        const [clubs, total] = await Promise.all([
+            this.prisma.club.findMany({
+                include: {
+                    user_tb: {
+                        select: {
+                            id: true,
+                            nickname: true,
+                            profile_path: true,
+                        },
+                    },
+                    club_img_tb: {
+                        where: { is_main: true },
+                        select: {
+                            id: true,
+                            file_path: true,
+                            is_main: true,
+                        },
+                        take: 1,
+                    },
+                    club_keyword_summary: {
+                        include: {
+                            keyword_tb: {
+                                select: {
+                                    id: true,
+                                    name: true,
+                                    icon_path: true,
+                                },
+                            },
+                        },
+                        take: 3,
+                    },
+                    _count: {
+                        select: {
+                            favorite_tb: true,
+                        },
+                    },
+                },
+                orderBy: { createdAt: 'desc' },
+                skip: offset,
+                take: limit,
+            }),
+            this.prisma.club.count(),
+        ]);
+
+        return {
+            items: clubs.map((club) => ({
+                id: club.id,
+                name: club.name,
+                address: club.address,
+                phone: club.phone,
+                capacity: club.capacity,
+                openTime: club.openTime ? club.openTime.toISOString() : null,
+                closeTime: club.closeTime ? club.closeTime.toISOString() : null,
+                description: club.description,
+                avgRating: club.avgRating,
+                reviewCnt: club.reviewCnt,
+                createdAt: club.createdAt ? club.createdAt.toISOString() : null,
+                owner: club.user_tb
+                    ? {
+                          id: club.user_tb.id,
+                          nickname: club.user_tb.nickname,
+                          profilePath: club.user_tb.profile_path,
+                      }
+                    : null,
+                mainImage: club.club_img_tb[0]
+                    ? {
+                          id: club.club_img_tb[0].id,
+                          filePath: club.club_img_tb[0].file_path,
+                          isMain: club.club_img_tb[0].is_main,
+                      }
+                    : null,
+                keywords: club.club_keyword_summary.map((cks) => ({
+                    id: cks.keyword_tb.id,
+                    name: cks.keyword_tb.name,
+                    iconPath: cks.keyword_tb.icon_path,
+                })),
+                favoriteCount: club._count.favorite_tb,
+            })),
+            total,
+            offset,
+            limit,
+        };
+    }
 
     async getAll(offset: number = 0, limit: number = 20): Promise<ClubListResponseType> {
         const [clubs, total] = await Promise.all([

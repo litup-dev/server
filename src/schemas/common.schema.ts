@@ -93,8 +93,24 @@ export const paginatedResponseSchema = <T extends z.ZodType>(itemSchema: T) =>
         })
         .openapi({ description: '페이지네이션 응답' });
 
+export const keywordSchema = z.object({
+    id: z.number().int(),
+    keyword: z.string(),
+    iconPath: z.string().nullable(),
+    sortOrder: z.number().int(),
+});
+export const categorySchema = z.object({
+    id: z.number().int(),
+    code: z.string(),
+    name: z.string(),
+    keywords: z.array(keywordSchema),
+});
+
+export const reviewCategorySchema = z.array(categorySchema);
+
 // 응답 스키마 -> 성공, 페이징에 대한 공통적인 스키마로 만드는 과정 해당 파일을 generateSchema로 감싸서 fastify가 읽게함
 export const operationSuccessRes = successResponseSchema(operationSuccessResponseSchema);
+export const reviewCategorySuccessRes = successResponseSchema(reviewCategorySchema);
 
 // JSON 스키마 -> fastify가 읽을 수 있게 변환하는 부분
 export const successResJson = generateSchema(operationSuccessRes);
@@ -103,8 +119,10 @@ export const booleanSuccessResJson = generateSchema(successResponseSchema(z.bool
 export const idParamJson = generateSchema(idParamSchema);
 export const bodyIdsJson = generateSchema(bodyIdsSchema);
 export const defaultPaginationJson = generateSchema(defaultPaginationSchema);
+export const reviewCategoryJson = generateSchema(reviewCategorySuccessRes);
 
 // 타입 추출
 export type OperationSuccessType = z.infer<typeof operationSuccessResponseSchema>;
 export type IdParamType = z.infer<typeof idParamSchema>;
 export type DefaultPaginationType = z.infer<typeof defaultPaginationSchema>;
+export type ReviewCategoryType = z.infer<typeof reviewCategorySchema>;

@@ -1,5 +1,6 @@
 import { z, generateSchema } from '@/common/zod.js';
 import { successResponseSchema, paginatedResponseSchema } from '@/schemas/common.schema.js';
+import { ClubSearchArea, ClubSortBy } from '@/types/search.types.js';
 
 // 사용자 정보 스키마
 const clubUserSchema = z.object({
@@ -59,6 +60,36 @@ export const clubSimpleSchema = clubSchema.pick({
 
 // 클럽 목록 조회 쿼리 파라미터 스키마
 export const getClubsSchema = z.object({
+    keyword: z.string().nullable().openapi({
+        description: '클럽명 키워드',
+        example: '제비다방',
+    }),
+    area: z.nativeEnum(ClubSearchArea).nullable().optional().openapi({
+        description: '지역',
+        example: 'seoul',
+    }),
+    latitude: z
+        .preprocess((val) => {
+            if (typeof val === 'string') return parseFloat(val);
+            return val;
+        }, z.number().nullable().optional())
+        .openapi({
+            description: '위도',
+            example: 37.5665,
+        }),
+    longitude: z
+        .preprocess((val) => {
+            if (typeof val === 'string') return parseFloat(val);
+            return val;
+        }, z.number().nullable().optional())
+        .openapi({
+            description: '경도',
+            example: 126.978,
+        }),
+    sort: z.nativeEnum(ClubSortBy).optional().openapi({
+        description: '정렬 기준',
+        example: '-reviewCount',
+    }),
     offset: z
         .preprocess((val) => {
             if (typeof val === 'string') return parseInt(val, 10);
