@@ -1,4 +1,4 @@
-import { errorResJson, reviewCategoryJson } from '@/schemas/common.schema.js';
+import { errorResJson, reviewCategoryJson } from '@/schemas/common.schema';
 import { CommonService } from '@/services/common.service';
 import { FastifyInstance } from 'fastify';
 
