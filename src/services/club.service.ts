@@ -2,35 +2,86 @@ import { PrismaClient } from '@prisma/client';
 import { ForbiddenError, NotFoundError } from '@/common/error.js';
 import { SavedFileInfo } from '@/types/file.types.js';
 import { OperationSuccessType } from '@/schemas/common.schema.js';
-import { ClubType, ClubListResponseType, GetClubsType } from '@/schemas/club.schema.js';
-import { ClubSearchArea } from '@/types/search.types';
+import {
+    ClubType,
+    ClubListResponseType,
+    GetClubsType,
+    ClubSearchResponseType,
+    ClubSearchType,
+} from '@/schemas/club.schema.js';
+import { ClubSearchArea, ClubSortBy } from '@/types/search.types';
+import { late } from 'zod';
+import { create } from 'domain';
 
 export class ClubService {
     constructor(private prisma: PrismaClient) {}
 
-    async getSearch(parameters: GetClubsType): Promise<ClubListResponseType> {
-        const { keyword, area, latitude, longitude, sort, offset, limit } = parameters;
+    async getSearch(parameters: GetClubsType): Promise<ClubSearchResponseType> {
+        const { searchKey, area, latitude, longitude, keywords, sort, offset, limit } = parameters;
+        console.log('GetSearch parameters:', parameters);
+
+        if (area === ClubSearchArea.NEARBY && latitude && longitude) {
+            return this.getSearchNearby(parameters);
+        }
 
         const whereConditions: any = {};
-        if (keyword) {
-            whereConditions.clubName = {
-                contains: keyword,
+
+        // 클럽명
+        if (searchKey) {
+            whereConditions.name = {
+                contains: searchKey,
             };
         }
+
+        // 권역
         if (area && area !== 'nearby') {
             if (area == ClubSearchArea.SEOUL) {
-                whereConditions.address = '서울';
-            } else if (area == ClubSearchArea.BUSAN) {
-                whereConditions.address = '부산';
-            } else if (area == ClubSearchArea.OTHER) {
                 whereConditions.address = {
-                    notIn: ['서울', '부산'],
+                    contains: '서울',
                 };
+            } else if (area == ClubSearchArea.BUSAN) {
+                whereConditions.address = {
+                    contains: '부산',
+                };
+            } else if (area == ClubSearchArea.OTHER) {
+                whereConditions.AND = [
+                    {
+                        address: {
+                            not: {
+                                contains: '서울',
+                            },
+                        },
+                    },
+                    {
+                        address: {
+                            not: {
+                                contains: '부산',
+                            },
+                        },
+                    },
+                ];
             }
         }
 
+        // 리뷰 키워드
+        if (keywords && keywords.length > 0) {
+            whereConditions.club_keyword_summary = {
+                some: {
+                    keyword_tb: {
+                        id: {
+                            in: keywords,
+                        },
+                    },
+                },
+            };
+        }
+
+        // 정렬 조건
+        const orderBy = this.buildOrderByForObject(sort);
+
         const [clubs, total] = await Promise.all([
             this.prisma.club.findMany({
+                where: whereConditions,
                 include: {
                     user_tb: {
                         select: {
@@ -66,132 +117,154 @@ export class ClubService {
                         },
                     },
                 },
-                orderBy: { createdAt: 'desc' },
+                orderBy,
                 skip: offset,
                 take: limit,
             }),
-            this.prisma.club.count(),
+            this.prisma.club.count({ where: whereConditions }),
         ]);
 
         return {
-            items: clubs.map((club) => ({
-                id: club.id,
-                name: club.name,
-                address: club.address,
-                phone: club.phone,
-                capacity: club.capacity,
-                openTime: club.openTime ? club.openTime.toISOString() : null,
-                closeTime: club.closeTime ? club.closeTime.toISOString() : null,
-                description: club.description,
-                avgRating: club.avgRating,
-                reviewCnt: club.reviewCnt,
-                createdAt: club.createdAt ? club.createdAt.toISOString() : null,
-                owner: club.user_tb
-                    ? {
-                          id: club.user_tb.id,
-                          nickname: club.user_tb.nickname,
-                          profilePath: club.user_tb.profile_path,
-                      }
-                    : null,
-                mainImage: club.club_img_tb[0]
-                    ? {
-                          id: club.club_img_tb[0].id,
-                          filePath: club.club_img_tb[0].file_path,
-                          isMain: club.club_img_tb[0].is_main,
-                      }
-                    : null,
-                keywords: club.club_keyword_summary.map((cks) => ({
-                    id: cks.keyword_tb.id,
-                    name: cks.keyword_tb.name,
-                    iconPath: cks.keyword_tb.icon_path,
-                })),
-                favoriteCount: club._count.favorite_tb,
-            })),
+            items: clubs.map((club) => this.mapClubSearchToResponse(club)),
             total,
             offset,
             limit,
         };
     }
+    private async getSearchNearby(parameters: GetClubsType): Promise<ClubSearchResponseType> {
+        const { searchKey, area, latitude, longitude, keywords, sort, offset, limit } = parameters;
+        // 반경
+        const radiusKm = 5;
 
-    async getAll(offset: number = 0, limit: number = 20): Promise<ClubListResponseType> {
-        const [clubs, total] = await Promise.all([
-            this.prisma.club.findMany({
-                include: {
-                    user_tb: {
-                        select: {
-                            id: true,
-                            nickname: true,
-                            profile_path: true,
-                        },
+        const conditions: string[] = [];
+        const params: any[] = [longitude, latitude, radiusKm];
+        let paramIndex = 4;
+
+        if (searchKey) {
+            conditions.push(`c.name ILIKE '%' || $${paramIndex} || '%'`);
+            params.push(searchKey);
+            paramIndex++;
+        }
+
+        if (keywords && keywords.length > 0) {
+            conditions.push(`c.id IN (
+                SELECT DISTINCT club_id
+                FROM club_keyword_summary
+                WHERE keyword_id = ANY($${paramIndex}::int[])
+                )`);
+            params.push(keywords);
+            paramIndex++;
+        }
+
+        const whereClause = conditions.length > 0 ? `AND ${conditions.join(' AND ')}` : '';
+
+        const orderByClause = this.buildOrderByForRaw(sort);
+        console.log('Keywords param:', keywords);
+        console.log('Conditions:', conditions);
+        console.log('WhereClause:', whereClause);
+        console.log('OrderByClause:', orderByClause);
+        console.log('Params:', params);
+        const query = `
+            SELECT 
+                c.id,
+                c.user_id,
+                c.created_at,
+                c.name,
+                c.phone,
+                c.open_time,
+                c.close_time,
+                c.capacity,
+                c.address,
+                c.description,
+                c.avg_rating,
+                c.review_cnt,
+                c.updated_at,
+                c.sns_links,
+                c.latest_review_at,
+                c.latitude,
+                c.longitude,
+                ST_Distance(
+                    c.location::geography,
+                    ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography
+                ) as distance
+            FROM club_tb c
+            WHERE ST_DWithin(
+                c.location::geography,
+                ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography,
+                $3 * 1000
+            )
+            ${whereClause}
+            ${orderByClause}
+            OFFSET $${paramIndex}
+            LIMIT $${paramIndex + 1}
+        `;
+
+        params.push(offset, limit);
+
+        const clubs = (await this.prisma.$queryRawUnsafe(query, ...params)) as any[];
+
+        const countQuery = `
+            SELECT COUNT(*) as count
+            FROM club_tb c
+            WHERE ST_DWithin(
+                c.location::geography,
+                ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography,
+                $3 * 1000
+            )
+            ${whereClause}
+        `;
+
+        const countResult: any = await this.prisma.$queryRawUnsafe(
+            countQuery,
+            ...params.slice(0, paramIndex - 1)
+        );
+        const total = Number(countResult[0]?.count || 0);
+
+        const clubIds = clubs.map((c: any) => c.id);
+        const fullClubs = await this.prisma.club.findMany({
+            where: { id: { in: clubIds } },
+            include: {
+                user_tb: {
+                    select: {
+                        id: true,
+                        nickname: true,
+                        profile_path: true,
                     },
-                    club_img_tb: {
-                        where: { is_main: true },
-                        select: {
-                            id: true,
-                            file_path: true,
-                            is_main: true,
-                        },
-                        take: 1,
+                },
+                club_img_tb: {
+                    where: { is_main: true },
+                    select: {
+                        id: true,
+                        file_path: true,
+                        is_main: true,
                     },
-                    club_keyword_summary: {
-                        include: {
-                            keyword_tb: {
-                                select: {
-                                    id: true,
-                                    name: true,
-                                    icon_path: true,
-                                },
+                    take: 1,
+                },
+                club_keyword_summary: {
+                    include: {
+                        keyword_tb: {
+                            select: {
+                                id: true,
+                                name: true,
+                                icon_path: true,
                             },
-                        },
-                        take: 3,
-                    },
-                    _count: {
-                        select: {
-                            favorite_tb: true,
                         },
                     },
                 },
-                orderBy: { createdAt: 'desc' },
-                skip: offset,
-                take: limit,
-            }),
-            this.prisma.club.count(),
-        ]);
+                _count: {
+                    select: {
+                        favorite_tb: true,
+                    },
+                },
+            },
+        });
+
+        // Raw Query 순서 보존
+        const clubMap = new Map(fullClubs.map((club) => [club.id, club]));
+        const orderedClubs = clubIds.map((id) => clubMap.get(id)).filter(Boolean) as any[];
 
         return {
-            items: clubs.map((club) => ({
-                id: club.id,
-                name: club.name,
-                address: club.address,
-                phone: club.phone,
-                capacity: club.capacity,
-                openTime: club.openTime ? club.openTime.toISOString() : null,
-                closeTime: club.closeTime ? club.closeTime.toISOString() : null,
-                description: club.description,
-                avgRating: club.avgRating,
-                reviewCnt: club.reviewCnt,
-                createdAt: club.createdAt ? club.createdAt.toISOString() : null,
-                owner: club.user_tb
-                    ? {
-                          id: club.user_tb.id,
-                          nickname: club.user_tb.nickname,
-                          profilePath: club.user_tb.profile_path,
-                      }
-                    : null,
-                mainImage: club.club_img_tb[0]
-                    ? {
-                          id: club.club_img_tb[0].id,
-                          filePath: club.club_img_tb[0].file_path,
-                          isMain: club.club_img_tb[0].is_main,
-                      }
-                    : null,
-                keywords: club.club_keyword_summary.map((cks) => ({
-                    id: cks.keyword_tb.id,
-                    name: cks.keyword_tb.name,
-                    iconPath: cks.keyword_tb.icon_path,
-                })),
-                favoriteCount: club._count.favorite_tb,
-            })),
+            items: orderedClubs.map((club) => this.mapClubSearchToResponse(club)),
             total,
             offset,
             limit,
@@ -262,12 +335,15 @@ export class ClubService {
             address: club.address,
             phone: club.phone,
             capacity: club.capacity,
-            openTime: club.openTime ? club.openTime.toISOString() : null,
-            closeTime: club.closeTime ? club.closeTime.toISOString() : null,
+            openTime: club.openTime ? this.formatTimeOnly(club.openTime) : null,
+            closeTime: club.closeTime ? this.formatTimeOnly(club.closeTime) : null,
             description: club.description,
             avgRating: club.avgRating,
             reviewCnt: club.reviewCnt,
+            favoriteCount: club._count.favorite_tb,
             createdAt: club.createdAt ? club.createdAt.toISOString() : null,
+            latitude: club.latitude,
+            longitude: club.longitude,
             owner: club.user_tb
                 ? {
                       id: club.user_tb.id,
@@ -280,17 +356,6 @@ export class ClubService {
                 filePath: img.file_path,
                 isMain: img.is_main,
             })),
-            keywords: club.club_keyword_summary.map((cks) => ({
-                id: cks.keyword_tb.id,
-                name: cks.keyword_tb.name,
-                iconPath: cks.keyword_tb.icon_path,
-            })),
-            upcomingPerforms: club.perform_tb.map((perform) => ({
-                id: perform.id,
-                title: perform.title,
-                performDate: perform.perform_date ? perform.perform_date.toISOString() : null,
-            })),
-            favoriteCount: club._count.favorite_tb,
         };
     }
 
@@ -360,11 +425,68 @@ export class ClubService {
 
         return { success: true, operation: 'saved' };
     }
-}
 
-function timeStringToDate(timeStr: string | null): Date | null {
-    if (!timeStr) return null;
-    const [hours, minutes, seconds] = timeStr.split(':').map(Number);
-    const date = new Date(Date.UTC(1970, 0, 1, hours, minutes, seconds));
-    return date;
+    private buildOrderByForObject(sortBy?: string): { [key: string]: 'asc' | 'desc' } {
+        const defaultOrder = { createdAt: 'desc' as const };
+
+        if (!sortBy) return defaultOrder;
+        const [direction, field] = [sortBy[0], sortBy.slice(1)];
+        const order = direction === '-' ? 'desc' : 'asc';
+
+        switch (field) {
+            case 'reviewCount':
+                return { reviewCnt: order };
+            case 'rating':
+                return { avgRating: order };
+            case 'reviewCreatedAt':
+                return { latestReviewAt: order };
+            default:
+                return defaultOrder;
+        }
+    }
+    private buildOrderByForRaw(sortBy?: string) {
+        const defaultOrder: string = `ORDER BY c.created_at DESC, distance ASC`;
+
+        if (!sortBy) return defaultOrder;
+        const [direction, field] = [sortBy[0], sortBy.slice(1)];
+        const order = direction === '-' ? 'desc' : 'asc';
+
+        switch (field) {
+            case 'reviewCount':
+                return `ORDER BY c.review_cnt ${order.toUpperCase()}, distance ASC`;
+            case 'rating':
+                return `ORDER BY c.avg_rating ${order.toUpperCase()}, distance ASC`;
+            case 'reviewCreatedAt':
+                return `ORDER BY c.latest_review_at ${order.toUpperCase()}, distance ASC`;
+            default:
+                return defaultOrder;
+        }
+    }
+
+    private mapClubSearchToResponse(club: any): ClubSearchType {
+        return {
+            id: club.id,
+            name: club.name,
+            address: club.address,
+            avgRating: club.avgRating,
+            reviewCnt: club.reviewCnt,
+            latitude: club.latitude,
+            longitude: club.longitude,
+            mainImage: club.club_img_tb[0]
+                ? {
+                      id: club.club_img_tb[0].id,
+                      filePath: club.club_img_tb[0].file_path,
+                      isMain: club.club_img_tb[0].is_main,
+                  }
+                : null,
+            favoriteCount: club._count.favorite_tb,
+        };
+    }
+
+    private formatTimeOnly(time: Date | string): string {
+        const date = typeof time === 'string' ? new Date(time) : time;
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        return `${hours}:${minutes}`;
+    }
 }

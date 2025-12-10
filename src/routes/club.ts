@@ -4,8 +4,8 @@ import {
     getClubsJson,
     GetClubsType,
     clubDetailResJson,
-    clubListResJson,
     toggleFavoriteResJson,
+    clubSearchResJson,
 } from '@/schemas/club.schema.js';
 import { idParamSchema, idParamJson, errorResJson } from '@/schemas/common.schema.js';
 import { BadRequestError } from '@/common/error.js';
@@ -21,7 +21,7 @@ export async function clubRoutes(fastify: FastifyInstance) {
                 summary: '클럽 목록 조회',
                 description: '클럽 목록 조회',
                 response: {
-                    200: clubListResJson,
+                    200: clubSearchResJson,
                     400: errorResJson,
                     500: errorResJson,
                 },
@@ -31,7 +31,7 @@ export async function clubRoutes(fastify: FastifyInstance) {
             const query = request.query as GetClubsType;
 
             const service = new ClubService(request.server.prisma);
-            const result = await service.getAll(query.offset, query.limit);
+            const result = await service.getSearch(query);
 
             return reply.send({
                 data: result,

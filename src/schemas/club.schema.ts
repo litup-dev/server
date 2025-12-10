@@ -44,6 +44,8 @@ export const clubSchema = z.object({
     reviewCnt: z.number().nullable(),
     favoriteCount: z.number().nullable(),
     createdAt: z.string().nullable(),
+    latitude: z.number().nullable(),
+    longitude: z.number().nullable(),
     owner: clubUserSchema.optional().nullable(),
     mainImage: clubImageSchema.optional().nullable(),
     images: z.array(clubImageSchema).optional().nullable(),
@@ -58,9 +60,21 @@ export const clubSimpleSchema = clubSchema.pick({
     mainImage: true,
 });
 
+export const clubSearchSchema = clubSchema.pick({
+    id: true,
+    name: true,
+    address: true,
+    mainImage: true,
+    latitude: true,
+    longitude: true,
+    avgRating: true,
+    reviewCnt: true,
+    favoriteCount: true,
+});
+
 // 클럽 목록 조회 쿼리 파라미터 스키마
 export const getClubsSchema = z.object({
-    keyword: z.string().nullable().openapi({
+    searchKey: z.string().nullable().optional().openapi({
         description: '클럽명 키워드',
         example: '제비다방',
     }),
@@ -85,6 +99,22 @@ export const getClubsSchema = z.object({
         .openapi({
             description: '경도',
             example: 126.978,
+        }),
+    keywords: z
+        .preprocess((val) => {
+            if (typeof val === 'string') {
+                return val
+                    .split(',')
+                    .map((id) => parseInt(id.trim()))
+                    .filter((id) => !isNaN(id));
+            }
+            return val;
+        }, z.array(z.number()))
+        .optional()
+        .nullable()
+        .openapi({
+            description: '키워드 ID 배열 (콤마로 구분)',
+            example: [1, 2, 3],
         }),
     sort: z.nativeEnum(ClubSortBy).optional().openapi({
         description: '정렬 기준',
@@ -125,22 +155,33 @@ export const clubListSimpleResponseSchema = z.object({
     limit: z.number(),
 });
 
+export const clubSearchResponseSchema = z.object({
+    items: z.array(clubSearchSchema),
+    total: z.number(),
+    offset: z.number(),
+    limit: z.number(),
+});
+
 // 응답 스키마
 export const clubDetailRes = successResponseSchema(clubSchema);
 export const clubListRes = paginatedResponseSchema(clubSchema);
 export const clubListSimpleRes = paginatedResponseSchema(clubSimpleSchema);
+export const clubSearchRes = paginatedResponseSchema(clubSearchSchema);
 export const toggleFavoriteRes = successResponseSchema(z.boolean());
 
 // JSON Schema
 export const getClubsJson = generateSchema(getClubsSchema);
 export const clubDetailResJson = generateSchema(clubDetailRes);
 export const clubListResJson = generateSchema(clubListRes);
+export const clubSearchResJson = generateSchema(clubSearchRes);
 export const clubListSimpleResJson = generateSchema(clubListSimpleRes);
 export const toggleFavoriteResJson = generateSchema(toggleFavoriteRes);
 
 // 타입 추출
 export type ClubType = z.infer<typeof clubSchema>;
+export type ClubSearchType = z.infer<typeof clubSearchSchema>;
 export type GetClubsType = z.infer<typeof getClubsSchema>;
 export type ClubDetailResponseType = z.infer<typeof clubDetailRes>;
 export type ClubListResponseType = z.infer<typeof clubListResponseSchema>;
 export type ClubListSimpleResponseType = z.infer<typeof clubListSimpleResponseSchema>;
+export type ClubSearchResponseType = z.infer<typeof clubSearchResponseSchema>;

@@ -180,6 +180,7 @@ export class ReviewService {
                 data: {
                     avgRating: stats._avg.rating || 0,
                     reviewCnt: stats._count,
+                    latestReviewAt: new Date(),
                 },
             });
 

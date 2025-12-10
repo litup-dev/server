@@ -19,16 +19,20 @@ model Club {
   capacity             Int?
   address              String?                   @db.VarChar(50)
   description          String?
-  avgRating            Float?                    @map("avg_rating")
-  reviewCnt            Int?                      @map("review_cnt")
+  avgRating            Float?                    @default(0.0) @map("avg_rating")
+  reviewCnt            Int?                      @default(0) @map("review_cnt")
   updated_at           DateTime?                 @db.Timestamptz(6)
   sns_links            Json?
+  latestReviewAt       DateTime?                 @map("latest_review_at") @db.Timestamptz(6)
+  longitude            Float?
+  latitude             Float?
   club_img_tb          club_img_tb[]
   club_keyword_summary club_keyword_summary[]
   club_review_tb       club_review_tb[]
   user_tb              user_tb                   @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   favorite_tb          favorite_tb[]
   perform_tb           Perform[]
+  perform_tmp          perform_tmp[]
 
   @@map("club_tb")
 }
@@ -238,7 +242,7 @@ model user_tb {
   created_at             DateTime?                @default(now()) @db.Timestamptz(6)
   updated_at             DateTime?                @db.Timestamptz(6)
   profile_path           String?
-  role                   String?                  @db.VarChar(20)
+  role                   String?                  @default("user") @db.VarChar(20)
   provider_id            String?                  @db.VarChar(255)
   bio                    String?
   email                  String?                  @db.VarChar(255)
@@ -250,6 +254,7 @@ model user_tb {
   perform_review_like_tb perform_review_like_tb[]
   perform_review_tb      perform_review_tb[]
   perform_tb             Perform[]
+  perform_tmp            perform_tmp[]
   report_tb              report_tb[]
   user_settings_tb       user_settings_tb?
   social_code            social_code              @relation(fields: [social_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -290,4 +295,36 @@ model nickname_word_tb {
   word     String @db.VarChar(10)
 
   @@index([category], map: "idx_category")
+}
+
+model perform_img_tmp {
+  id            Int         @id @default(autoincrement())
+  perform_id    Int
+  file_path     String?     @db.VarChar(255)
+  created_at    DateTime?   @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime?   @db.Timestamptz(6)
+  is_main       Boolean?
+  original_name String?     @db.VarChar(255)
+  file_size     BigInt?
+  perform_tmp   perform_tmp @relation(fields: [perform_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model perform_tmp {
+  id              Int               @id @default(autoincrement())
+  club_id         Int
+  user_id         Int
+  title           String?           @db.VarChar(100)
+  description     String?
+  perform_date    DateTime?         @db.Timestamptz(6)
+  booking_price   Int?              @default(0)
+  created_at      DateTime?         @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime?         @db.Timestamptz(6)
+  is_cancelled    Boolean?
+  artists         Json?
+  sns_links       Json?
+  onsite_price    Int?              @default(0)
+  booking_url     String?           @db.VarChar(255)
+  perform_img_tmp perform_img_tmp[]
+  club_tb         Club              @relation(fields: [club_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user_tb         user_tb           @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
