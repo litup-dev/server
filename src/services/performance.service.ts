@@ -274,9 +274,6 @@ export class PerformanceService {
         const endDate = new Date(startDate);
         endDate.setMonth(endDate.getMonth() + 1);
 
-        console.log('startDate', startDate);
-        console.log('endDate', endDate);
-
         const performances = await this.prisma.perform.findMany({
             where: {
                 perform_date: {
@@ -291,13 +288,16 @@ export class PerformanceService {
                 artists: true,
                 club_tb: {
                     select: {
+                        id: true,
                         name: true,
                     },
                 },
                 perform_img_tb: {
                     where: { is_main: true },
                     select: {
+                        id: true,
                         file_path: true,
+                        is_main: true,
                     },
                     take: 1,
                 },
@@ -309,33 +309,84 @@ export class PerformanceService {
 
         const result: Record<
             string,
-            {
-                id: number;
-                clubName: string;
-                performName: string;
-                artists: string[] | null;
-                image: string | null;
-            }[]
+            Record<
+                number,
+                {
+                    id: number;
+                    clubName: string | null;
+                    performances: Array<{
+                        id: number;
+                        title: string | null;
+                        performDate: string | null;
+                        artists: { name: string }[] | null;
+                        images: Array<{
+                            id: number;
+                            filePath: string | null;
+                            isMain: boolean | null;
+                        }> | null;
+                    }>;
+                }
+            >
         > = {};
 
         performances.forEach((p) => {
             const dateKey = p.perform_date!.toISOString().split('T')[0]!;
+            const clubId = p.club_tb!.id!;
 
             if (!result[dateKey]) {
-                result[dateKey] = [];
+                result[dateKey] = {};
             }
-            result[dateKey].push({
+
+            if (!result[dateKey][clubId]) {
+                result[dateKey][clubId] = {
+                    id: clubId,
+                    clubName: p.club_tb.name!,
+                    performances: [],
+                };
+            }
+
+            result[dateKey][clubId].performances.push({
                 id: p.id,
-                clubName: p.club_tb.name!,
-                performName: p.title!,
-                artists: Array.isArray(p.artists)
-                    ? (p.artists as { name: string }[]).map((a) => a.name)
+                title: p.title,
+                performDate:
+                    p.perform_date instanceof Date ? p.perform_date.toISOString() : p.perform_date, // ! 제거
+                artists: Array.isArray(p.artists) ? (p.artists as { name: string }[]) : null,
+                images: p.perform_img_tb[0]
+                    ? [
+                          {
+                              id: 0,
+                              filePath: p.perform_img_tb[0].file_path,
+                              isMain: true,
+                          },
+                      ]
                     : null,
-                image: p.perform_img_tb[0]?.file_path ?? null,
             });
         });
 
-        return result;
+        const finalResult: Record<
+            string,
+            Array<{
+                id: number;
+                clubName: string | null;
+                performances: Array<{
+                    id: number;
+                    title: string | null;
+                    performDate: string | null;
+                    artists: { name: string }[] | null;
+                    images: Array<{
+                        id: number;
+                        filePath: string | null;
+                        isMain: boolean | null;
+                    }> | null;
+                }>;
+            }>
+        > = {};
+
+        for (const date in result) {
+            finalResult[date] = Object.values(result[date]!);
+        }
+
+        return finalResult;
     }
 
     async attendPerformance(userId: number, performId: number): Promise<boolean> {

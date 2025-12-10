@@ -43,6 +43,14 @@ export const performanceDefaultSchema = z.object({
     images: z.array(imageSchema).optional().nullable(),
 });
 
+export const performSimpleSchema = performanceDefaultSchema.pick({
+    id: true,
+    title: true,
+    performDate: true,
+    artists: true,
+    images: true,
+});
+
 // 공연 페이지 응답 스키마
 export const performanceListResponseSchema = z.object({
     items: z.array(performanceDefaultSchema),
@@ -81,9 +89,7 @@ export const getPerformancesByMonthSchema = z.object({
 export const performanceMonthItemSchema = z.object({
     id: z.number(),
     clubName: z.string().nullable(),
-    performName: z.string(),
-    artists: z.array(z.string()).nullable(),
-    image: z.string().nullable(),
+    performances: z.array(performSimpleSchema),
 });
 
 export const performanceMonthListResponseSchema = z.record(
