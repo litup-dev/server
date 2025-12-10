@@ -1,24 +1,20 @@
 import { PrismaClient } from '@prisma/client';
-import { ForbiddenError, NotFoundError } from '@/common/error.js';
+import { NotFoundError } from '@/common/error.js';
 import { SavedFileInfo } from '@/types/file.types.js';
 import { OperationSuccessType } from '@/schemas/common.schema.js';
 import {
     ClubType,
-    ClubListResponseType,
     GetClubsType,
     ClubSearchResponseType,
     ClubSearchType,
 } from '@/schemas/club.schema.js';
-import { ClubSearchArea, ClubSortBy } from '@/types/search.types';
-import { late } from 'zod';
-import { create } from 'domain';
+import { ClubSearchArea } from '@/types/search.types.js';
 
 export class ClubService {
     constructor(private prisma: PrismaClient) {}
 
     async getSearch(parameters: GetClubsType): Promise<ClubSearchResponseType> {
         const { searchKey, area, latitude, longitude, keywords, sort, offset, limit } = parameters;
-        console.log('GetSearch parameters:', parameters);
 
         if (area === ClubSearchArea.NEARBY && latitude && longitude) {
             return this.getSearchNearby(parameters);
