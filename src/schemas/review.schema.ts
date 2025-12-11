@@ -1,5 +1,6 @@
 import { z, generateSchema } from '@/common/zod.js';
 import { successResponseSchema, paginatedResponseSchema } from '@/schemas/common.schema.js';
+import { ReviewSortBy } from '@/types/search.types';
 
 // 리뷰 키워드 스키마
 const reviewKeywordSchema = z.object({
@@ -84,6 +85,10 @@ export const updateReviewSchema = z.object({
 
 // 리뷰 목록 조회 쿼리 파라미터 스키마
 export const getReviewsSchema = z.object({
+    sort: z.nativeEnum(ReviewSortBy).optional().openapi({
+        description: '정렬 기준',
+        example: '-createdAt',
+    }),
     offset: z
         .preprocess((val) => {
             if (typeof val === 'string') return parseInt(val, 10);

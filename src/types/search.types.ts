@@ -13,3 +13,8 @@ export enum ClubSortBy {
     RATING_DESC = '-rating',
     RATING_ASC = '+rating',
 }
+
+export enum ReviewSortBy {
+    RECENT = '-createdAt',
+    OLDEST = '+createdAt',
+}

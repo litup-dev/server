@@ -7,6 +7,7 @@ import {
     ReviewListResponseType,
     CreateReviewType,
     UpdateReviewType,
+    GetReviewsType,
 } from '@/schemas/review.schema.js';
 
 export class ReviewService {
@@ -14,9 +15,12 @@ export class ReviewService {
 
     async getReviewsByClubId(
         clubId: number,
-        offset: number = 0,
-        limit: number = 10
+        query: GetReviewsType
     ): Promise<ReviewListResponseType> {
+        const orderBy = this.buildOrderByForObject(query.sort);
+        const offset = query.offset ?? 0;
+        const limit = query.limit ?? 10;
+
         const [reviews, total] = await Promise.all([
             this.prisma.club_review_tb.findMany({
                 where: { club_id: clubId },
@@ -46,7 +50,85 @@ export class ReviewService {
                         },
                     },
                 },
-                orderBy: { created_at: 'desc' },
+                orderBy,
+                skip: offset,
+                take: limit,
+            }),
+            this.prisma.club_review_tb.count({
+                where: { club_id: clubId },
+            }),
+        ]);
+
+        return {
+            items: reviews.map((review) => ({
+                id: review.id,
+                clubId: review.club_id,
+                userId: review.user_id,
+                rating: review.rating,
+                content: review.content,
+                createdAt: review.created_at ? review.created_at.toISOString() : null,
+                updatedAt: review.updated_at ? review.updated_at.toISOString() : null,
+                user: review.user_tb
+                    ? {
+                          id: review.user_tb.id,
+                          nickname: review.user_tb.nickname,
+                          profilePath: review.user_tb.profile_path,
+                      }
+                    : null,
+                keywords: review.club_review_keyword_tb.map((krw) => ({
+                    id: krw.keyword_tb.id,
+                    name: krw.keyword_tb.name,
+                })),
+                images: review.review_img_tb.map((img) => ({
+                    id: img.id,
+                    filePath: img.file_path,
+                    isMain: img.is_main,
+                })),
+            })),
+            total,
+            offset,
+            limit,
+        };
+    }
+    async getReviewsByClubIdAndUserId(
+        clubId: number,
+        userId: number,
+        query: GetReviewsType
+    ): Promise<ReviewListResponseType> {
+        const orderBy = this.buildOrderByForObject(query.sort);
+        const offset = query.offset ?? 0;
+        const limit = query.limit ?? 10;
+
+        const [reviews, total] = await Promise.all([
+            this.prisma.club_review_tb.findMany({
+                where: { club_id: clubId, user_id: userId },
+                include: {
+                    user_tb: {
+                        select: {
+                            id: true,
+                            nickname: true,
+                            profile_path: true,
+                        },
+                    },
+                    club_review_keyword_tb: {
+                        include: {
+                            keyword_tb: {
+                                select: {
+                                    id: true,
+                                    name: true,
+                                },
+                            },
+                        },
+                    },
+                    review_img_tb: {
+                        select: {
+                            id: true,
+                            file_path: true,
+                            is_main: true,
+                        },
+                    },
+                },
+                orderBy,
                 skip: offset,
                 take: limit,
             }),
@@ -342,5 +424,20 @@ export class ReviewService {
         });
 
         return { success: true, operation: 'saved' };
+    }
+
+    private buildOrderByForObject(sortBy?: string): { [key: string]: 'asc' | 'desc' } {
+        const defaultOrder = { createdAt: 'desc' as const };
+
+        if (!sortBy) return defaultOrder;
+        const [direction, field] = [sortBy[0], sortBy.slice(1)];
+        const order = direction === '-' ? 'desc' : 'asc';
+
+        switch (field) {
+            case 'createdAt':
+                return { created_at: order };
+            default:
+                return defaultOrder;
+        }
     }
 }
