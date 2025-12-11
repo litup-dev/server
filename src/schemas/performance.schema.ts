@@ -43,13 +43,25 @@ export const performanceDefaultSchema = z.object({
     images: z.array(imageSchema).optional().nullable(),
 });
 
-export const performSimpleSchema = performanceDefaultSchema.pick({
+export const performCalendarSchema = performanceDefaultSchema.pick({
     id: true,
     title: true,
     performDate: true,
     artists: true,
     images: true,
 });
+
+export const performMonthlyByClubSchema = performanceDefaultSchema.pick({
+    id: true,
+    title: true,
+    performDate: true,
+    bookingPrice: true,
+    onsitePrice: true,
+    isCanceled: true,
+    description: true,
+});
+
+export const performMonthlyListByClubSchema = z.array(performMonthlyByClubSchema);
 
 // 공연 페이지 응답 스키마
 export const performanceListResponseSchema = z.object({
@@ -75,7 +87,12 @@ export const performanceRecordsSchema = performanceDefaultSchema
         }),
     });
 
-export const getPerformancesByMonthSchema = z.object({
+export const getClubPerformancesByMonthSchema = z.object({
+    entityId: z.number().int().positive().openapi({
+        type: 'number',
+        description: '클럽 ID',
+        example: 1,
+    }),
     month: z
         .string()
         .regex(/^\d{4}-\d{2}$/, '월 조회 포맷 YYYY-MM')
@@ -86,15 +103,26 @@ export const getPerformancesByMonthSchema = z.object({
         }),
 });
 
-export const performanceMonthItemSchema = z.object({
-    id: z.number(),
-    clubName: z.string().nullable(),
-    performances: z.array(performSimpleSchema),
+export const getPerformancesCalendarSchema = z.object({
+    month: z
+        .string()
+        .regex(/^\d{4}-\d{2}$/, '월 조회 포맷 YYYY-MM')
+        .openapi({
+            type: 'string',
+            description: '조회 월, 포맷 YYYY-MM',
+            example: '2025-11',
+        }),
 });
 
-export const performanceMonthListResponseSchema = z.record(
+export const performanceCalendarItemSchema = z.object({
+    id: z.number(),
+    clubName: z.string().nullable(),
+    performances: z.array(performCalendarSchema),
+});
+
+export const performanceCalendarListResponseSchema = z.record(
     z.string(),
-    z.array(performanceMonthItemSchema)
+    z.array(performanceCalendarItemSchema)
 );
 
 // 공연 관람기록 페이지 응답 스키마
@@ -205,22 +233,26 @@ export const searchPerformancesSchema = z.object({
 export const performDetailRes = successResponseSchema(performanceDefaultSchema);
 export const performListRes = paginatedResponseSchema(performanceDefaultSchema);
 export const performRecordsRes = paginatedResponseSchema(performanceRecordsSchema);
+export const performMonthlyByClubRes = successResponseSchema(performMonthlyListByClubSchema);
 export const attendRes = successResponseSchema(z.boolean());
 
 // JSON Schema
 export const getPerformancesByDateRangeJson = generateSchema(getPerformancesByDateRangeSchema);
-export const getPerformancesByMonthJson = generateSchema(getPerformancesByMonthSchema);
+export const getPerformancesByMonthJson = generateSchema(getPerformancesCalendarSchema);
 export const searchPerformancesJson = generateSchema(searchPerformancesSchema);
 export const performanceListResJson = generateSchema(performListRes);
 export const performDetailResJson = generateSchema(performDetailRes);
 export const performanceRecordsResJson = generateSchema(performRecordsRes);
+export const performanceMonthByClubListResJson = generateSchema(performMonthlyByClubRes);
 
 // 타입 추출
 export type PerformanceType = z.infer<typeof performanceDefaultSchema>;
 export type PerformanceListType = z.infer<typeof performListRes>;
 export type GetPerformanceByDateRangeType = z.infer<typeof getPerformancesByDateRangeSchema>;
-export type GetPerformanceByMonthType = z.infer<typeof getPerformancesByMonthSchema>;
+export type GetPerformanceCalendarType = z.infer<typeof getPerformancesCalendarSchema>;
+export type getClubPerformancesByMonthType = z.infer<typeof getClubPerformancesByMonthSchema>;
 export type SearchPerformancesType = z.infer<typeof searchPerformancesSchema>;
 export type PerformanceListResponseType = z.infer<typeof performanceListResponseSchema>;
-export type PerformanceMonthListResponseType = z.infer<typeof performanceMonthListResponseSchema>;
+export type PerformanceCalendarListType = z.infer<typeof performanceCalendarListResponseSchema>;
 export type PerformanceRecordsType = z.infer<typeof performanceRecordsListResponseSchema>;
+export type PerformanceMonthlyByClubType = z.infer<typeof performMonthlyListByClubSchema>;

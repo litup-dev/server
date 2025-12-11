@@ -3,10 +3,12 @@ import { OperationSuccessType } from '@/schemas/common.schema.js';
 import {
     GetPerformanceByDateRangeType,
     PerformanceListResponseType,
-    PerformanceMonthListResponseType,
+    PerformanceCalendarListType,
     SearchPerformancesType,
     PerformanceType,
-    GetPerformanceByMonthType,
+    GetPerformanceCalendarType,
+    getClubPerformancesByMonthType,
+    PerformanceMonthlyByClubType,
 } from '@/schemas/performance.schema.js';
 import { SavedFileInfo } from '@/types/file.types.js';
 import { PrismaClient } from '@prisma/client';
@@ -267,8 +269,8 @@ export class PerformanceService {
     }
 
     async getPerformancesByMonth(
-        query: GetPerformanceByMonthType
-    ): Promise<PerformanceMonthListResponseType> {
+        query: GetPerformanceCalendarType
+    ): Promise<PerformanceCalendarListType> {
         const { month } = query;
         const startDate = new Date(`${month}-01`);
         const endDate = new Date(startDate);
@@ -387,6 +389,48 @@ export class PerformanceService {
         }
 
         return finalResult;
+    }
+
+    async getClubMonthlyPerformances(
+        params: getClubPerformancesByMonthType
+    ): Promise<PerformanceMonthlyByClubType> {
+        const { month, entityId } = params;
+        const startDate = new Date(`${month}-01`);
+        const endDate = new Date(startDate);
+        endDate.setMonth(endDate.getMonth() + 1);
+
+        const performances = await this.prisma.perform.findMany({
+            where: {
+                perform_date: {
+                    gte: startDate,
+                    lt: endDate,
+                },
+                club_id: entityId,
+            },
+            select: {
+                id: true,
+                title: true,
+                perform_date: true,
+                booking_price: true,
+                onsite_price: true,
+                is_cancelled: true,
+                description: true,
+            },
+            orderBy: {
+                perform_date: 'asc',
+            },
+        });
+
+        return performances.map((p) => ({
+            id: p.id,
+            title: p.title,
+            performDate:
+                p.perform_date instanceof Date ? p.perform_date.toISOString() : p.perform_date,
+            bookingPrice: p.booking_price ?? null,
+            onsitePrice: p.onsite_price ?? null,
+            isCanceled: p.is_cancelled ?? null,
+            description: p.description ?? null,
+        }));
     }
 
     async attendPerformance(userId: number, performId: number): Promise<boolean> {

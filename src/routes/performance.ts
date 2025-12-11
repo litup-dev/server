@@ -8,8 +8,9 @@ import {
     searchPerformancesJson,
     SearchPerformancesType,
     getPerformancesByMonthJson,
-    performanceMonthListResponseSchema,
-    GetPerformanceByMonthType,
+    GetPerformanceCalendarType,
+    performanceCalendarListResponseSchema,
+    performanceMonthByClubListResJson,
 } from '@/schemas/performance.schema.js';
 import {
     idParamSchema,
@@ -85,18 +86,56 @@ export async function performanceRoutes(fastify: FastifyInstance) {
                 summary: '메인 페이지 공연 목록 월별 조회',
                 description: '메인 페이지 공연 목록 월별 조회',
                 response: {
-                    200: performanceMonthListResponseSchema,
+                    200: performanceCalendarListResponseSchema,
                     400: errorResJson,
                     500: errorResJson,
                 },
             },
         },
         async (request, reply) => {
-            const query = request.query as GetPerformanceByMonthType;
+            const query = request.query as GetPerformanceCalendarType;
 
             const service = new PerformanceService(request.server.prisma);
 
             const result = await service.getPerformancesByMonth(query);
+
+            return reply.send({
+                data: result,
+            });
+        }
+    );
+
+    fastify.get(
+        '/performances/club/:entityId/calendar',
+        {
+            schema: {
+                params: idParamJson,
+                querystring: getPerformancesByMonthJson,
+                tags: ['Performances'],
+                summary: '클럽별 공연 목록 월별 조회',
+                description: '클럽별 공연 목록 월별 조회',
+                response: {
+                    200: performanceMonthByClubListResJson,
+                    400: errorResJson,
+                    500: errorResJson,
+                },
+            },
+        },
+        async (request, reply) => {
+            const parsed = idParamSchema.safeParse(request.params);
+            if (!parsed.success) {
+                throw new BadRequestError(`허용되지 않은 파라미터입니다. ${parsed.error.message}`);
+            }
+
+            const { entityId } = parsed.data;
+            const query = request.query as GetPerformanceCalendarType;
+
+            const service = new PerformanceService(request.server.prisma);
+
+            const result = await service.getClubMonthlyPerformances({
+                month: query.month,
+                entityId,
+            });
 
             return reply.send({
                 data: result,
