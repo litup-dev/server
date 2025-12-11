@@ -96,7 +96,6 @@ export const paginatedResponseSchema = <T extends z.ZodType>(itemSchema: T) =>
 export const keywordSchema = z.object({
     id: z.number().int(),
     keyword: z.string(),
-    iconPath: z.string().nullable(),
     sortOrder: z.number().int(),
 });
 export const categorySchema = z.object({

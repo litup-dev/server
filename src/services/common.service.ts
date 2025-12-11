@@ -25,7 +25,6 @@ export class CommonService {
             keywords: category.keyword_tb.map((keyword) => ({
                 id: keyword.id,
                 keyword: keyword.name || '',
-                iconPath: keyword.icon_path || '',
                 sortOrder: keyword.sort_order || 0,
             })),
         }));

@@ -101,7 +101,6 @@ export class ClubService {
                                 select: {
                                     id: true,
                                     name: true,
-                                    icon_path: true,
                                 },
                             },
                         },
@@ -242,7 +241,6 @@ export class ClubService {
                             select: {
                                 id: true,
                                 name: true,
-                                icon_path: true,
                             },
                         },
                     },
@@ -293,7 +291,6 @@ export class ClubService {
                             select: {
                                 id: true,
                                 name: true,
-                                icon_path: true,
                             },
                         },
                     },
@@ -340,6 +337,10 @@ export class ClubService {
             createdAt: club.createdAt ? club.createdAt.toISOString() : null,
             latitude: club.latitude,
             longitude: club.longitude,
+            keywords: club.club_keyword_summary.map((cks) => ({
+                id: cks.keyword_tb.id,
+                name: cks.keyword_tb.name,
+            })),
             owner: club.user_tb
                 ? {
                       id: club.user_tb.id,

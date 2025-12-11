@@ -20,7 +20,6 @@ const clubImageSchema = z.object({
 const clubKeywordSchema = z.object({
     id: z.number(),
     name: z.string().nullable(),
-    iconPath: z.string().nullable(),
 });
 
 // 예정 공연 스키마

@@ -247,7 +247,6 @@ export const performanceMonthByClubListResJson = generateSchema(performMonthlyBy
 
 // 타입 추출
 export type PerformanceType = z.infer<typeof performanceDefaultSchema>;
-export type PerformanceListType = z.infer<typeof performListRes>;
 export type GetPerformanceByDateRangeType = z.infer<typeof getPerformancesByDateRangeSchema>;
 export type GetPerformanceCalendarType = z.infer<typeof getPerformancesCalendarSchema>;
 export type getClubPerformancesByMonthType = z.infer<typeof getClubPerformancesByMonthSchema>;
