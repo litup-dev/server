@@ -18,6 +18,7 @@ export class ReviewService {
         query: GetReviewsType
     ): Promise<ReviewListResponseType> {
         const orderBy = this.buildOrderByForObject(query.sort);
+        console.log('orderBy', orderBy);
         const offset = query.offset ?? 0;
         const limit = query.limit ?? 10;
 
@@ -427,7 +428,7 @@ export class ReviewService {
     }
 
     private buildOrderByForObject(sortBy?: string): { [key: string]: 'asc' | 'desc' } {
-        const defaultOrder = { createdAt: 'desc' as const };
+        const defaultOrder = { created_at: 'desc' as const };
 
         if (!sortBy) return defaultOrder;
         const [direction, field] = [sortBy[0], sortBy.slice(1)];
