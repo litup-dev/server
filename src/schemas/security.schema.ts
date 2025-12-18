@@ -1,7 +1,7 @@
 import { z, generateSchema } from '@/common/zod.js';
 
 export const jwtTokenSchema = z.object({
-    userId: z.number().int().positive().openapi({
+    userId: z.number().int().positive().nullable().openapi({
         type: 'integer',
         description: '사용자 고유 ID',
         example: 123,

@@ -31,6 +31,7 @@ export async function clubRoutes(fastify: FastifyInstance) {
             const query = request.query as GetClubsType;
 
             const service = new ClubService(request.server.prisma);
+            console.log('Club Query Parameters:', query);
             const result = await service.getSearch(query);
 
             return reply.send({
@@ -95,6 +96,9 @@ export async function clubRoutes(fastify: FastifyInstance) {
             const { entityId } = parsed.data;
 
             const { userId } = parseJwt(request.headers, false);
+            if (!userId) {
+                throw new BadRequestError('유효하지 않은 사용자입니다.');
+            }
 
             const service = new ClubService(request.server.prisma);
             const result = await service.toggleFavorite(entityId, userId);

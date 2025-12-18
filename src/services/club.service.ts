@@ -15,7 +15,6 @@ export class ClubService {
 
     async getSearch(parameters: GetClubsType): Promise<ClubSearchResponseType> {
         const { searchKey, area, latitude, longitude, keywords, sort, offset, limit } = parameters;
-
         if (area === ClubSearchArea.NEARBY && latitude && longitude) {
             return this.getSearchNearby(parameters);
         }
@@ -335,8 +334,8 @@ export class ClubService {
             reviewCnt: club.reviewCnt,
             favoriteCount: club._count.favorite_tb,
             createdAt: club.createdAt ? club.createdAt.toISOString() : null,
-            latitude: club.latitude,
-            longitude: club.longitude,
+            latitude: (club as any).latitude ?? null,
+            longitude: (club as any).longitude ?? null,
             keywords: club.club_keyword_summary.map((cks) => ({
                 id: cks.keyword_tb.id,
                 name: cks.keyword_tb.name,
@@ -467,8 +466,8 @@ export class ClubService {
             address: club.address,
             avgRating: club.avgRating,
             reviewCnt: club.reviewCnt,
-            latitude: club.latitude,
-            longitude: club.longitude,
+            latitude: club.latitude ?? null,
+            longitude: club.longitude ?? null,
             mainImage: club.club_img_tb[0]
                 ? {
                       id: club.club_img_tb[0].id,

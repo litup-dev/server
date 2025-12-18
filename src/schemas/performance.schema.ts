@@ -61,8 +61,10 @@ export const performMonthlyByClubSchema = performanceDefaultSchema.pick({
     description: true,
 });
 
-export const performMonthlyListByClubSchema = z.array(performMonthlyByClubSchema);
-
+export const performMonthlyListByClubSchema = z.record(
+    z.string(),
+    z.array(performMonthlyByClubSchema)
+);
 // 공연 페이지 응답 스키마
 export const performanceListResponseSchema = z.object({
     items: z.array(performanceDefaultSchema),

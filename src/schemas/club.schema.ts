@@ -83,6 +83,7 @@ export const getClubsSchema = z.object({
     }),
     latitude: z
         .preprocess((val) => {
+            if (val === undefined || val === null || val === '') return undefined;
             if (typeof val === 'string') return parseFloat(val);
             return val;
         }, z.number().nullable().optional())
@@ -92,6 +93,7 @@ export const getClubsSchema = z.object({
         }),
     longitude: z
         .preprocess((val) => {
+            if (val === undefined || val === null || val === '') return undefined;
             if (typeof val === 'string') return parseFloat(val);
             return val;
         }, z.number().nullable().optional())

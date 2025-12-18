@@ -33,7 +33,7 @@ export function parseJwt(headers: FastifyRequest['headers'], isNullable: boolean
     }
 
     return {
-        userId: userId ?? null,
+        userId: Number(userId) ?? null,
         iat: null,
         exp: null,
     };

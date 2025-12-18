@@ -421,16 +421,45 @@ export class PerformanceService {
             },
         });
 
-        return performances.map((p) => ({
-            id: p.id,
-            title: p.title,
-            performDate:
-                p.perform_date instanceof Date ? p.perform_date.toISOString() : p.perform_date,
-            bookingPrice: p.booking_price ?? null,
-            onsitePrice: p.onsite_price ?? null,
-            isCanceled: p.is_cancelled ?? null,
-            description: p.description ?? null,
-        }));
+        const result: Record<
+            string,
+            Array<{
+                id: number;
+                title: string | null;
+                performDate: string | null;
+                bookingPrice: number | null;
+                onsitePrice: number | null;
+                isCanceled: boolean | null;
+                description: string | null;
+            }>
+        > = {};
+
+        performances.forEach((p) => {
+            const dateKey = p.perform_date
+                ? p.perform_date instanceof Date
+                    ? p.perform_date.toISOString().split('T')[0]
+                    : new Date(p.perform_date).toISOString().split('T')[0]
+                : '';
+
+            if (!dateKey) return;
+
+            if (!result[dateKey]) {
+                result[dateKey] = [];
+            }
+
+            result[dateKey].push({
+                id: p.id,
+                title: p.title,
+                performDate:
+                    p.perform_date instanceof Date ? p.perform_date.toISOString() : p.perform_date,
+                bookingPrice: p.booking_price ?? null,
+                onsitePrice: p.onsite_price ?? null,
+                isCanceled: p.is_cancelled ?? null,
+                description: p.description ?? null,
+            });
+        });
+
+        return result;
     }
 
     async attendPerformance(userId: number, performId: number): Promise<boolean> {

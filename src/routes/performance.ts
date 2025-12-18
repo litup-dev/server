@@ -169,6 +169,9 @@ export async function performanceRoutes(fastify: FastifyInstance) {
 
             const { entityId } = parsed.data;
             const { userId } = parseJwt(request.headers, false);
+            if (!userId) {
+                throw new BadRequestError('사용자 정보가 없습니다.');
+            }
 
             const service = new PerformanceService(request.server.prisma);
             const result = await service.attendPerformance(userId, entityId);
@@ -204,6 +207,9 @@ export async function performanceRoutes(fastify: FastifyInstance) {
 
             const { entityId } = parsed.data;
             const { userId } = parseJwt(request.headers, false);
+            if (!userId) {
+                throw new BadRequestError('사용자 정보가 없습니다.');
+            }
 
             const service = new PerformanceService(request.server.prisma);
             const result = await service.isUserAttending(userId, entityId);
