@@ -30,7 +30,7 @@ export async function clubRoutes(fastify: FastifyInstance) {
         },
         async (request, reply) => {
             const query = request.query as GetClubsType;
-
+            console.log('query', query);
             const service = new ClubService(request.server.prisma);
             const userId = parseJwtOptional(request.headers);
             const result = await service.getSearch(query, userId);

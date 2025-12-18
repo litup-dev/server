@@ -239,9 +239,9 @@ export async function performanceRoutes(fastify: FastifyInstance) {
             }
 
             const { entityId } = parsed.data;
-
+            const userId = parseJwtOptional(request.headers);
             const service = new PerformanceService(request.server.prisma);
-            const result = await service.getPerformanceDetails(entityId);
+            const result = await service.getPerformanceDetails(entityId, userId);
             return reply.send({ data: result });
         }
     );

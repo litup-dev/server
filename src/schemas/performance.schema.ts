@@ -43,6 +43,26 @@ export const performanceDefaultSchema = z.object({
     images: z.array(imageSchema).optional().nullable(),
 });
 
+export const performanceDetailSchema = performanceDefaultSchema
+    .pick({
+        id: true,
+        title: true,
+        description: true,
+        performDate: true,
+        bookingPrice: true,
+        onsitePrice: true,
+        bookingUrl: true,
+        isCanceled: true,
+        artists: true,
+        snsLinks: true,
+        createdAt: true,
+        club: true,
+        images: true,
+    })
+    .extend({
+        isAttend: z.boolean().nullable(),
+    });
+
 export const performCalendarSchema = performanceDefaultSchema.pick({
     id: true,
     title: true,
@@ -51,15 +71,19 @@ export const performCalendarSchema = performanceDefaultSchema.pick({
     images: true,
 });
 
-export const performMonthlyByClubSchema = performanceDefaultSchema.pick({
-    id: true,
-    title: true,
-    performDate: true,
-    bookingPrice: true,
-    onsitePrice: true,
-    isCanceled: true,
-    description: true,
-});
+export const performMonthlyByClubSchema = performanceDefaultSchema
+    .pick({
+        id: true,
+        title: true,
+        performDate: true,
+        bookingPrice: true,
+        onsitePrice: true,
+        isCanceled: true,
+        description: true,
+    })
+    .extend({
+        isAttend: z.boolean().nullable(),
+    });
 
 export const performMonthlyListByClubSchema = z.record(
     z.string(),
@@ -237,7 +261,8 @@ export const searchPerformancesSchema = z.object({
 });
 
 // 응답 스키마
-export const performDetailRes = successResponseSchema(performanceDefaultSchema);
+export const performDefaultRes = successResponseSchema(performanceDefaultSchema);
+export const performDetailRes = successResponseSchema(performanceDetailSchema);
 export const performListRes = paginatedResponseSchema(performanceDefaultSchema);
 export const performRecordsRes = paginatedResponseSchema(performanceRecordsSchema);
 export const performMonthlyByClubRes = successResponseSchema(performMonthlyListByClubSchema);
@@ -248,12 +273,14 @@ export const getPerformancesByDateRangeJson = generateSchema(getPerformancesByDa
 export const getPerformancesByMonthJson = generateSchema(getPerformancesCalendarSchema);
 export const searchPerformancesJson = generateSchema(searchPerformancesSchema);
 export const performanceListResJson = generateSchema(performListRes);
+export const performDefaultResJson = generateSchema(performDefaultRes);
 export const performDetailResJson = generateSchema(performDetailRes);
 export const performanceRecordsResJson = generateSchema(performRecordsRes);
 export const performanceMonthByClubListResJson = generateSchema(performMonthlyByClubRes);
 
 // 타입 추출
 export type PerformanceType = z.infer<typeof performanceDefaultSchema>;
+export type PerformanceDetailType = z.infer<typeof performanceDetailSchema>;
 export type GetPerformanceByDateRangeType = z.infer<typeof getPerformancesByDateRangeSchema>;
 export type GetPerformanceCalendarType = z.infer<typeof getPerformancesCalendarSchema>;
 export type getClubPerformancesByMonthType = z.infer<typeof getClubPerformancesByMonthSchema>;

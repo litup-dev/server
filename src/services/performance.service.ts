@@ -5,10 +5,10 @@ import {
     PerformanceListResponseType,
     PerformanceCalendarListType,
     SearchPerformancesType,
-    PerformanceType,
     GetPerformanceCalendarType,
     getClubPerformancesByMonthType,
     PerformanceMonthlyByClubType,
+    PerformanceDetailType,
 } from '@/schemas/performance.schema.js';
 import { SavedFileInfo } from '@/types/file.types.js';
 import { PrismaClient } from '@prisma/client';
@@ -457,7 +457,7 @@ export class PerformanceService {
                 onsitePrice: p.onsite_price ?? null,
                 isCanceled: p.is_cancelled ?? null,
                 description: p.description ?? null,
-                isAttend: p.attend_tb ? true : false,
+                isAttend: p.attend_tb && p.attend_tb.length > 0 ? true : false,
             });
         });
 
@@ -506,7 +506,10 @@ export class PerformanceService {
         return attend !== null;
     }
 
-    async getPerformanceDetails(performId: number): Promise<PerformanceType | null> {
+    async getPerformanceDetails(
+        performId: number,
+        userId: number | null
+    ): Promise<PerformanceDetailType | null> {
         const performance = await this.prisma.perform.findUnique({
             where: { id: performId },
             include: {
@@ -524,6 +527,13 @@ export class PerformanceService {
                         is_main: true,
                     },
                 },
+                attend_tb: userId
+                    ? {
+                          where: {
+                              user_id: userId,
+                          },
+                      }
+                    : false,
             },
         });
         if (!performance) {
@@ -561,6 +571,7 @@ export class PerformanceService {
                 filePath: img.file_path ?? null,
                 isMain: img.is_main ?? null,
             })),
+            isAttend: performance.attend_tb && performance.attend_tb.length > 0 ? true : false,
         };
     }
 
