@@ -9,7 +9,8 @@ import {
 } from '@/schemas/club.schema.js';
 import { idParamSchema, idParamJson, errorResJson } from '@/schemas/common.schema.js';
 import { BadRequestError } from '@/common/error.js';
-import { parseJwt } from '@/utils/jwt.js';
+import { parseJwt, parseJwtOptional } from '@/utils/jwt.js';
+import { parse } from 'path';
 
 export async function clubRoutes(fastify: FastifyInstance) {
     fastify.get(
@@ -31,8 +32,8 @@ export async function clubRoutes(fastify: FastifyInstance) {
             const query = request.query as GetClubsType;
 
             const service = new ClubService(request.server.prisma);
-            const { userId } = parseJwt(request.headers, true);
-            const result = await service.getSearch(query, userId ?? null);
+            const userId = parseJwtOptional(request.headers);
+            const result = await service.getSearch(query, userId);
 
             return reply.send({
                 data: result,
@@ -63,9 +64,9 @@ export async function clubRoutes(fastify: FastifyInstance) {
             }
 
             const { entityId } = parsed.data;
-            const { userId } = parseJwt(request.headers, true);
+            const userId = parseJwtOptional(request.headers);
             const service = new ClubService(request.server.prisma);
-            const result = await service.getById(entityId, userId ?? null);
+            const result = await service.getById(entityId, userId);
 
             return reply.send({ data: result });
         }
@@ -95,10 +96,7 @@ export async function clubRoutes(fastify: FastifyInstance) {
 
             const { entityId } = parsed.data;
 
-            const { userId } = parseJwt(request.headers, false);
-            if (!userId) {
-                throw new BadRequestError('유효하지 않은 사용자입니다.');
-            }
+            const { userId } = parseJwt(request.headers);
 
             const service = new ClubService(request.server.prisma);
             const result = await service.toggleFavorite(entityId, userId);

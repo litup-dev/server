@@ -49,7 +49,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         },
         async (request, reply) => {
             const service = new AuthService(request.server.prisma);
-            const { userId } = parseJwt(request.headers, false);
+            const { userId } = parseJwt(request.headers);
             const result = await service.withdrawUser(userId);
             return reply.send({
                 data: result,

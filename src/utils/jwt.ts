@@ -22,19 +22,52 @@ function getToken(headers: FastifyRequest['headers']): string {
     return token;
 }
 
-export function parseJwt(headers: FastifyRequest['headers'], isNullable: boolean): JwtTokenType {
+export function parseJwt(headers: FastifyRequest['headers']): JwtTokenType & { userId: number } {
     const token = getToken(headers);
     const decoded = jwtDecode<{ [key: string]: any }>(token);
     const { userId, iat, exp } = decoded;
-    if (isNullable === false) {
-        if (!userId) {
-            throw new UnauthorizedError('유효하지 않은 토큰입니다.');
-        }
+    if (!userId) {
+        throw new UnauthorizedError('유효하지 않은 토큰입니다.');
     }
 
     return {
-        userId: Number(userId) ?? null,
+        userId: Number(userId),
         iat: null,
         exp: null,
     };
+}
+
+function getTokenOptional(headers: FastifyRequest['headers']): string | null {
+    const authorization = headers['authorization'];
+
+    if (!authorization) {
+        return null;
+    }
+
+    if (!authorization.startsWith('Bearer ')) {
+        return null;
+    }
+
+    const token = authorization.replace('Bearer ', '');
+
+    if (!token) {
+        return null;
+    }
+    return token;
+}
+
+export function parseJwtOptional(headers: FastifyRequest['headers']): number | null {
+    const token = getTokenOptional(headers);
+
+    if (!token) {
+        return null;
+    }
+
+    try {
+        const decoded = jwtDecode<{ [key: string]: any }>(token);
+        const { userId } = decoded;
+        return userId ? Number(userId) : null;
+    } catch {
+        return null;
+    }
 }

@@ -21,7 +21,7 @@ export async function reportRoutes(fastify: FastifyInstance) {
             },
         },
         async (request, reply) => {
-            const { userId } = parseJwt(request.headers, false);
+            const { userId } = parseJwt(request.headers);
             const reportInfo = request.body as CreateReportType;
             const service = new ReportService(fastify.prisma);
             const result = await service.createReport(userId, reportInfo);

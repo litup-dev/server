@@ -394,7 +394,7 @@ export class PerformanceService {
     async getClubMonthlyPerformances(
         params: getClubPerformancesByMonthType
     ): Promise<PerformanceMonthlyByClubType> {
-        const { month, entityId } = params;
+        const { month, entityId, userId } = params;
         const startDate = new Date(`${month}-01`);
         const endDate = new Date(startDate);
         endDate.setMonth(endDate.getMonth() + 1);
@@ -407,14 +407,14 @@ export class PerformanceService {
                 },
                 club_id: entityId,
             },
-            select: {
-                id: true,
-                title: true,
-                perform_date: true,
-                booking_price: true,
-                onsite_price: true,
-                is_cancelled: true,
-                description: true,
+            include: {
+                attend_tb: userId
+                    ? {
+                          where: {
+                              user_id: userId,
+                          },
+                      }
+                    : false,
             },
             orderBy: {
                 perform_date: 'asc',
@@ -431,6 +431,7 @@ export class PerformanceService {
                 onsitePrice: number | null;
                 isCanceled: boolean | null;
                 description: string | null;
+                isAttend: boolean | null;
             }>
         > = {};
 
@@ -456,6 +457,7 @@ export class PerformanceService {
                 onsitePrice: p.onsite_price ?? null,
                 isCanceled: p.is_cancelled ?? null,
                 description: p.description ?? null,
+                isAttend: p.attend_tb ? true : false,
             });
         });
 

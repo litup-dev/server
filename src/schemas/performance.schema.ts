@@ -95,6 +95,11 @@ export const getClubPerformancesByMonthSchema = z.object({
         description: '클럽 ID',
         example: 1,
     }),
+    userId: z.number().nullable().openapi({
+        type: 'number',
+        description: '사용자 ID',
+        example: 123,
+    }),
     month: z
         .string()
         .regex(/^\d{4}-\d{2}$/, '월 조회 포맷 YYYY-MM')

@@ -66,7 +66,7 @@ export async function performanceReviewRoutes(fastify: FastifyInstance) {
             const { entityId } = request.params as IdParamType;
             const service = new PerformanceReviewService(request.server.prisma);
             const { content } = request.body as { content: string };
-            const { userId } = parseJwt(request.headers, false);
+            const { userId } = parseJwt(request.headers);
             const result = await service.createReview(entityId, userId, content);
             return reply.send({
                 data: result,
@@ -95,7 +95,7 @@ export async function performanceReviewRoutes(fastify: FastifyInstance) {
             const { entityId } = request.params as IdParamType;
             const service = new PerformanceReviewService(request.server.prisma);
             const { content } = request.body as { content: string };
-            const { userId } = parseJwt(request.headers, false);
+            const { userId } = parseJwt(request.headers);
             const result = await service.patchReview(entityId, userId, content);
             return reply.send({
                 data: result,
@@ -122,7 +122,7 @@ export async function performanceReviewRoutes(fastify: FastifyInstance) {
         async (request, reply) => {
             const { entityId } = request.params as IdParamType;
             const service = new PerformanceReviewService(request.server.prisma);
-            const { userId } = parseJwt(request.headers, false);
+            const { userId } = parseJwt(request.headers);
             const result = await service.deleteReview(entityId, userId);
             return reply.send({ data: result });
         }
@@ -153,7 +153,7 @@ export async function performanceReviewRoutes(fastify: FastifyInstance) {
 
             const { entityId } = parsed.data;
             // 임시 추출
-            const { userId } = parseJwt(request.headers, false);
+            const { userId } = parseJwt(request.headers);
 
             const service = new PerformanceReviewService(request.server.prisma);
             const result = await service.likePerformanceReview(userId, entityId);

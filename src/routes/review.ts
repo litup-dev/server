@@ -76,7 +76,7 @@ export async function reviewRoutes(fastify: FastifyInstance) {
             const { entityId } = parsed.data;
             const query = request.query as GetReviewsType;
 
-            const { userId } = parseJwt(request.headers, false);
+            const { userId } = parseJwt(request.headers);
 
             const service = new ReviewService(request.server.prisma);
             const result = await service.getReviewsByClubIdAndUserId(entityId, userId, query);
@@ -148,7 +148,7 @@ export async function reviewRoutes(fastify: FastifyInstance) {
             const { entityId: clubId } = parsed.data;
             const body = request.body as CreateReviewType;
 
-            const { userId } = parseJwt(request.headers, false);
+            const { userId } = parseJwt(request.headers);
 
             const service = new ReviewService(request.server.prisma);
 
@@ -195,7 +195,7 @@ export async function reviewRoutes(fastify: FastifyInstance) {
             const { entityId } = parsed.data;
             const body = request.body as UpdateReviewType;
 
-            const { userId } = parseJwt(request.headers, false);
+            const { userId } = parseJwt(request.headers);
 
             const service = new ReviewService(request.server.prisma);
             const result = await service.update(entityId, userId, body);
@@ -230,7 +230,7 @@ export async function reviewRoutes(fastify: FastifyInstance) {
 
             const { entityId } = parsed.data;
 
-            const { userId } = parseJwt(request.headers, false);
+            const { userId } = parseJwt(request.headers);
 
             const service = new ReviewService(request.server.prisma);
             await service.delete(entityId, userId);
