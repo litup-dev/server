@@ -207,8 +207,8 @@ export async function uploadRoutes(fastify: FastifyInstance) {
             schema: {
                 params: idParamJson,
                 tags: ['Upload'],
-                summary: '클럽 리뷰 이미지 업로드',
-                description: '사용자 클럽 리뷰 이미지를 업로드합니다.',
+                summary: '클럽 이미지 업로드',
+                description: '클럽 이미지를 업로드합니다.',
                 response: {
                     200: successResJson,
                     400: errorResJson,
