@@ -76,7 +76,7 @@ export class ClubService {
 
         // 정렬 조건
         const orderBy = this.buildOrderByForObject(sort);
-
+        console.log('orderBy', orderBy);
         const [clubs, total] = await Promise.all([
             this.prisma.club.findMany({
                 where: whereConditions,
@@ -445,7 +445,7 @@ export class ClubService {
         return { success: true, operation: 'saved' };
     }
 
-    private buildOrderByForObject(sortBy?: string): { [key: string]: 'asc' | 'desc' } {
+    private buildOrderByForObject(sortBy?: string): any {
         const defaultOrder = { createdAt: 'desc' as const };
 
         if (!sortBy) return defaultOrder;
@@ -454,11 +454,11 @@ export class ClubService {
 
         switch (field) {
             case 'reviewCount':
-                return { reviewCnt: order };
+                return [{ reviewCnt: order }, { createdAt: 'desc' as const }];
             case 'rating':
-                return { avgRating: order };
+                return [{ avgRating: order }, { createdAt: 'desc' as const }];
             case 'reviewCreatedAt':
-                return { latestReviewAt: order };
+                return [{ latestReviewAt: order }, { createdAt: 'desc' as const }];
             default:
                 return defaultOrder;
         }
@@ -472,11 +472,11 @@ export class ClubService {
 
         switch (field) {
             case 'reviewCount':
-                return `ORDER BY c.review_cnt ${order.toUpperCase()}, distance ASC`;
+                return `ORDER BY c.review_cnt ${order.toUpperCase()}, distance ASC, created_at DESC`;
             case 'rating':
-                return `ORDER BY c.avg_rating ${order.toUpperCase()}, distance ASC`;
+                return `ORDER BY c.avg_rating ${order.toUpperCase()}, distance ASC, created_at DESC`;
             case 'reviewCreatedAt':
-                return `ORDER BY c.latest_review_at ${order.toUpperCase()}, distance ASC`;
+                return `ORDER BY c.latest_review_at ${order.toUpperCase()}, distance ASC, created_at DESC`;
             default:
                 return defaultOrder;
         }
@@ -499,7 +499,7 @@ export class ClubService {
                   }
                 : null,
             favoriteCount: club._count.favorite_tb,
-            isFavorite: club.favorite_tb ? true : false,
+            isFavorite: club.favorite_tb && club.favorite_tb.length > 0 ? true : false,
         };
     }
 
