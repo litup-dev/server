@@ -50,6 +50,7 @@ export const clubSchema = z.object({
     images: z.array(clubImageSchema).optional().nullable(),
     keywords: z.array(clubKeywordSchema).optional().nullable(),
     upcomingPerforms: z.array(upcomingPerformSchema).optional().nullable(),
+    isFavorite: z.boolean().optional().nullable(),
 });
 
 // 클럽 정보 간소화 스키마
@@ -69,6 +70,7 @@ export const clubSearchSchema = clubSchema.pick({
     avgRating: true,
     reviewCnt: true,
     favoriteCount: true,
+    isFavorite: true,
 });
 
 // 클럽 목록 조회 쿼리 파라미터 스키마

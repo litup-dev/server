@@ -13,10 +13,13 @@ import { ClubSearchArea } from '@/types/search.types.js';
 export class ClubService {
     constructor(private prisma: PrismaClient) {}
 
-    async getSearch(parameters: GetClubsType): Promise<ClubSearchResponseType> {
+    async getSearch(
+        parameters: GetClubsType,
+        userId: number | null
+    ): Promise<ClubSearchResponseType> {
         const { searchKey, area, latitude, longitude, keywords, sort, offset, limit } = parameters;
         if (area === ClubSearchArea.NEARBY && latitude && longitude) {
-            return this.getSearchNearby(parameters);
+            return this.getSearchNearby(parameters, userId);
         }
 
         const whereConditions: any = {};
@@ -105,6 +108,13 @@ export class ClubService {
                         },
                         take: 3,
                     },
+                    favorite_tb: userId
+                        ? {
+                              where: {
+                                  user_id: userId,
+                              },
+                          }
+                        : false,
                     _count: {
                         select: {
                             favorite_tb: true,
@@ -125,7 +135,10 @@ export class ClubService {
             limit,
         };
     }
-    private async getSearchNearby(parameters: GetClubsType): Promise<ClubSearchResponseType> {
+    private async getSearchNearby(
+        parameters: GetClubsType,
+        userId: number | null
+    ): Promise<ClubSearchResponseType> {
         const { searchKey, area, latitude, longitude, keywords, sort, offset, limit } = parameters;
         // 반경
         const radiusKm = 5;
@@ -153,11 +166,6 @@ export class ClubService {
         const whereClause = conditions.length > 0 ? `AND ${conditions.join(' AND ')}` : '';
 
         const orderByClause = this.buildOrderByForRaw(sort);
-        console.log('Keywords param:', keywords);
-        console.log('Conditions:', conditions);
-        console.log('WhereClause:', whereClause);
-        console.log('OrderByClause:', orderByClause);
-        console.log('Params:', params);
         const query = `
             SELECT 
                 c.id,
@@ -244,6 +252,13 @@ export class ClubService {
                         },
                     },
                 },
+                favorite_tb: userId
+                    ? {
+                          where: {
+                              user_id: userId,
+                          },
+                      }
+                    : false,
                 _count: {
                     select: {
                         favorite_tb: true,
@@ -264,7 +279,7 @@ export class ClubService {
         };
     }
 
-    async getById(id: number): Promise<ClubType> {
+    async getById(id: number, userId: number | null): Promise<ClubType> {
         const club = await this.prisma.club.findUnique({
             where: { id },
             include: {
@@ -309,6 +324,13 @@ export class ClubService {
                     orderBy: { perform_date: 'asc' },
                     take: 5,
                 },
+                favorite_tb: userId
+                    ? {
+                          where: {
+                              user_id: userId,
+                          },
+                      }
+                    : false,
                 _count: {
                     select: {
                         favorite_tb: true,
@@ -352,6 +374,7 @@ export class ClubService {
                 filePath: img.file_path,
                 isMain: img.is_main,
             })),
+            isFavorite: club.favorite_tb ? true : false,
         };
     }
 
@@ -476,6 +499,7 @@ export class ClubService {
                   }
                 : null,
             favoriteCount: club._count.favorite_tb,
+            isFavorite: club.favorite_tb ? true : false,
         };
     }
 
