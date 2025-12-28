@@ -261,7 +261,7 @@ export class ReviewService {
             await tx.club.update({
                 where: { id: clubId },
                 data: {
-                    avgRating: stats._avg.rating || 0,
+                    avgRating: stats._avg.rating ? Math.round(stats._avg.rating * 10) / 10 : 0,
                     reviewCnt: stats._count,
                     latestReviewAt: new Date(),
                 },
@@ -332,7 +332,7 @@ export class ReviewService {
                 await tx.club.update({
                     where: { id: review.club_id },
                     data: {
-                        avgRating: stats._avg.rating || 0,
+                        avgRating: stats._avg.rating ? Math.round(stats._avg.rating * 10) / 10 : 0,
                     },
                 });
             }
@@ -387,7 +387,7 @@ export class ReviewService {
             await tx.club.update({
                 where: { id: review.club_id },
                 data: {
-                    avgRating: stats._avg.rating || 0,
+                    avgRating: stats._avg.rating ? Math.round(stats._avg.rating * 10) / 10 : 0,
                     reviewCnt: stats._count,
                 },
             });
