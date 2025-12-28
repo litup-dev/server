@@ -12,6 +12,8 @@ import { clubListSimpleResJson } from '@/schemas/club.schema.js';
 import { performanceRecordsResJson } from '@/schemas/performance.schema.js';
 import {
     userInfoResJson,
+    userPrivacySettingJson,
+    UserPrivacySettingType,
     userProfileEditJson,
     UserProfileEditType,
     userStatsResJson,
@@ -202,6 +204,42 @@ export async function userRoutes(fastify: FastifyInstance) {
             const { userId } = parseJwt(request.headers);
             const profileData = request.body as UserProfileEditType;
             const result = await service.updateUserProfile(userId, profileData);
+            return reply.send({ data: result });
+        }
+    );
+
+    fastify.get(
+        '/users/settings/privacy',
+        {
+            schema: {
+                tags: ['User'],
+                summary: '유저 정보 공개범위 조회',
+                description: '유저 정보 공개범위 조회',
+            },
+        },
+        async (request, reply) => {
+            const service = new UserService(request.server.prisma);
+            const { userId } = parseJwt(request.headers);
+            const result = await service.getUserPrivacySettings(userId);
+            return reply.send({ data: result });
+        }
+    );
+
+    fastify.patch(
+        '/users/settings/privacy',
+        {
+            schema: {
+                tags: ['User'],
+                summary: '유저 정보 공개범위 수정',
+                description: '유저 정보 공개범위 수정',
+                body: userPrivacySettingJson,
+            },
+        },
+        async (request, reply) => {
+            const service = new UserService(request.server.prisma);
+            const { userId } = parseJwt(request.headers);
+            const privacyData = request.body as UserPrivacySettingType;
+            const result = await service.updateUserPrivacySettings(userId, privacyData);
             return reply.send({ data: result });
         }
     );
