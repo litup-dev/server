@@ -181,7 +181,7 @@ export async function userRoutes(fastify: FastifyInstance) {
             const { entityIds } = request.body as { entityIds: number[] };
             const service = new UserService(request.server.prisma);
             const { userId } = parseJwt(request.headers);
-            const result = await service.deleteUserAttendanceRecords(userId, entityIds);
+            const result = await service.deleteUserFavoriteClubs(userId, entityIds);
 
             return reply.send({ data: result });
         }
