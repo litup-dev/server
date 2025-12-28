@@ -85,7 +85,7 @@ export class UserService {
         });
         const performanceIds = attendances.map((a) => a.perform_id);
         if (performanceIds.length === 0) {
-            throw new NotFoundError('참석 기록이 없습니다.');
+            return { items: [], total: 0, offset, limit };
         }
         const [performances, total] = await this.prisma.$transaction([
             this.prisma.perform.findMany({
@@ -205,7 +205,7 @@ export class UserService {
 
         console.log('Favorite club IDs:', clubIds);
         if (clubIds.length === 0) {
-            throw new NotFoundError('관심 클럽이 없습니다.');
+            return { items: [], total: 0, offset, limit };
         }
 
         const [clubs, total] = await this.prisma.$transaction([
