@@ -76,7 +76,7 @@ export class ClubService {
 
         // 정렬 조건
         const orderBy = this.buildOrderByForObject(sort);
-        console.log('orderBy', orderBy);
+
         const [clubs, total] = await Promise.all([
             this.prisma.club.findMany({
                 where: whereConditions,
@@ -374,7 +374,7 @@ export class ClubService {
                 filePath: img.file_path,
                 isMain: img.is_main,
             })),
-            isFavorite: club.favorite_tb ? true : false,
+            isFavorite: club.favorite_tb && club.favorite_tb.length > 0 ? true : false,
         };
     }
 
