@@ -5,6 +5,7 @@ import { UserSimpleType } from '@/schemas/user.schema.js';
 import { PrivacyLevel } from '@/types/privacy.types.js';
 import { PrismaClient } from '@prisma/client';
 import { NicknameService } from '@/services/nickname.service.js';
+import { getTsid } from 'tsid-ts';
 
 export class AuthService {
     constructor(private prisma: PrismaClient) {}
@@ -31,28 +32,40 @@ export class AuthService {
         if (existingUser) {
             // throw new ConflictError('이미 존재하는 사용자입니다.');
             // 소셜 로그인만 존재해 로그인, 회원가입에 대한 구분이 애매함.
-            return {
-                id: existingUser.id,
-                nickname: existingUser.nickname,
-                profilePath: existingUser.profile_path ?? null,
-            };
+            if (existingUser.public_id && existingUser.public_id == '0') {
+                return {
+                    publicId: getTsid().toString(),
+                    nickname: existingUser.nickname,
+                    profilePath: existingUser.profile_path ?? null,
+                };
+            } else {
+                return {
+                    publicId: existingUser.public_id,
+                    nickname: existingUser.nickname,
+                    profilePath: existingUser.profile_path ?? null,
+                };
+            }
         }
 
-        // 추후 닉네임 로직 생성필요
+        // 신규 사용자 닉네임 생성
         const nicknameService = new NicknameService(this.prisma);
         const generateNickname = await nicknameService.generateNickname(email);
+        // 공개용 ID 생성
+        const publicId = getTsid().toString();
 
         const newUser = await this.prisma.user_tb.create({
             data: {
                 social_id: socialCode.id,
                 nickname: generateNickname,
                 provider_id: providerId,
+                public_id: publicId,
                 email: email,
             },
             select: {
                 id: true,
                 nickname: true,
                 profile_path: true,
+                public_id: true,
             },
         });
 
@@ -67,7 +80,7 @@ export class AuthService {
         });
 
         return {
-            id: newUser.id,
+            publicId: newUser.public_id,
             nickname: newUser.nickname,
             profilePath: newUser.profile_path ?? null,
         };

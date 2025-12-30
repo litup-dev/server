@@ -5,6 +5,7 @@ import { registerPlugins } from './plugins/index.js';
 import { registerRoutes } from './routes/index.js';
 import { setupErrorHandler } from './common/errorHandler.js';
 import { NicknameService } from './services/nickname.service.js';
+import { getTsid } from 'tsid-ts';
 
 const app = Fastify({
     logger: loggerOptions,
@@ -23,6 +24,11 @@ await registerPlugins(app);
 await registerRoutes(app);
 
 app.get('/', async (request, reply) => {
+    let tsid = '';
+    for (let i = 0; i < 10; i++) {
+        tsid = getTsid().toString();
+        console.log(tsid);
+    }
     return reply.redirect('/docs');
 });
 

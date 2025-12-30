@@ -42,17 +42,22 @@ export const userDefaultSchema = z.object({
         description: '사용자 이메일',
         example: 'user@example.com',
     }),
+    publicId: z.string().openapi({
+        type: 'string',
+        description: '공개용 사용자 ID',
+        example: 'XXXXXXXXXXXXX',
+    }),
 });
 
 export const userInfoSchema = userDefaultSchema.pick({
-    id: true,
+    publicId: true,
     nickname: true,
     profilePath: true,
     bio: true,
 });
 
 export const userSimpleSchema = userDefaultSchema.pick({
-    id: true,
+    publicId: true,
     nickname: true,
     profilePath: true,
 });

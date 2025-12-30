@@ -18,7 +18,7 @@ export class UserService {
         const user = await this.prisma.user_tb.findUnique({
             where: { id: userId },
             select: {
-                id: true,
+                public_id: true,
                 nickname: true,
                 profile_path: true,
                 bio: true,
@@ -30,7 +30,7 @@ export class UserService {
         }
 
         return {
-            id: user.id,
+            publicId: user.public_id,
             nickname: user.nickname,
             profilePath: user.profile_path ?? null,
             bio: user.bio ?? null,
@@ -301,7 +301,7 @@ export class UserService {
             },
         });
         return {
-            id: updatedUser.id,
+            publicId: updatedUser.public_id,
             nickname: updatedUser.nickname,
             profilePath: updatedUser.profile_path ?? null,
             bio: updatedUser.bio ?? null,
