@@ -14,6 +14,21 @@ import { PrismaClient } from '@prisma/client';
 export class UserService {
     constructor(private prisma: PrismaClient) {}
 
+    async getUserIdByPublicId(publicId: string): Promise<number> {
+        const user = await this.prisma.user_tb.findFirst({
+            where: { public_id: publicId },
+            select: {
+                id: true,
+            },
+        });
+
+        if (!user) {
+            throw new NotFoundError('사용자를 찾을 수 없습니다.');
+        }
+
+        return user.id;
+    }
+
     async getUserById(userId: number): Promise<UserInfoType> {
         const user = await this.prisma.user_tb.findUnique({
             where: { id: userId },

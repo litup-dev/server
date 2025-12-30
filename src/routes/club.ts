@@ -10,7 +10,6 @@ import {
 import { idParamSchema, idParamJson, errorResJson } from '@/schemas/common.schema.js';
 import { BadRequestError } from '@/common/error.js';
 import { parseJwt, parseJwtOptional } from '@/utils/jwt.js';
-import { parse } from 'path';
 
 export async function clubRoutes(fastify: FastifyInstance) {
     fastify.get(
@@ -32,8 +31,8 @@ export async function clubRoutes(fastify: FastifyInstance) {
             const query = request.query as GetClubsType;
             console.log('query', query);
             const service = new ClubService(request.server.prisma);
-            const userId = parseJwtOptional(request.headers);
-            const result = await service.getSearch(query, userId);
+            const publicId = parseJwtOptional(request.headers);
+            const result = await service.getSearch(query, publicId);
 
             return reply.send({
                 data: result,
@@ -64,9 +63,9 @@ export async function clubRoutes(fastify: FastifyInstance) {
             }
 
             const { entityId } = parsed.data;
-            const userId = parseJwtOptional(request.headers);
+            const publicId = parseJwtOptional(request.headers);
             const service = new ClubService(request.server.prisma);
-            const result = await service.getById(entityId, userId);
+            const result = await service.getById(entityId, publicId);
 
             return reply.send({ data: result });
         }
@@ -96,10 +95,10 @@ export async function clubRoutes(fastify: FastifyInstance) {
 
             const { entityId } = parsed.data;
 
-            const { userId } = parseJwt(request.headers);
+            const { publicId } = parseJwt(request.headers);
 
             const service = new ClubService(request.server.prisma);
-            const result = await service.toggleFavorite(entityId, userId);
+            const result = await service.toggleFavorite(entityId, publicId);
 
             return reply.send({ data: result });
         }

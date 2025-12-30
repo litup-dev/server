@@ -86,9 +86,9 @@ export class AuthService {
         };
     }
 
-    async withdrawUser(userId: number): Promise<OperationSuccessType> {
-        const existingUser = await this.prisma.user_tb.findUnique({
-            where: { id: userId },
+    async withdrawUser(publicId: string): Promise<OperationSuccessType> {
+        const existingUser = await this.prisma.user_tb.findFirst({
+            where: { public_id: publicId },
         });
 
         if (!existingUser) {
@@ -96,7 +96,7 @@ export class AuthService {
         }
 
         await this.prisma.user_tb.delete({
-            where: { id: userId },
+            where: { id: existingUser.id },
         });
         // 관련 파일들도 삭제해야함.
         // 리뷰 image, profile 등

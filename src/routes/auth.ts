@@ -49,43 +49,43 @@ export async function authRoutes(fastify: FastifyInstance) {
         },
         async (request, reply) => {
             const service = new AuthService(request.server.prisma);
-            const { userId } = parseJwt(request.headers);
-            const result = await service.withdrawUser(userId);
+            const { publicId } = parseJwt(request.headers);
+            const result = await service.withdrawUser(publicId);
             return reply.send({
                 data: result,
             });
         }
     );
 
-    fastify.post(
-        '/auth/dummy/verify',
-        {
-            schema: {
-                tags: ['Auth'],
-                summary: '회원가입 & 로그인',
-                description: '회원가입 & 로그인',
-            },
-        },
-        async (request, reply) => {
-            return reply.code(201).send({
-                data: {
-                    userId: 175,
-                    username: 'newuser',
-                },
-            });
-        }
-    );
-    fastify.delete(
-        '/auth/dummy/verify',
-        {
-            schema: {
-                tags: ['Auth'],
-                summary: '회원탈퇴',
-                description: '회원탈퇴',
-            },
-        },
-        async (request, reply) => {
-            return reply.code(204).send();
-        }
-    );
+    // fastify.post(
+    //     '/auth/dummy/verify',
+    //     {
+    //         schema: {
+    //             tags: ['Auth'],
+    //             summary: '회원가입 & 로그인',
+    //             description: '회원가입 & 로그인',
+    //         },
+    //     },
+    //     async (request, reply) => {
+    //         return reply.code(201).send({
+    //             data: {
+    //                 userId: 175,
+    //                 username: 'newuser',
+    //             },
+    //         });
+    //     }
+    // );
+    // fastify.delete(
+    //     '/auth/dummy/verify',
+    //     {
+    //         schema: {
+    //             tags: ['Auth'],
+    //             summary: '회원탈퇴',
+    //             description: '회원탈퇴',
+    //         },
+    //     },
+    //     async (request, reply) => {
+    //         return reply.code(204).send();
+    //     }
+    // );
 }
