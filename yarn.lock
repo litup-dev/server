@@ -4472,6 +4472,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     ts-node-dev: "npm:2.0.0"
     tsc-alias: "npm:1.8.16"
+    tsid-ts: "npm:^0.0.9"
     tsx: "npm:4.20.6"
     typescript: "npm:5.9.2"
     typescript-eslint: "npm:8.44.0"
@@ -6714,6 +6715,13 @@ __metadata:
     strip-bom: "npm:^3.0.0"
     strip-json-comments: "npm:^2.0.0"
   checksum: 10c0/7a5dec94b9e42017d93041b1962c174afde00fd8f3066eea81a5e5b743065e95f3bedebff0edbe215b2517f8cdace8c9f15651a78d5eb7409cad2fc107e5eb98
+  languageName: node
+  linkType: hard
+
+"tsid-ts@npm:^0.0.9":
+  version: 0.0.9
+  resolution: "tsid-ts@npm:0.0.9"
+  checksum: 10c0/138f222118038ea784d376a52eca28d302b355988a85b667ec2ebffee4a6530bed71a749d63b01079554569b94a58581ab9ff9144a0d33a9df8a6348f7c01a03
   languageName: node
   linkType: hard
 
