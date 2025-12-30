@@ -24,11 +24,6 @@ await registerPlugins(app);
 await registerRoutes(app);
 
 app.get('/', async (request, reply) => {
-    let tsid = '';
-    for (let i = 0; i < 10; i++) {
-        tsid = getTsid().toString();
-        console.log(tsid);
-    }
     return reply.redirect('/docs');
 });
 
