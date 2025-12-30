@@ -246,6 +246,7 @@ model user_tb {
   provider_id            String?                  @db.VarChar(255)
   bio                    String?
   email                  String?                  @db.VarChar(255)
+  public_id              String?                  @unique(map: "uq_user_tb_public_id") @db.VarChar(13)
   attend_tb              attend_tb[]
   club_img_tb            club_img_tb[]
   club_review_tb         club_review_tb[]
