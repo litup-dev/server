@@ -246,6 +246,7 @@ model user_tb {
   provider_id            String?                  @db.VarChar(255)
   bio                    String?
   email                  String?                  @db.VarChar(255)
+  public_id              String                   @default("0") @db.VarChar(13)
   attend_tb              attend_tb[]
   club_img_tb            club_img_tb[]
   club_review_tb         club_review_tb[]
@@ -260,6 +261,7 @@ model user_tb {
   social_code            social_code              @relation(fields: [social_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@unique([social_id, provider_id], map: "uq_user_tb_socialid_providerid")
+  @@index([public_id], map: "uq_user_tb_public_id")
 }
 
 model perform_review_like_tb {
