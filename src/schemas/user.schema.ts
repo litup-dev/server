@@ -131,6 +131,7 @@ export const userPrivacySettingSchema = z
 
 // 응답 스키마
 export const userDefaultRes = successResponseSchema(userDefaultSchema);
+export const userSimpleRes = successResponseSchema(userSimpleSchema);
 export const userListRes = successResponseSchema(userListResponseSchema);
 export const userInfoRes = successResponseSchema(userInfoSchema);
 export const userStatsRes = successResponseSchema(userStatsSchema);
@@ -138,6 +139,7 @@ export const userPrivacyRes = successResponseSchema(userPrivacySettingSchema);
 
 // Json 스키마
 export const userDefaultJson = generateSchema(userDefaultSchema);
+export const userSimpleJson = generateSchema(userSimpleRes);
 export const userInfoJson = generateSchema(userInfoSchema);
 export const userInfoResJson = generateSchema(userInfoRes);
 export const userStatsResJson = generateSchema(userStatsRes);

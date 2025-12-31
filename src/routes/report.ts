@@ -1,3 +1,5 @@
+import { requireUser } from '@/common/auth/requireUser';
+import { requireAuth } from '@/hooks/auth.hook';
 import { errorResJson, successResJson } from '@/schemas/common.schema.js';
 import { createReportJson, CreateReportType } from '@/schemas/report.schema.js';
 import { ReportService } from '@/services/report.service.js';
@@ -8,6 +10,7 @@ export async function reportRoutes(fastify: FastifyInstance) {
     fastify.post(
         '/report',
         {
+            preHandler: [requireAuth],
             schema: {
                 tags: ['Report'],
                 summary: '신고하기',
@@ -21,7 +24,8 @@ export async function reportRoutes(fastify: FastifyInstance) {
             },
         },
         async (request, reply) => {
-            const { userId } = parseJwt(request.headers);
+            requireUser(request);
+            const userId = request.user.userId;
             const reportInfo = request.body as CreateReportType;
             const service = new ReportService(fastify.prisma);
             const result = await service.createReport(userId, reportInfo);

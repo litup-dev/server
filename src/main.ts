@@ -5,7 +5,7 @@ import { registerPlugins } from './plugins/index.js';
 import { registerRoutes } from './routes/index.js';
 import { setupErrorHandler } from './common/errorHandler.js';
 import { NicknameService } from './services/nickname.service.js';
-import { getTsid } from 'tsid-ts';
+import { setupOptionalAuthHandler } from './common/preHandler.js';
 
 const app = Fastify({
     logger: loggerOptions,
@@ -18,6 +18,9 @@ const app = Fastify({
 
 // 전역 에러 핸들러 설정
 setupErrorHandler(app);
+
+// 공용아이디 파싱 핸들러 설정
+setupOptionalAuthHandler(app);
 
 // 플러그인 등록
 await registerPlugins(app);

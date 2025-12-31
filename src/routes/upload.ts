@@ -1,5 +1,7 @@
 import { createStorageAdapter } from '@/adapters/storage/index.js';
+import { requireUser } from '@/common/auth/requireUser';
 import { BadRequestError, NotFoundError } from '@/common/error.js';
+import { requireAuth } from '@/hooks/auth.hook';
 import { errorResJson, idParamJson, IdParamType, successResJson } from '@/schemas/common.schema.js';
 import { ClubService } from '@/services/club.service.js';
 import { PerformanceService } from '@/services/performance.service.js';
@@ -35,6 +37,7 @@ export async function uploadRoutes(fastify: FastifyInstance) {
     fastify.post(
         '/upload/avatar',
         {
+            preHandler: [requireAuth],
             schema: {
                 tags: ['Upload'],
                 summary: '아바타 업로드',
@@ -47,7 +50,8 @@ export async function uploadRoutes(fastify: FastifyInstance) {
             },
         },
         async (request, reply) => {
-            const userId = 2; // 임시 추출
+            requireUser(request);
+            const userId = request.user.userId;
 
             const parts = request.parts();
 
@@ -86,6 +90,7 @@ export async function uploadRoutes(fastify: FastifyInstance) {
     fastify.post(
         '/upload/poster/:entityId',
         {
+            preHandler: [requireAuth],
             schema: {
                 params: idParamJson,
                 tags: ['Upload'],
@@ -99,7 +104,8 @@ export async function uploadRoutes(fastify: FastifyInstance) {
             },
         },
         async (request, reply) => {
-            const { userId } = parseJwt(request.headers);
+            requireUser(request);
+            const userId = request.user.userId;
             const { entityId } = request.params as IdParamType;
 
             const parts = request.parts();
@@ -144,6 +150,7 @@ export async function uploadRoutes(fastify: FastifyInstance) {
     fastify.post(
         '/upload/club-review/:entityId',
         {
+            preHandler: [requireAuth],
             schema: {
                 params: idParamJson,
                 tags: ['Upload'],
@@ -157,7 +164,8 @@ export async function uploadRoutes(fastify: FastifyInstance) {
             },
         },
         async (request, reply) => {
-            const { userId } = parseJwt(request.headers);
+            requireUser(request);
+            const userId = request.user.userId;
             const { entityId } = request.params as IdParamType;
 
             const parts = request.parts();
@@ -205,6 +213,7 @@ export async function uploadRoutes(fastify: FastifyInstance) {
     fastify.post(
         '/upload/club/:entityId',
         {
+            preHandler: [requireAuth],
             schema: {
                 params: idParamJson,
                 tags: ['Upload'],
@@ -218,7 +227,8 @@ export async function uploadRoutes(fastify: FastifyInstance) {
             },
         },
         async (request, reply) => {
-            const { userId } = parseJwt(request.headers);
+            requireUser(request);
+            const userId = request.user.userId;
             const { entityId } = request.params as IdParamType;
 
             const parts = request.parts();

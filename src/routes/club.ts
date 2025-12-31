@@ -10,6 +10,8 @@ import {
 import { idParamSchema, idParamJson, errorResJson } from '@/schemas/common.schema.js';
 import { BadRequestError } from '@/common/error.js';
 import { parseJwt, parseJwtOptional } from '@/utils/jwt.js';
+import { requireUser } from '@/common/auth/requireUser';
+import { requireAuth } from '@/hooks/auth.hook';
 
 export async function clubRoutes(fastify: FastifyInstance) {
     fastify.get(
@@ -31,8 +33,8 @@ export async function clubRoutes(fastify: FastifyInstance) {
             const query = request.query as GetClubsType;
             console.log('query', query);
             const service = new ClubService(request.server.prisma);
-            const publicId = parseJwtOptional(request.headers);
-            const result = await service.getSearch(query, publicId);
+            const userId = request.user?.userId ?? null;
+            const result = await service.getSearch(query, userId);
 
             return reply.send({
                 data: result,
@@ -63,9 +65,9 @@ export async function clubRoutes(fastify: FastifyInstance) {
             }
 
             const { entityId } = parsed.data;
-            const publicId = parseJwtOptional(request.headers);
+            const userId = request.user?.userId ?? null;
             const service = new ClubService(request.server.prisma);
-            const result = await service.getById(entityId, publicId);
+            const result = await service.getById(entityId, userId);
 
             return reply.send({ data: result });
         }
@@ -74,6 +76,7 @@ export async function clubRoutes(fastify: FastifyInstance) {
     fastify.post(
         '/clubs/:entityId/favorite',
         {
+            preHandler: [requireAuth],
             schema: {
                 params: idParamJson,
                 tags: ['Clubs'],
@@ -88,6 +91,7 @@ export async function clubRoutes(fastify: FastifyInstance) {
             },
         },
         async (request, reply) => {
+            requireUser(request);
             const parsed = idParamSchema.safeParse(request.params);
             if (!parsed.success) {
                 throw new BadRequestError(`허용되지 않은 파라미터입니다. ${parsed.error.message}`);
@@ -95,10 +99,10 @@ export async function clubRoutes(fastify: FastifyInstance) {
 
             const { entityId } = parsed.data;
 
-            const { publicId } = parseJwt(request.headers);
+            const userId = request.user.userId;
 
             const service = new ClubService(request.server.prisma);
-            const result = await service.toggleFavorite(entityId, publicId);
+            const result = await service.toggleFavorite(entityId, userId);
 
             return reply.send({ data: result });
         }

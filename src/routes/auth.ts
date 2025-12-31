@@ -1,6 +1,8 @@
+import { requireUser } from '@/common/auth/requireUser';
+import { requireAuth } from '@/hooks/auth.hook';
 import { createUserJson } from '@/schemas/auth.schema.js';
 import { errorResJson, successResJson } from '@/schemas/common.schema.js';
-import { userDefaultJson } from '@/schemas/user.schema.js';
+import { userSimpleJson } from '@/schemas/user.schema';
 import { AuthService } from '@/services/auth.service.js';
 import { parseJwt } from '@/utils/jwt.js';
 import { FastifyInstance } from 'fastify';
@@ -15,7 +17,7 @@ export async function authRoutes(fastify: FastifyInstance) {
                 summary: '회원가입 & 로그인',
                 description: '회원가입 & 로그인',
                 response: {
-                    201: userDefaultJson,
+                    201: userSimpleJson,
                     400: errorResJson,
                     500: errorResJson,
                 },
@@ -29,13 +31,14 @@ export async function authRoutes(fastify: FastifyInstance) {
                 email: string;
             };
             const user = await service.verifyUser({ provider, providerId, email });
-            return reply.send({ data: user });
+            reply.send({ data: user });
         }
     );
 
     fastify.delete(
         '/auth/withdraw',
         {
+            preHandler: [requireAuth],
             schema: {
                 tags: ['Auth'],
                 summary: '회원탈퇴',
@@ -48,44 +51,13 @@ export async function authRoutes(fastify: FastifyInstance) {
             },
         },
         async (request, reply) => {
+            requireUser(request);
             const service = new AuthService(request.server.prisma);
-            const { publicId } = parseJwt(request.headers);
-            const result = await service.withdrawUser(publicId);
-            return reply.send({
+            const userId = request.user.userId;
+            const result = await service.withdrawUser(userId);
+            reply.send({
                 data: result,
             });
         }
     );
-
-    // fastify.post(
-    //     '/auth/dummy/verify',
-    //     {
-    //         schema: {
-    //             tags: ['Auth'],
-    //             summary: '회원가입 & 로그인',
-    //             description: '회원가입 & 로그인',
-    //         },
-    //     },
-    //     async (request, reply) => {
-    //         return reply.code(201).send({
-    //             data: {
-    //                 userId: 175,
-    //                 username: 'newuser',
-    //             },
-    //         });
-    //     }
-    // );
-    // fastify.delete(
-    //     '/auth/dummy/verify',
-    //     {
-    //         schema: {
-    //             tags: ['Auth'],
-    //             summary: '회원탈퇴',
-    //             description: '회원탈퇴',
-    //         },
-    //     },
-    //     async (request, reply) => {
-    //         return reply.code(204).send();
-    //     }
-    // );
 }

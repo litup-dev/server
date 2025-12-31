@@ -16,15 +16,9 @@ export class ClubService {
 
     async getSearch(
         parameters: GetClubsType,
-        publicId: string | null
+        userId: number | null
     ): Promise<ClubSearchResponseType> {
         const { searchKey, area, latitude, longitude, keywords, sort, offset, limit } = parameters;
-
-        let userId: number | null = null;
-        if (publicId !== null) {
-            const userService = new UserService(this.prisma);
-            userId = await userService.getUserIdByPublicId(publicId);
-        }
 
         if (area === ClubSearchArea.NEARBY && latitude && longitude) {
             return this.getSearchNearby(parameters, userId);
@@ -287,13 +281,7 @@ export class ClubService {
         };
     }
 
-    async getById(id: number, publicId: string | null): Promise<ClubType> {
-        let userId: number | null = null;
-
-        if (publicId !== null) {
-            const userService = new UserService(this.prisma);
-            userId = await userService.getUserIdByPublicId(publicId);
-        }
+    async getById(id: number, userId: number | null): Promise<ClubType> {
         const club = await this.prisma.club.findUnique({
             where: { id },
             include: {
@@ -392,10 +380,7 @@ export class ClubService {
         };
     }
 
-    async toggleFavorite(clubId: number, publicId: string): Promise<boolean> {
-        const userService = new UserService(this.prisma);
-        const userId = await userService.getUserIdByPublicId(publicId);
-
+    async toggleFavorite(clubId: number, userId: number): Promise<boolean> {
         const club = await this.prisma.club.findUnique({
             where: { id: clubId },
             select: { id: true },

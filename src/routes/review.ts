@@ -13,6 +13,8 @@ import {
 import { idParamSchema, idParamJson, errorResJson } from '@/schemas/common.schema.js';
 import { BadRequestError, NotFoundError } from '@/common/error.js';
 import { parseJwt } from '@/utils/jwt.js';
+import { requireAuth } from '@/hooks/auth.hook';
+import { requireUser } from '@/common/auth/requireUser';
 
 export async function reviewRoutes(fastify: FastifyInstance) {
     fastify.get(
@@ -54,6 +56,7 @@ export async function reviewRoutes(fastify: FastifyInstance) {
     fastify.get(
         '/clubs/:entityId/reviews/me',
         {
+            preHandler: [requireAuth],
             schema: {
                 params: idParamJson,
                 querystring: getReviewsJson,
@@ -68,6 +71,7 @@ export async function reviewRoutes(fastify: FastifyInstance) {
             },
         },
         async (request, reply) => {
+            requireUser(request);
             const parsed = idParamSchema.safeParse(request.params);
             if (!parsed.success) {
                 throw new BadRequestError(`허용되지 않은 파라미터입니다. ${parsed.error.message}`);
@@ -76,7 +80,7 @@ export async function reviewRoutes(fastify: FastifyInstance) {
             const { entityId } = parsed.data;
             const query = request.query as GetReviewsType;
 
-            const { userId } = parseJwt(request.headers);
+            const userId = request.user.userId;
 
             const service = new ReviewService(request.server.prisma);
             const result = await service.getReviewsByClubIdAndUserId(entityId, userId, query);
@@ -125,6 +129,7 @@ export async function reviewRoutes(fastify: FastifyInstance) {
     fastify.post(
         '/clubs/:entityId/reviews',
         {
+            preHandler: [requireAuth],
             schema: {
                 params: idParamJson,
                 body: createReviewJson,
@@ -140,6 +145,7 @@ export async function reviewRoutes(fastify: FastifyInstance) {
             },
         },
         async (request, reply) => {
+            requireUser(request);
             const parsed = idParamSchema.safeParse(request.params);
             if (!parsed.success) {
                 throw new BadRequestError(`허용되지 않은 파라미터입니다. ${parsed.error.message}`);
@@ -148,7 +154,7 @@ export async function reviewRoutes(fastify: FastifyInstance) {
             const { entityId: clubId } = parsed.data;
             const body = request.body as CreateReviewType;
 
-            const { userId } = parseJwt(request.headers);
+            const userId = request.user.userId;
 
             const service = new ReviewService(request.server.prisma);
 
@@ -172,6 +178,7 @@ export async function reviewRoutes(fastify: FastifyInstance) {
     fastify.patch(
         '/reviews/:entityId',
         {
+            preHandler: [requireAuth],
             schema: {
                 params: idParamJson,
                 body: updateReviewJson,
@@ -187,6 +194,7 @@ export async function reviewRoutes(fastify: FastifyInstance) {
             },
         },
         async (request, reply) => {
+            requireUser(request);
             const parsed = idParamSchema.safeParse(request.params);
             if (!parsed.success) {
                 throw new BadRequestError(`허용되지 않은 파라미터입니다. ${parsed.error.message}`);
@@ -195,7 +203,7 @@ export async function reviewRoutes(fastify: FastifyInstance) {
             const { entityId } = parsed.data;
             const body = request.body as UpdateReviewType;
 
-            const { userId } = parseJwt(request.headers);
+            const userId = request.user.userId;
 
             const service = new ReviewService(request.server.prisma);
             const result = await service.update(entityId, userId, body);
@@ -209,6 +217,7 @@ export async function reviewRoutes(fastify: FastifyInstance) {
     fastify.delete(
         '/reviews/:entityId',
         {
+            preHandler: [requireAuth],
             schema: {
                 params: idParamJson,
                 tags: ['Reviews'],
@@ -223,6 +232,7 @@ export async function reviewRoutes(fastify: FastifyInstance) {
             },
         },
         async (request, reply) => {
+            requireUser(request);
             const parsed = idParamSchema.safeParse(request.params);
             if (!parsed.success) {
                 throw new BadRequestError(`허용되지 않은 파라미터입니다. ${parsed.error.message}`);
@@ -230,7 +240,7 @@ export async function reviewRoutes(fastify: FastifyInstance) {
 
             const { entityId } = parsed.data;
 
-            const { userId } = parseJwt(request.headers);
+            const userId = request.user.userId;
 
             const service = new ReviewService(request.server.prisma);
             await service.delete(entityId, userId);

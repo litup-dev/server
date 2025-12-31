@@ -16,6 +16,8 @@ import {
 } from '@/schemas/performanceReview.schema.js';
 import { BadRequestError } from '@/common/error.js';
 import { parseJwt } from '@/utils/jwt.js';
+import { requireAuth } from '@/hooks/auth.hook';
+import { requireUser } from '@/common/auth/requireUser';
 
 export async function performanceReviewRoutes(fastify: FastifyInstance) {
     fastify.get(
@@ -48,6 +50,7 @@ export async function performanceReviewRoutes(fastify: FastifyInstance) {
     fastify.post(
         '/performance/:entityId/reviews',
         {
+            preHandler: [requireAuth],
             schema: {
                 params: idParamJson,
                 body: createPerformanceReviewJson,
@@ -63,10 +66,11 @@ export async function performanceReviewRoutes(fastify: FastifyInstance) {
             },
         },
         async (request, reply) => {
+            requireUser(request);
             const { entityId } = request.params as IdParamType;
             const service = new PerformanceReviewService(request.server.prisma);
             const { content } = request.body as { content: string };
-            const { userId } = parseJwt(request.headers);
+            const userId = request.user.userId;
             const result = await service.createReview(entityId, userId, content);
             return reply.send({
                 data: result,
@@ -77,6 +81,7 @@ export async function performanceReviewRoutes(fastify: FastifyInstance) {
     fastify.patch(
         '/performance/reviews/:entityId',
         {
+            preHandler: [requireAuth],
             schema: {
                 params: idParamJson,
                 body: createPerformanceReviewJson,
@@ -92,10 +97,11 @@ export async function performanceReviewRoutes(fastify: FastifyInstance) {
             },
         },
         async (request, reply) => {
+            requireUser(request);
             const { entityId } = request.params as IdParamType;
             const service = new PerformanceReviewService(request.server.prisma);
             const { content } = request.body as { content: string };
-            const { userId } = parseJwt(request.headers);
+            const userId = request.user.userId;
             const result = await service.patchReview(entityId, userId, content);
             return reply.send({
                 data: result,
@@ -106,6 +112,7 @@ export async function performanceReviewRoutes(fastify: FastifyInstance) {
     fastify.delete(
         '/performance/reviews/:entityId',
         {
+            preHandler: [requireAuth],
             schema: {
                 params: idParamJson,
                 tags: ['Performance Reviews'],
@@ -120,9 +127,10 @@ export async function performanceReviewRoutes(fastify: FastifyInstance) {
             },
         },
         async (request, reply) => {
+            requireUser(request);
             const { entityId } = request.params as IdParamType;
             const service = new PerformanceReviewService(request.server.prisma);
-            const { userId } = parseJwt(request.headers);
+            const userId = request.user.userId;
             const result = await service.deleteReview(entityId, userId);
             return reply.send({ data: result });
         }
@@ -131,6 +139,7 @@ export async function performanceReviewRoutes(fastify: FastifyInstance) {
     fastify.post(
         '/performances/review/:entityId/like',
         {
+            preHandler: [requireAuth],
             schema: {
                 params: idParamJson,
                 tags: ['Performance Reviews'],
@@ -144,6 +153,7 @@ export async function performanceReviewRoutes(fastify: FastifyInstance) {
             },
         },
         async (request, reply) => {
+            requireUser(request);
             const parsed = idParamSchema.safeParse(request.params);
             if (!parsed.success) {
                 throw new BadRequestError(
@@ -152,8 +162,7 @@ export async function performanceReviewRoutes(fastify: FastifyInstance) {
             }
 
             const { entityId } = parsed.data;
-            // 임시 추출
-            const { userId } = parseJwt(request.headers);
+            const userId = request.user.userId;
 
             const service = new PerformanceReviewService(request.server.prisma);
             const result = await service.likePerformanceReview(userId, entityId);
