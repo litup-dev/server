@@ -47,7 +47,7 @@ export async function uploadRoutes(fastify: FastifyInstance) {
             },
         },
         async (request, reply) => {
-            const userId = 2; // 임시 추출
+            const { userId } = parseJwt(request.headers);
 
             const parts = request.parts();
 
