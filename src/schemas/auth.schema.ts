@@ -1,4 +1,6 @@
 import { z, generateSchema } from '@/common/zod.js';
+import { userSimpleSchema } from './user.schema';
+import { successResponseSchema } from './common.schema';
 
 export const createUserSchema = z.object({
     provider: z.string().openapi({
@@ -19,8 +21,19 @@ export const createUserSchema = z.object({
     }),
 });
 
+export const loginSchema = userSimpleSchema.extend({
+    accessToken: z.string().openapi({
+        type: 'string',
+        description: '액세스 토큰',
+        example: 'bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+    }),
+});
+
+// 응답 스키마
+export const loginRes = successResponseSchema(loginSchema);
 // Json 스키마
 export const createUserJson = generateSchema(createUserSchema);
+export const loginJson = generateSchema(loginRes);
 
 // 타입 추출
 export type CreateUserType = z.infer<typeof createUserSchema>;
