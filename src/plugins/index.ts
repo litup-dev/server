@@ -4,6 +4,7 @@ import { registerPrisma } from './prisma.js';
 import { registerCors } from './cors.js';
 import { registerSchedule } from './schedule.js';
 import { registerMultipart } from './multipart.js';
+import { registerOauth } from './oauth.js';
 
 export async function registerPlugins(fastify: FastifyInstance) {
     await registerPrisma(fastify);
@@ -11,4 +12,5 @@ export async function registerPlugins(fastify: FastifyInstance) {
     await registerCors(fastify);
     await registerSchedule(fastify);
     await registerMultipart(fastify);
+    await registerOauth(fastify);
 }

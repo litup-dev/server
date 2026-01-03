@@ -5,12 +5,14 @@ import { UserSimpleType } from '@/schemas/user.schema.js';
 import { PrivacyLevel } from '@/types/privacy.types.js';
 import { PrismaClient } from '@prisma/client';
 import { NicknameService } from '@/services/nickname.service.js';
+import { FastifyInstance, FastifyRequest } from 'fastify';
+import { API_PREFIX, HOST, PORT } from '@/common/constants';
 
 export class AuthService {
     constructor(private prisma: PrismaClient) {}
 
-    async verifyUser(body: CreateUserType): Promise<UserSimpleType> {
-        const { provider, providerId, email } = body;
+    async verifyUser(params: CreateUserType): Promise<UserSimpleType> {
+        const { provider, providerId, email } = params;
 
         const socialCode = await this.prisma.social_code.findFirst({
             where: { code: provider },
@@ -60,9 +62,6 @@ export class AuthService {
         await this.prisma.user_settings_tb.create({
             data: {
                 user_id: newUser.id,
-                favorite_clubs_privacy: PrivacyLevel.PUBLIC,
-                attendance_privacy: PrivacyLevel.PUBLIC,
-                perform_history_privacy: PrivacyLevel.PUBLIC,
             },
         });
 
@@ -98,6 +97,54 @@ export class AuthService {
             success: true,
             operation: 'deleted',
             message: '유저가 삭제되었습니다.',
+        };
+    }
+
+    async registerForKakao(
+        fastify: FastifyInstance,
+        request: FastifyRequest
+    ): Promise<UserSimpleType> {
+        fastify.log.info('카카오 OAuth 콜백 처리 시작');
+        const { token } =
+            await fastify.kakaoOAuth2.getAccessTokenFromAuthorizationCodeFlow(request);
+
+        const kakaoUserResponse = await fetch('https://kapi.kakao.com/v2/user/me', {
+            headers: {
+                Authorization: `Bearer ${token.access_token}`,
+            },
+        });
+
+        /**
+         * KAKAO USER INFO (2026-01-03 기준)
+         * Kakao user info: {
+         *      id: 1234567899,
+         *      connected_at: '2025-11-19T08:51:47Z',
+         *      kakao_account: {
+         *          has_email: true,
+         *          email_needs_agreement: false,
+         *          is_email_valid: true,
+         *          is_email_verified: true,
+         *          email: '{email address}',
+         *      }
+         *  }
+         */
+
+        const info = await kakaoUserResponse.json();
+
+        const providerId = String(info.id);
+        const provider = 'kakao';
+        const email = info.kakao_account.email;
+
+        const verifyUser = await this.verifyUser({
+            provider,
+            providerId,
+            email,
+        });
+
+        return {
+            id: verifyUser.id,
+            nickname: verifyUser.nickname,
+            profilePath: verifyUser.profilePath,
         };
     }
 }
