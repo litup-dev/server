@@ -1008,6 +1008,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@fastify/cookie@npm:^11.0.1":
+  version: 11.0.2
+  resolution: "@fastify/cookie@npm:11.0.2"
+  dependencies:
+    cookie: "npm:^1.0.0"
+    fastify-plugin: "npm:^5.0.0"
+  checksum: 10c0/055aef3260e2a95115e976d820faeacf2513790e99c589c6bfeef06ead181b501a5bd18fb6fa8c507fd2a284cb2e0808e180ab2e64138269f717383e82a75384
+  languageName: node
+  linkType: hard
+
 "@fastify/cors@npm:11.1.0":
   version: 11.1.0
   resolution: "@fastify/cors@npm:11.1.0"
@@ -1077,6 +1087,17 @@ __metadata:
     fastify-plugin: "npm:^5.0.0"
     secure-json-parse: "npm:^4.0.0"
   checksum: 10c0/d49c14ac84c93e65145f3f6cbdfb0405b3bc00642c7a347359c894a125bfe136b7cec3dd0f529f374ebd232eb98f04594788d5f3fe75cec8300b10c39b1c087f
+  languageName: node
+  linkType: hard
+
+"@fastify/oauth2@npm:^8.1.2":
+  version: 8.1.2
+  resolution: "@fastify/oauth2@npm:8.1.2"
+  dependencies:
+    "@fastify/cookie": "npm:^11.0.1"
+    fastify-plugin: "npm:^5.0.0"
+    simple-oauth2: "npm:^5.0.0"
+  checksum: 10c0/a96779334c1f1f8eecacfd555dd0e1ff6db28045cac736ff0c049f877d78febc573c44d94a18ef587bf4d6202549dca9125c1ad662d0411bc3ccfe24182a8b59
   languageName: node
   linkType: hard
 
@@ -1155,6 +1176,56 @@ __metadata:
     rfdc: "npm:^1.3.1"
     yaml: "npm:^2.4.2"
   checksum: 10c0/ae9b822a90572d48c50cb60903d1c69083a56dee007843a0c7549a851aea99ec4758062e18ad00b16aaf4390c500108b516974620e354814035b754b405de61c
+  languageName: node
+  linkType: hard
+
+"@hapi/boom@npm:^10.0.1":
+  version: 10.0.1
+  resolution: "@hapi/boom@npm:10.0.1"
+  dependencies:
+    "@hapi/hoek": "npm:^11.0.2"
+  checksum: 10c0/e4ae8a69bb67c5687320d320a0706ac66e797a659c19fb1c9b909eaefe3b41780e4ecd4382de1297b10c33e9db81f79667324576b9153f57b0cf701293b908d0
+  languageName: node
+  linkType: hard
+
+"@hapi/bourne@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "@hapi/bourne@npm:3.0.0"
+  checksum: 10c0/2e2df62f6bc6f32b980ba5bbdc09200c93c55c8306399ec0f2781da088a82aab699498c89fe94fec4acf770210f9aee28c75bfc2f04044849ac01b034134e717
+  languageName: node
+  linkType: hard
+
+"@hapi/hoek@npm:^11.0.2, @hapi/hoek@npm:^11.0.4":
+  version: 11.0.7
+  resolution: "@hapi/hoek@npm:11.0.7"
+  checksum: 10c0/39a4a3ae9526ed66509f6d03c6eb43179a2590df6e98443328c966cfa5e7cbb9d340f61fdbe0afe092662d5377d5a611c3303c808fee26a9c9cfd6bd3737dc1c
+  languageName: node
+  linkType: hard
+
+"@hapi/hoek@npm:^9.0.0, @hapi/hoek@npm:^9.3.0":
+  version: 9.3.0
+  resolution: "@hapi/hoek@npm:9.3.0"
+  checksum: 10c0/a096063805051fb8bba4c947e293c664b05a32b47e13bc654c0dd43813a1cec993bdd8f29ceb838020299e1d0f89f68dc0d62a603c13c9cc8541963f0beca055
+  languageName: node
+  linkType: hard
+
+"@hapi/topo@npm:^5.1.0":
+  version: 5.1.0
+  resolution: "@hapi/topo@npm:5.1.0"
+  dependencies:
+    "@hapi/hoek": "npm:^9.0.0"
+  checksum: 10c0/b16b06d9357947149e032bdf10151eb71aea8057c79c4046bf32393cb89d0d0f7ca501c40c0f7534a5ceca078de0700d2257ac855c15e59fe4e00bba2f25c86f
+  languageName: node
+  linkType: hard
+
+"@hapi/wreck@npm:^18.0.0":
+  version: 18.1.0
+  resolution: "@hapi/wreck@npm:18.1.0"
+  dependencies:
+    "@hapi/boom": "npm:^10.0.1"
+    "@hapi/bourne": "npm:^3.0.0"
+    "@hapi/hoek": "npm:^11.0.2"
+  checksum: 10c0/eab85afdf24d0c514abada83ef09e5f3b096348bfba36bb6c7a6f7eebd47ab583e07aa1005be7d638b405e4c55ec82a3697ad0cbe1b2db6bb73fa0e66baffde4
   languageName: node
   linkType: hard
 
@@ -1399,6 +1470,29 @@ __metadata:
   version: 1.1.0
   resolution: "@rtsao/scc@npm:1.1.0"
   checksum: 10c0/b5bcfb0d87f7d1c1c7c0f7693f53b07866ed9fec4c34a97a8c948fb9a7c0082e416ce4d3b60beb4f5e167cbe04cdeefbf6771320f3ede059b9ce91188c409a5b
+  languageName: node
+  linkType: hard
+
+"@sideway/address@npm:^4.1.5":
+  version: 4.1.5
+  resolution: "@sideway/address@npm:4.1.5"
+  dependencies:
+    "@hapi/hoek": "npm:^9.0.0"
+  checksum: 10c0/638eb6f7e7dba209053dd6c8da74d7cc995e2b791b97644d0303a7dd3119263bcb7225a4f6804d4db2bc4f96e5a9d262975a014f58eae4d1753c27cbc96ef959
+  languageName: node
+  linkType: hard
+
+"@sideway/formula@npm:^3.0.1":
+  version: 3.0.1
+  resolution: "@sideway/formula@npm:3.0.1"
+  checksum: 10c0/3fe81fa9662efc076bf41612b060eb9b02e846ea4bea5bd114f1662b7f1541e9dedcf98aff0d24400bcb92f113964a50e0290b86e284edbdf6346fa9b7e2bf2c
+  languageName: node
+  linkType: hard
+
+"@sideway/pinpoint@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "@sideway/pinpoint@npm:2.0.0"
+  checksum: 10c0/d2ca75dacaf69b8fc0bb8916a204e01def3105ee44d8be16c355e5f58189eb94039e15ce831f3d544f229889ccfa35562a0ce2516179f3a7ee1bbe0b71e55b36
   languageName: node
   linkType: hard
 
@@ -2926,6 +3020,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"cookie@npm:^1.0.0":
+  version: 1.1.1
+  resolution: "cookie@npm:1.1.1"
+  checksum: 10c0/79c4ddc0fcad9c4f045f826f42edf54bcc921a29586a4558b0898277fa89fb47be95bc384c2253f493af7b29500c830da28341274527328f18eba9f58afa112c
+  languageName: node
+  linkType: hard
+
 "cookie@npm:^1.0.1":
   version: 1.0.2
   resolution: "cookie@npm:1.0.2"
@@ -4443,6 +4544,7 @@ __metadata:
     "@fastify/cors": "npm:11.1.0"
     "@fastify/helmet": "npm:13.0.1"
     "@fastify/multipart": "npm:9.2.1"
+    "@fastify/oauth2": "npm:^8.1.2"
     "@fastify/sensible": "npm:6.0.3"
     "@fastify/static": "npm:8.2.0"
     "@fastify/swagger": "npm:9.5.1"
@@ -4827,6 +4929,19 @@ __metadata:
   bin:
     jiti: lib/jiti-cli.mjs
   checksum: 10c0/79b2e96a8e623f66c1b703b98ec1b8be4500e1d217e09b09e343471bbb9c105381b83edbb979d01cef18318cc45ce6e153571b6c83122170eefa531c64b6789b
+  languageName: node
+  linkType: hard
+
+"joi@npm:^17.6.4":
+  version: 17.13.3
+  resolution: "joi@npm:17.13.3"
+  dependencies:
+    "@hapi/hoek": "npm:^9.3.0"
+    "@hapi/topo": "npm:^5.1.0"
+    "@sideway/address": "npm:^4.1.5"
+    "@sideway/formula": "npm:^3.0.1"
+    "@sideway/pinpoint": "npm:^2.0.0"
+  checksum: 10c0/9262aef1da3f1bec5b03caf50c46368899fe03b8ff26cbe3d53af4584dd1049079fc97230bbf1500b6149db7cc765b9ee45f0deb24bb6fc3fa06229d7148c17f
   languageName: node
   linkType: hard
 
@@ -6221,6 +6336,18 @@ __metadata:
   version: 4.1.0
   resolution: "signal-exit@npm:4.1.0"
   checksum: 10c0/41602dce540e46d599edba9d9860193398d135f7ff72cab629db5171516cfae628d21e7bfccde1bbfdf11c48726bc2a6d1a8fb8701125852fbfda7cf19c6aa83
+  languageName: node
+  linkType: hard
+
+"simple-oauth2@npm:^5.0.0":
+  version: 5.1.0
+  resolution: "simple-oauth2@npm:5.1.0"
+  dependencies:
+    "@hapi/hoek": "npm:^11.0.4"
+    "@hapi/wreck": "npm:^18.0.0"
+    debug: "npm:^4.3.4"
+    joi: "npm:^17.6.4"
+  checksum: 10c0/3ed7428540644363b93bac16941dfd869db1e8b43250e515130e28a7c94c537d363833ac53d22c3b8444f050953b45ef4d833815c7b704f249369747ef338537
   languageName: node
   linkType: hard
 

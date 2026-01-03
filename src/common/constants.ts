@@ -20,3 +20,5 @@ export const REDIS_HOST = process.env.REDIS_HOST || 'localhost';
 export const REDIS_PORT = Number(process.env.REDIS_PORT) || 6379;
 export const REDIS_PASSWORD = process.env.REDIS_PASSWORD || '';
 export const REDIS_DATABASE = Number(process.env.REDIS_DATABASE) || 4;
+export const KAKAO_CLIENT_ID = process.env.KAKAO_CLIENT_ID || '';
+export const KAKAO_CLIENT_SECRET = process.env.KAKAO_CLIENT_SECRET || '';
