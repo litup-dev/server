@@ -9,7 +9,7 @@ import { FastifyInstance } from 'fastify';
 import { TokenService } from '@/services/token.service';
 import { randomUUID } from 'crypto';
 import path from 'path';
-import { InvalidTokenError } from '@/common/error';
+import { InvalidTokenError, NotFoundError } from '@/common/error';
 
 export async function authRoutes(fastify: FastifyInstance) {
     fastify.get(
@@ -38,6 +38,8 @@ export async function authRoutes(fastify: FastifyInstance) {
                     result = await service.registerForKakao(fastify, request);
                 } else if (provider === 'google') {
                     result = await service.registerForGoogle(fastify, request);
+                } else {
+                    throw new NotFoundError('지원하지 않는 소셜 로그인 제공자입니다.');
                 }
 
                 const tokenService = new TokenService(fastify);
@@ -95,7 +97,7 @@ export async function authRoutes(fastify: FastifyInstance) {
                     httpOnly: true,
                     secure: NODE_ENV === 'production' ? true : false,
                     sameSite: 'lax', // CSRF 공격 방지
-                    path: '/',
+                    path: NODE_ENV === 'production' ? '/auth/refresh' : '/',
                 });
 
                 reply.send({
@@ -112,33 +114,6 @@ export async function authRoutes(fastify: FastifyInstance) {
             }
         }
     );
-
-    // fastify.post(
-    //     '/auth/verify',
-    //     {
-    //         schema: {
-    //             body: createUserJson,
-    //             tags: ['Auth'],
-    //             summary: '회원가입 & 로그인',
-    //             description: '회원가입 & 로그인',
-    //             response: {
-    //                 201: userDefaultJson,
-    //                 400: errorResJson,
-    //                 500: errorResJson,
-    //             },
-    //         },
-    //     },
-    //     async (request, reply) => {
-    //         const service = new AuthService(request.server.prisma);
-    //         const { provider, providerId, email } = request.body as {
-    //             provider: string;
-    //             providerId: string;
-    //             email: string;
-    //         };
-    //         const user = await service.verifyUser({ provider, providerId, email });
-    //         return reply.send({ data: user });
-    //     }
-    // );
 
     fastify.delete(
         '/auth/withdraw',
@@ -163,38 +138,6 @@ export async function authRoutes(fastify: FastifyInstance) {
             });
         }
     );
-
-    // fastify.post(
-    //     '/auth/dummy/verify',
-    //     {
-    //         schema: {
-    //             tags: ['Auth'],
-    //             summary: '회원가입 & 로그인',
-    //             description: '회원가입 & 로그인',
-    //         },
-    //     },
-    //     async (request, reply) => {
-    //         return reply.code(201).send({
-    //             data: {
-    //                 userId: 175,
-    //                 username: 'newuser',
-    //             },
-    //         });
-    //     }
-    // );
-    // fastify.delete(
-    //     '/auth/dummy/verify',
-    //     {
-    //         schema: {
-    //             tags: ['Auth'],
-    //             summary: '회원탈퇴',
-    //             description: '회원탈퇴',
-    //         },
-    //     },
-    //     async (request, reply) => {
-    //         return reply.code(204).send();
-    //     }
-    // );
 
     fastify.post('/auth/refresh', async (request, reply) => {
         const tokenService = new TokenService(fastify);
