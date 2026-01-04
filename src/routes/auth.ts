@@ -26,15 +26,14 @@ export async function authRoutes(fastify: FastifyInstance) {
             try {
                 request.log.info('OAuth callback 처리 시작');
 
-                const provider = (request.params as any).provider;
+                const provider = (request.params as any).provider.toLowerCase();
                 const service = new AuthService(fastify.prisma);
                 let result = null;
 
                 if (provider === 'kakao') {
                     result = await service.registerForKakao(fastify, request);
                 } else if (provider === 'google') {
-                    // Google OAuth 처리 로직 추가 예정
-                    return reply.status(500).send({ error: 'Google OAuth not implemented yet' });
+                    result = await service.registerForGoogle(fastify, request);
                 }
 
                 // jwt 토큰 발급 로직 넣어야함.
