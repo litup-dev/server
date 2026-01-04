@@ -2,11 +2,9 @@ import { NotFoundError } from '@/common/error.js';
 import { CreateUserType } from '@/schemas/auth.schema.js';
 import { OperationSuccessType } from '@/schemas/common.schema.js';
 import { UserSimpleType } from '@/schemas/user.schema.js';
-import { PrivacyLevel } from '@/types/privacy.types.js';
 import { PrismaClient } from '@prisma/client';
 import { NicknameService } from '@/services/nickname.service.js';
-import { FastifyInstance, FastifyRequest } from 'fastify';
-import { API_PREFIX, HOST, PORT } from '@/common/constants';
+import fastify, { FastifyInstance, FastifyRequest } from 'fastify';
 
 export class AuthService {
     constructor(private prisma: PrismaClient) {}

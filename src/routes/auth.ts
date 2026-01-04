@@ -1,11 +1,14 @@
 import { access } from 'fs';
-import { API_PREFIX, HOST, PORT } from '@/common/constants';
+import { API_PREFIX, HOST, NODE_ENV, PORT } from '@/common/constants';
 import { createUserJson, loginJson } from '@/schemas/auth.schema.js';
 import { errorResJson, successResJson } from '@/schemas/common.schema.js';
 import { userDefaultJson } from '@/schemas/user.schema.js';
 import { AuthService } from '@/services/auth.service.js';
 import { parseJwt } from '@/utils/jwt.js';
 import { FastifyInstance } from 'fastify';
+import { TokenService } from '@/services/token.service';
+import { randomUUID } from 'crypto';
+import path from 'path';
 
 export async function authRoutes(fastify: FastifyInstance) {
     fastify.get(
@@ -36,11 +39,23 @@ export async function authRoutes(fastify: FastifyInstance) {
                     result = await service.registerForGoogle(fastify, request);
                 }
 
-                // jwt 토큰 발급 로직 넣어야함.
+                const tokenService = new TokenService(fastify);
+                const accessToken = tokenService.generateJwtToken(result!.id);
+                const refresshTokenId = randomUUID();
+                const refreshToken = tokenService.generateRefreshToken(result!.id, refresshTokenId);
+                await tokenService.saveRefreshToken(refresshTokenId, result!.id, 7 * 24 * 60 * 60);
+
+                reply.setCookie('refreshToken', refreshToken, {
+                    httpOnly: true,
+                    secure: NODE_ENV === 'production' ? true : false,
+                    sameSite: 'lax', // CSRF 공격 방지
+                    path: '/auth/refresh',
+                });
+
                 reply.send({
                     data: {
                         ...result,
-                        accessToken: 'bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ923123',
+                        accessToken,
                     },
                 });
             } catch (err: any) {
