@@ -147,4 +147,50 @@ export class AuthService {
             profilePath: verifyUser.profilePath,
         };
     }
+
+    async registerForGoogle(
+        fastify: FastifyInstance,
+        request: FastifyRequest
+    ): Promise<UserSimpleType> {
+        fastify.log.info('구글 OAuth 콜백 처리 시작');
+        const { token } =
+            await fastify.googleOAuth2.getAccessTokenFromAuthorizationCodeFlow(request);
+
+        const googleUserResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+            headers: {
+                Authorization: `Bearer ${token.access_token}`,
+            },
+        });
+
+        /**
+         * Google USER INFO (2026-01-03 기준)
+         *  Google user info: {
+         *    id: '114273003388577675068',
+         *    email: 'xxxxxxxxx@gmail.com',
+         *    verified_email: true,
+         *    name: 'Tazo Companion',
+         *    given_name: 'Tazo',
+         *    family_name: 'Companion',
+         *    picture: 'https://lh3.googleusercontent.com/a/ACg8ocL7tuyH50Vi4YJVe4OJPARWuDBOMJ7aggusr9y-Ml4zoUMqkuU=s96-c'
+         *  }
+         */
+
+        const info = await googleUserResponse.json();
+
+        const providerId = String(info.id);
+        const provider = 'google';
+        const email = info.email;
+
+        const verifyUser = await this.verifyUser({
+            provider,
+            providerId,
+            email,
+        });
+
+        return {
+            id: verifyUser.id,
+            nickname: verifyUser.nickname,
+            profilePath: verifyUser.profilePath,
+        };
+    }
 }
