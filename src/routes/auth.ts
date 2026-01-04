@@ -52,7 +52,7 @@ export async function authRoutes(fastify: FastifyInstance) {
                     httpOnly: true,
                     secure: NODE_ENV === 'production' ? true : false,
                     sameSite: 'lax', // CSRF 공격 방지
-                    path: '/auth/refresh',
+                    path: NODE_ENV === 'production' ? '/auth/refresh' : '/',
                 });
 
                 reply.send({
