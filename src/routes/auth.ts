@@ -1,4 +1,4 @@
-import { access } from 'fs';
+import { access, fstat } from 'fs';
 import { API_PREFIX, HOST, NODE_ENV, PORT } from '@/common/constants';
 import { createUserJson, loginJson } from '@/schemas/auth.schema.js';
 import { errorResJson, successResJson } from '@/schemas/common.schema.js';
@@ -9,6 +9,7 @@ import { FastifyInstance } from 'fastify';
 import { TokenService } from '@/services/token.service';
 import { randomUUID } from 'crypto';
 import path from 'path';
+import { InvalidTokenError } from '@/common/error';
 
 export async function authRoutes(fastify: FastifyInstance) {
     fastify.get(
@@ -41,9 +42,9 @@ export async function authRoutes(fastify: FastifyInstance) {
 
                 const tokenService = new TokenService(fastify);
                 const accessToken = tokenService.generateJwtToken(result!.id);
-                const refresshTokenId = randomUUID();
-                const refreshToken = tokenService.generateRefreshToken(result!.id, refresshTokenId);
-                await tokenService.saveRefreshToken(refresshTokenId, result!.id, 7 * 24 * 60 * 60);
+                const refreshTokenId = randomUUID();
+                const refreshToken = tokenService.generateRefreshToken(result!.id, refreshTokenId);
+                await tokenService.saveRefreshToken(refreshTokenId, result!.id);
 
                 reply.setCookie('refreshToken', refreshToken, {
                     httpOnly: true,
@@ -55,7 +56,54 @@ export async function authRoutes(fastify: FastifyInstance) {
                 reply.send({
                     data: {
                         ...result,
-                        accessToken,
+                        accessToken: `Bearer ${accessToken}`,
+                    },
+                });
+            } catch (err: any) {
+                fastify.log.error('Kakao OAuth callback error:', err);
+                reply.status(500).send({ error: String(err) });
+            }
+        }
+    );
+
+    fastify.post(
+        '/auth/dev-login',
+        {
+            schema: {
+                tags: ['Auth'],
+                summary: '소셜 회원가입 & 로그인',
+                description: '소셜 회원가입 & 로그인',
+                response: {
+                    200: loginJson,
+                    400: errorResJson,
+                    500: errorResJson,
+                },
+            },
+        },
+        async (request, reply) => {
+            try {
+                const body = request.body as any;
+                const userId = body.userId;
+                const tokenService = new TokenService(fastify);
+
+                const accessToken = tokenService.generateJwtToken(userId);
+                const refreshTokenId = randomUUID();
+                const refreshToken = tokenService.generateRefreshToken(userId, refreshTokenId);
+                await tokenService.saveRefreshToken(refreshTokenId, userId);
+
+                reply.setCookie('refreshToken', refreshToken, {
+                    httpOnly: true,
+                    secure: NODE_ENV === 'production' ? true : false,
+                    sameSite: 'lax', // CSRF 공격 방지
+                    path: '/',
+                });
+
+                reply.send({
+                    data: {
+                        id: userId,
+                        nickname: 'devuser',
+                        profilePath: null,
+                        accessToken: `Bearer ${accessToken}`,
                     },
                 });
             } catch (err: any) {
@@ -147,4 +195,13 @@ export async function authRoutes(fastify: FastifyInstance) {
     //         return reply.code(204).send();
     //     }
     // );
+
+    fastify.post('/auth/refresh', async (request, reply) => {
+        const tokenService = new TokenService(fastify);
+        const accessToken = await tokenService.getNewAccessToken(request, reply);
+        if (!accessToken) {
+            throw new InvalidTokenError('토큰이 유효하지 않습니다.');
+        }
+        reply.send({ data: { accessToken } });
+    });
 }
