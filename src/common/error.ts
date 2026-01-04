@@ -5,3 +5,4 @@ export const ConflictError = createError('CONFLICT', '%s', 409);
 export const BadRequestError = createError('BAD_REQUEST', '%s', 400);
 export const ForbiddenError = createError('FORBIDDEN', '%s', 403);
 export const UnauthorizedError = createError('UNAUTHORIZED', '%s', 401);
+export const InvalidTokenError = createError('INVALID_TOKEN', '%s', 401);

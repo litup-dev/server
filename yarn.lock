@@ -1008,7 +1008,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@fastify/cookie@npm:^11.0.1":
+"@fastify/cookie@npm:^11.0.1, @fastify/cookie@npm:^11.0.2":
   version: 11.0.2
   resolution: "@fastify/cookie@npm:11.0.2"
   dependencies:
@@ -4632,6 +4632,7 @@ __metadata:
     "@aws-sdk/client-s3": "npm:3.914.0"
     "@eslint/js": "npm:9.35.0"
     "@fastify/compress": "npm:8.1.0"
+    "@fastify/cookie": "npm:^11.0.2"
     "@fastify/cors": "npm:11.1.0"
     "@fastify/helmet": "npm:13.0.1"
     "@fastify/jwt": "npm:^10.0.0"
