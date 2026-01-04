@@ -1,5 +1,11 @@
 import fastifyPlugin from 'fastify-plugin';
-import { InvalidTokenError } from '../error';
+import {
+    AuthorizationTokenExpiredError,
+    AuthorizationTokenInvalidError,
+    AuthorizationTokenUnsignedError,
+    InvalidTokenError,
+    NoAuthorizationInCookieError,
+} from '../error';
 import { FastifyRequest, FastifyReply } from 'fastify';
 
 export const registerAuthPreHandler = fastifyPlugin(async (fastify) => {
@@ -7,10 +13,26 @@ export const registerAuthPreHandler = fastifyPlugin(async (fastify) => {
         try {
             await request.jwtVerify();
             if (request.user.type !== 'access') {
-                throw new InvalidTokenError('토큰 타입이 올바르지 않습니다.');
+                throw new InvalidTokenError();
             }
-        } catch {
-            throw new InvalidTokenError('인증이 필요합니다.');
+        } catch (err: any) {
+            const code = err?.code;
+            if (code === 'FST_JWT_AUTHORIZATION_TOKEN_EXPIRED') {
+                throw new AuthorizationTokenExpiredError();
+            }
+            if (code === 'FST_JWT_NO_AUTHORIZATION_IN_HEADER') {
+                throw new NoAuthorizationInCookieError();
+            }
+            if (code === 'FST_JWT_NO_AUTHORIZATION_IN_COOKIE') {
+                throw new NoAuthorizationInCookieError();
+            }
+            if (code === 'FST_JWT_AUTHORIZATION_TOKEN_INVALID') {
+                throw new AuthorizationTokenInvalidError();
+            }
+            if (code === 'FAST_JWT_MISSING_SIGNATURE') {
+                throw new AuthorizationTokenUnsignedError();
+            }
+            throw err;
         }
     });
 
