@@ -14,11 +14,46 @@ import { PrismaClient } from '@prisma/client';
 export class UserService {
     constructor(private prisma: PrismaClient) {}
 
+    async getUserIdByPublicId(publicId: string): Promise<number> {
+        const user = await this.prisma.user_tb.findFirst({
+            where: { public_id: publicId },
+            select: {
+                id: true,
+            },
+        });
+        if (!user) {
+            throw new NotFoundError('사용자를 찾을 수 없습니다.');
+        }
+
+        return user.id;
+    }
+
+    async getUserByPublicId(publicId: string): Promise<UserInfoType> {
+        const user = await this.prisma.user_tb.findFirst({
+            where: { public_id: publicId },
+            select: {
+                public_id: true,
+                nickname: true,
+                profile_path: true,
+                bio: true,
+            },
+        });
+        if (!user) {
+            throw new NotFoundError('사용자를 찾을 수 없습니다.');
+        }
+        return {
+            publicId: user.public_id,
+            nickname: user.nickname,
+            profilePath: user.profile_path ?? null,
+            bio: user.bio ?? null,
+        };
+    }
+
     async getUserById(userId: number): Promise<UserInfoType> {
         const user = await this.prisma.user_tb.findUnique({
             where: { id: userId },
             select: {
-                id: true,
+                public_id: true,
                 nickname: true,
                 profile_path: true,
                 bio: true,
@@ -30,14 +65,15 @@ export class UserService {
         }
 
         return {
-            id: user.id,
+            publicId: user.public_id,
             nickname: user.nickname,
             profilePath: user.profile_path ?? null,
             bio: user.bio ?? null,
         };
     }
 
-    async getUserStats(userId: number): Promise<UserStatsType> {
+    async getUserStats(publicId: string): Promise<UserStatsType> {
+        const userId = await this.getUserIdByPublicId(publicId);
         const attendCount = await this.prisma.attend_tb.count({
             where: { user_id: userId },
         });
@@ -53,11 +89,12 @@ export class UserService {
     }
 
     async getUserPerformHistory(
-        targetUserId: number,
+        publicId: string,
         requesterId: number | null,
         offset: number,
         limit: number
     ): Promise<PerformanceRecordsType> {
+        const targetUserId = await this.getUserIdByPublicId(publicId);
         const isSelf = requesterId !== null && requesterId === targetUserId;
         if (!isSelf) {
             const privacyRule = await this.prisma.user_settings_tb.findFirst({
@@ -173,11 +210,12 @@ export class UserService {
     }
 
     async getUserFavoriteClubs(
-        targetUserId: number,
+        publicId: string,
         requesterId: number | null,
         offset: number,
         limit: number
     ): Promise<ClubListSimpleResponseType> {
+        const targetUserId = await this.getUserIdByPublicId(publicId);
         const isSelf = requesterId !== null && requesterId === targetUserId;
         if (!isSelf) {
             const privacyRule = await this.prisma.user_settings_tb.findFirst({
@@ -312,7 +350,7 @@ export class UserService {
             },
         });
         return {
-            id: updatedUser.id,
+            publicId: updatedUser.public_id,
             nickname: updatedUser.nickname,
             profilePath: updatedUser.profile_path ?? null,
             bio: updatedUser.bio ?? null,

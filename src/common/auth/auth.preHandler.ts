@@ -5,16 +5,36 @@ import {
     AuthorizationTokenUnsignedError,
     InvalidTokenError,
     NoAuthorizationInCookieError,
+    NotFoundError,
 } from '../error';
 import { FastifyRequest, FastifyReply } from 'fastify';
 
 export const registerAuthPreHandler = fastifyPlugin(async (fastify) => {
+    async function attachUserId(request: FastifyRequest) {
+        const publicId = (request.user as any)?.publicId as string | undefined;
+        if (!publicId) {
+            request.userId = null;
+            return;
+        }
+        const user = await fastify.prisma.user_tb.findFirst({
+            where: { public_id: publicId },
+            select: { id: true },
+        });
+
+        if (!user) {
+            throw new NotFoundError('사용자를 찾을 수 없습니다.');
+        }
+
+        request.userId = user.id;
+    }
+
     fastify.decorate('requireAuth', async (request: FastifyRequest, reply: FastifyReply) => {
         try {
             await request.jwtVerify();
             if (request.user.type !== 'access') {
                 throw new InvalidTokenError();
             }
+            await attachUserId(request);
         } catch (err: any) {
             const code = err?.code;
             if (code === 'FST_JWT_AUTHORIZATION_TOKEN_EXPIRED') {
@@ -39,8 +59,9 @@ export const registerAuthPreHandler = fastifyPlugin(async (fastify) => {
     fastify.decorate('optionalAuth', async (request: FastifyRequest, reply: FastifyReply) => {
         try {
             await request.jwtVerify();
+            await attachUserId(request);
         } catch {
-            // pass
+            request.userId = null;
         }
     });
 });

@@ -2,12 +2,12 @@ import '@fastify/jwt';
 import { JwtPayload } from './jwt';
 
 type AccessTokenPayload = {
-    userId: number;
+    publicId: string;
     type: 'access';
 };
 
 type RefreshTokenPayload = {
-    userId: number;
+    publicId: string;
     type: 'refresh';
     jti: string;
 };

@@ -39,14 +39,8 @@ export async function reviewRoutes(fastify: FastifyInstance) {
 
             const { entityId } = parsed.data;
             const query = request.query as GetReviewsType;
-            let userId = null;
-            if (request.user) {
-                userId = request.user.userId;
-            }
-
             const service = new ReviewService(request.server.prisma);
-            const result = await service.getReviewsByClubId(userId, entityId, query);
-
+            const result = await service.getReviewsByClubId(request.userId, entityId, query);
             request.log.info(`Found ${result.items.length} reviews for club ${entityId}`);
 
             return reply.send({
@@ -115,7 +109,10 @@ export async function reviewRoutes(fastify: FastifyInstance) {
             const { entityId: clubId } = parsed.data;
             const body = request.body as CreateReviewType;
 
-            const userId = request.user.userId;
+            const userId = request.userId;
+            if (!userId) {
+                throw new NotFoundError('사용자를 찾을 수 없습니다.');
+            }
 
             const service = new ReviewService(request.server.prisma);
 
@@ -163,7 +160,10 @@ export async function reviewRoutes(fastify: FastifyInstance) {
             const { entityId } = parsed.data;
             const body = request.body as UpdateReviewType;
 
-            const userId = request.user.userId;
+            const userId = request.userId;
+            if (!userId) {
+                throw new NotFoundError('사용자를 찾을 수 없습니다.');
+            }
 
             const service = new ReviewService(request.server.prisma);
             const result = await service.update(entityId, userId, body);
@@ -199,7 +199,10 @@ export async function reviewRoutes(fastify: FastifyInstance) {
 
             const { entityId } = parsed.data;
 
-            const userId = request.user.userId;
+            const userId = request.userId;
+            if (!userId) {
+                throw new NotFoundError('사용자를 찾을 수 없습니다.');
+            }
 
             const service = new ReviewService(request.server.prisma);
             await service.delete(entityId, userId);

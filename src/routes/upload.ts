@@ -48,7 +48,10 @@ export async function uploadRoutes(fastify: FastifyInstance) {
             },
         },
         async (request, reply) => {
-            const userId = request.user.userId;
+            const userId = request.userId;
+            if (!userId) {
+                throw new NotFoundError('사용자를 찾을 수 없습니다.');
+            }
 
             const parts = request.parts();
 
@@ -101,7 +104,10 @@ export async function uploadRoutes(fastify: FastifyInstance) {
             },
         },
         async (request, reply) => {
-            const userId = request.user.userId;
+            const userId = request.userId;
+            if (!userId) {
+                throw new NotFoundError('사용자를 찾을 수 없습니다.');
+            }
 
             const { entityId } = request.params as IdParamType;
 
@@ -161,7 +167,10 @@ export async function uploadRoutes(fastify: FastifyInstance) {
             },
         },
         async (request, reply) => {
-            const userId = request.user.userId;
+            const userId = request.userId;
+            if (!userId) {
+                throw new NotFoundError('사용자를 찾을 수 없습니다.');
+            }
 
             const { entityId } = request.params as IdParamType;
 
@@ -224,7 +233,10 @@ export async function uploadRoutes(fastify: FastifyInstance) {
             },
         },
         async (request, reply) => {
-            const userId = request.user.userId;
+            const userId = request.userId;
+            if (!userId) {
+                throw new NotFoundError('사용자를 찾을 수 없습니다.');
+            }
             const { entityId } = request.params as IdParamType;
 
             const parts = request.parts();
