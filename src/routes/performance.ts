@@ -18,7 +18,7 @@ import {
     errorResJson,
     booleanSuccessResJson,
 } from '@/schemas/common.schema.js';
-import { BadRequestError } from '@/common/error.js';
+import { BadRequestError, NotFoundError } from '@/common/error.js';
 import { parseJwt, parseJwtOptional } from '@/utils/jwt.js';
 
 export async function performanceRoutes(fastify: FastifyInstance) {
@@ -130,16 +130,12 @@ export async function performanceRoutes(fastify: FastifyInstance) {
 
             const { entityId } = parsed.data;
             const query = request.query as GetPerformanceCalendarType;
-            let userId = null;
-            if (request.user) {
-                userId = request.user.userId;
-            }
             const service = new PerformanceService(request.server.prisma);
 
             const result = await service.getClubMonthlyPerformances({
                 month: query.month,
                 entityId,
-                userId,
+                userId: request.userId,
             });
 
             return reply.send({
@@ -174,7 +170,10 @@ export async function performanceRoutes(fastify: FastifyInstance) {
             }
 
             const { entityId } = parsed.data;
-            const userId = request.user.userId;
+            const userId = request.userId;
+            if (!userId) {
+                throw new NotFoundError('사용자를 찾을 수 없습니다.');
+            }
 
             const service = new PerformanceService(request.server.prisma);
             const result = await service.attendPerformance(userId, entityId);
@@ -210,7 +209,10 @@ export async function performanceRoutes(fastify: FastifyInstance) {
             }
 
             const { entityId } = parsed.data;
-            const userId = request.user.userId;
+            const userId = request.userId;
+            if (!userId) {
+                throw new NotFoundError('사용자를 찾을 수 없습니다.');
+            }
 
             const service = new PerformanceService(request.server.prisma);
             const result = await service.isUserAttending(userId, entityId);
@@ -246,12 +248,8 @@ export async function performanceRoutes(fastify: FastifyInstance) {
             }
 
             const { entityId } = parsed.data;
-            let userId = null;
-            if (request.user) {
-                userId = request.user.userId;
-            }
             const service = new PerformanceService(request.server.prisma);
-            const result = await service.getPerformanceDetails(entityId, userId);
+            const result = await service.getPerformanceDetails(entityId, request.userId);
             return reply.send({ data: result });
         }
     );

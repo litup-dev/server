@@ -14,13 +14,13 @@ import {
     createPerformanceReviewJson,
     performanceReviewLikeResJson,
 } from '@/schemas/performanceReview.schema.js';
-import { BadRequestError } from '@/common/error.js';
-import { parseJwt, parseJwtOptional } from '@/utils/jwt.js';
+import { BadRequestError, NotFoundError } from '@/common/error.js';
 
 export async function performanceReviewRoutes(fastify: FastifyInstance) {
     fastify.get(
         '/performance/:entityId/reviews',
         {
+            preHandler: [fastify.optionalAuth],
             schema: {
                 querystring: defaultPaginationJson,
                 params: idParamJson,
@@ -37,9 +37,13 @@ export async function performanceReviewRoutes(fastify: FastifyInstance) {
         async (request, reply) => {
             const { entityId } = request.params as IdParamType;
             const { offset, limit } = request.query as { offset: number; limit: number };
-            const userId = parseJwtOptional(request.headers);
             const service = new PerformanceReviewService(request.server.prisma);
-            const result = await service.getReviewsByPerformanceId(userId, entityId, offset, limit);
+            const result = await service.getReviewsByPerformanceId(
+                request.userId,
+                entityId,
+                offset,
+                limit
+            );
             return reply.send({
                 data: result,
             });
@@ -68,7 +72,10 @@ export async function performanceReviewRoutes(fastify: FastifyInstance) {
             const { entityId } = request.params as IdParamType;
             const service = new PerformanceReviewService(request.server.prisma);
             const { content } = request.body as { content: string };
-            const userId = request.user.userId;
+            const userId = request.userId;
+            if (!userId) {
+                throw new NotFoundError('사용자를 찾을 수 없습니다.');
+            }
             const result = await service.createReview(entityId, userId, content);
             return reply.send({
                 data: result,
@@ -98,7 +105,10 @@ export async function performanceReviewRoutes(fastify: FastifyInstance) {
             const { entityId } = request.params as IdParamType;
             const service = new PerformanceReviewService(request.server.prisma);
             const { content } = request.body as { content: string };
-            const userId = request.user.userId;
+            const userId = request.userId;
+            if (!userId) {
+                throw new NotFoundError('사용자를 찾을 수 없습니다.');
+            }
             const result = await service.patchReview(entityId, userId, content);
             return reply.send({
                 data: result,
@@ -126,7 +136,10 @@ export async function performanceReviewRoutes(fastify: FastifyInstance) {
         async (request, reply) => {
             const { entityId } = request.params as IdParamType;
             const service = new PerformanceReviewService(request.server.prisma);
-            const userId = request.user.userId;
+            const userId = request.userId;
+            if (!userId) {
+                throw new NotFoundError('사용자를 찾을 수 없습니다.');
+            }
             const result = await service.deleteReview(entityId, userId);
             return reply.send({ data: result });
         }
@@ -157,7 +170,10 @@ export async function performanceReviewRoutes(fastify: FastifyInstance) {
             }
 
             const { entityId } = parsed.data;
-            const userId = request.user.userId;
+            const userId = request.userId;
+            if (!userId) {
+                throw new NotFoundError('사용자를 찾을 수 없습니다.');
+            }
 
             const service = new PerformanceReviewService(request.server.prisma);
             const result = await service.likePerformanceReview(userId, entityId);

@@ -5,5 +5,10 @@ declare module 'fastify' {
     interface FastifyInstance {
         requireAuth: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
         optionalAuth: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
+        prisma: import('@prisma/client').PrismaClient;
+    }
+
+    interface FastifyRequest {
+        userId: number | null;
     }
 }
