@@ -1,6 +1,6 @@
 import { access, fstat } from 'fs';
 import { API_PREFIX, HOST, NODE_ENV, PORT } from '@/common/constants';
-import { createUserJson, loginJson } from '@/schemas/auth.schema.js';
+import { accessTokenJson, createUserJson, loginJson } from '@/schemas/auth.schema.js';
 import { errorResJson, successResJson } from '@/schemas/common.schema.js';
 import { userDefaultJson } from '@/schemas/user.schema.js';
 import { AuthService } from '@/services/auth.service.js';
@@ -118,6 +118,7 @@ export async function authRoutes(fastify: FastifyInstance) {
     fastify.delete(
         '/auth/withdraw',
         {
+            preHandler: [fastify.requireAuth],
             schema: {
                 tags: ['Auth'],
                 summary: '회원탈퇴',
@@ -131,7 +132,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         },
         async (request, reply) => {
             const service = new AuthService(request.server.prisma);
-            const { userId } = parseJwt(request.headers);
+            const userId = request.user.userId;
             const result = await service.withdrawUser(userId);
             return reply.send({
                 data: result,
@@ -139,12 +140,27 @@ export async function authRoutes(fastify: FastifyInstance) {
         }
     );
 
-    fastify.post('/auth/refresh', async (request, reply) => {
-        const tokenService = new TokenService(fastify);
-        const accessToken = await tokenService.getNewAccessToken(request, reply);
-        if (!accessToken) {
-            throw new InvalidTokenError('토큰이 유효하지 않습니다.');
+    fastify.post(
+        '/auth/refresh',
+        {
+            schema: {
+                tags: ['Auth'],
+                summary: '토큰 재발급',
+                description: '토큰 재발급',
+                response: {
+                    200: accessTokenJson,
+                    400: errorResJson,
+                    500: errorResJson,
+                },
+            },
+        },
+        async (request, reply) => {
+            const tokenService = new TokenService(fastify);
+            const accessToken = await tokenService.getNewAccessToken(request, reply);
+            if (!accessToken) {
+                throw new InvalidTokenError('토큰이 유효하지 않습니다.');
+            }
+            reply.send({ data: { accessToken } });
         }
-        reply.send({ data: { accessToken } });
-    });
+    );
 }
