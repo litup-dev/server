@@ -12,7 +12,6 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 export const registerAuthPreHandler = fastifyPlugin(async (fastify) => {
     async function attachUserId(request: FastifyRequest) {
         const publicId = (request.user as any)?.publicId as string | undefined;
-        console.log('attachUserId publicId:', publicId);
         if (!publicId) {
             request.userId = null;
             return;
@@ -21,7 +20,6 @@ export const registerAuthPreHandler = fastifyPlugin(async (fastify) => {
             where: { public_id: publicId },
             select: { id: true },
         });
-        console.log(user);
 
         if (!user) {
             throw new NotFoundError('사용자를 찾을 수 없습니다.');
