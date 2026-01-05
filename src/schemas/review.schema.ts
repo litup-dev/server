@@ -28,7 +28,7 @@ export const reviewSchema = z.object({
     clubId: z.number().nullable(),
     userId: z.number().nullable(),
     rating: z.number().nullable(),
-    content: z.string().nullable(),
+    content: z.string().min(10).max(1000).nullable(),
     createdAt: z.string().nullable(),
     updatedAt: z.string().nullable(),
     user: reviewUserSchema.optional().nullable(),
