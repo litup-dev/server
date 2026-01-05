@@ -32,7 +32,7 @@ export class AuthService {
             // throw new ConflictError('이미 존재하는 사용자입니다.');
             // 소셜 로그인만 존재해 로그인, 회원가입에 대한 구분이 애매함.
             return {
-                id: existingUser.id,
+                publicId: existingUser.public_id,
                 nickname: existingUser.nickname,
                 profilePath: existingUser.profile_path ?? null,
             };
@@ -51,6 +51,7 @@ export class AuthService {
             },
             select: {
                 id: true,
+                public_id: true,
                 nickname: true,
                 profile_path: true,
             },
@@ -64,7 +65,7 @@ export class AuthService {
         });
 
         return {
-            id: newUser.id,
+            publicId: newUser.public_id,
             nickname: newUser.nickname,
             profilePath: newUser.profile_path ?? null,
         };
@@ -140,7 +141,7 @@ export class AuthService {
         });
 
         return {
-            id: verifyUser.id,
+            publicId: verifyUser.publicId,
             nickname: verifyUser.nickname,
             profilePath: verifyUser.profilePath,
         };
@@ -186,7 +187,7 @@ export class AuthService {
         });
 
         return {
-            id: verifyUser.id,
+            publicId: verifyUser.publicId,
             nickname: verifyUser.nickname,
             profilePath: verifyUser.profilePath,
         };

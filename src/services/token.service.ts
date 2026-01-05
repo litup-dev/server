@@ -10,10 +10,10 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
 export class TokenService {
     constructor(private fastify: FastifyInstance) {}
-    generateJwtToken(userId: number): string {
+    generateJwtToken(publicId: string): string {
         return this.fastify.jwt.sign(
             {
-                userId,
+                publicId,
                 type: 'access',
             },
             {
@@ -22,10 +22,10 @@ export class TokenService {
         );
     }
 
-    generateRefreshToken(userId: number, tokenId: string): string {
+    generateRefreshToken(publicId: string, tokenId: string): string {
         return this.fastify.jwt.sign(
             {
-                userId,
+                publicId,
                 type: 'refresh',
                 jti: tokenId,
             },
@@ -35,13 +35,8 @@ export class TokenService {
         );
     }
 
-    async saveRefreshToken(tokenId: string, userId: number): Promise<void> {
-        await redis.set(
-            `refresh_token:${tokenId}`,
-            String(userId),
-            'EX',
-            JWT_REFRESH_TOKEN_EXPIRES_IN
-        );
+    async saveRefreshToken(tokenId: string, publicId: string): Promise<void> {
+        await redis.set(`refresh_token:${tokenId}`, publicId, 'EX', JWT_REFRESH_TOKEN_EXPIRES_IN);
     }
 
     async isExistsRefreshToken(tokenId: string): Promise<boolean> {
@@ -62,7 +57,7 @@ export class TokenService {
             }
 
             const payload = request.server.jwt.verify(token) as {
-                userId: number;
+                publicId: string;
                 type: 'refresh';
                 jti: string;
             };
@@ -71,7 +66,7 @@ export class TokenService {
                 throw new InvalidTokenError('유효하지 않은 토큰 타입입니다.');
             }
 
-            const userId = payload.userId;
+            const publicId = payload.publicId;
             const jti = payload.jti;
 
             const refreshTokenExists = await this.isExistsRefreshToken(jti);
@@ -82,8 +77,8 @@ export class TokenService {
             // 리프레시 토큰 로테이션
             await this.deleteRefreshToken(jti);
             const newRefreshTokenId = randomUUID();
-            const newRefreshToken = this.generateRefreshToken(userId, newRefreshTokenId);
-            await this.saveRefreshToken(newRefreshTokenId, userId);
+            const newRefreshToken = this.generateRefreshToken(publicId, newRefreshTokenId);
+            await this.saveRefreshToken(newRefreshTokenId, publicId);
 
             reply.setCookie('refreshToken', newRefreshToken, {
                 httpOnly: true,
@@ -92,7 +87,7 @@ export class TokenService {
                 path: NODE_ENV === 'production' ? '/auth/refresh' : '/',
             });
 
-            return this.generateJwtToken(userId);
+            return this.generateJwtToken(publicId);
         } catch (err) {
             throw new InvalidTokenError('토큰이 유효하지 않습니다.');
         }

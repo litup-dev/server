@@ -43,10 +43,13 @@ export async function authRoutes(fastify: FastifyInstance) {
                 }
 
                 const tokenService = new TokenService(fastify);
-                const accessToken = tokenService.generateJwtToken(result!.id);
+                const accessToken = tokenService.generateJwtToken(result!.publicId);
                 const refreshTokenId = randomUUID();
-                const refreshToken = tokenService.generateRefreshToken(result!.id, refreshTokenId);
-                await tokenService.saveRefreshToken(refreshTokenId, result!.id);
+                const refreshToken = tokenService.generateRefreshToken(
+                    result!.publicId,
+                    refreshTokenId
+                );
+                await tokenService.saveRefreshToken(refreshTokenId, result!.publicId);
 
                 reply.setCookie('refreshToken', refreshToken, {
                     httpOnly: true,
@@ -132,7 +135,10 @@ export async function authRoutes(fastify: FastifyInstance) {
         },
         async (request, reply) => {
             const service = new AuthService(request.server.prisma);
-            const userId = request.user.userId;
+            const userId = request.userId;
+            if (!userId) {
+                throw new NotFoundError('사용자를 찾을 수 없습니다.');
+            }
             const result = await service.withdrawUser(userId);
             return reply.send({
                 data: result,

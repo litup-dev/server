@@ -1,4 +1,4 @@
-import { BadRequestError } from '@/common/error.js';
+import { BadRequestError, NotFoundError } from '@/common/error.js';
 import {
     bodyIdsJson,
     commonSortJson,
@@ -8,6 +8,8 @@ import {
     errorResJson,
     idParamJson,
     idParamSchema,
+    publicIdParamJson,
+    publicIdParamSchema,
     successResJson,
 } from '@/schemas/common.schema.js';
 import { clubListSimpleResJson } from '@/schemas/club.schema.js';
@@ -40,10 +42,10 @@ import { PerformanceReviewService } from '@/services/performanceReview.service';
 
 export async function userRoutes(fastify: FastifyInstance) {
     fastify.get(
-        '/users/:entityId',
+        '/users/:publicId',
         {
             schema: {
-                params: idParamJson,
+                params: publicIdParamJson,
                 tags: ['User'],
                 summary: '유저 정보 조회',
                 description: '유저 정보 조회',
@@ -55,22 +57,23 @@ export async function userRoutes(fastify: FastifyInstance) {
             },
         },
         async (request, reply) => {
-            const parsed = idParamSchema.safeParse(request.params);
+            const parsed = publicIdParamSchema.safeParse(request.params);
             if (!parsed.success) {
                 throw new BadRequestError(`허용되지 않은 파라미터입니다. ${parsed.error.message}`);
             }
             const service = new UserService(request.server.prisma);
-            const { entityId } = parsed.data;
-            const result = await service.getUserById(entityId);
+            const { publicId } = parsed.data;
+            const result = await service.getUserByPublicId(publicId);
 
             return reply.send({ data: result });
         }
     );
 
     fastify.get(
-        '/users/stats/:entityId',
+        '/users/stats/:publicId',
         {
             schema: {
+                params: publicIdParamJson,
                 tags: ['User'],
                 summary: '유저 통계 조회',
                 description: '유저 통계 조회',
@@ -82,23 +85,23 @@ export async function userRoutes(fastify: FastifyInstance) {
             },
         },
         async (request, reply) => {
-            const parsed = idParamSchema.safeParse(request.params);
+            const parsed = publicIdParamSchema.safeParse(request.params);
             if (!parsed.success) {
                 throw new BadRequestError(`허용되지 않은 파라미터입니다. ${parsed.error.message}`);
             }
             const service = new UserService(request.server.prisma);
-            const { entityId } = parsed.data;
-            const result = await service.getUserStats(entityId);
+            const { publicId } = parsed.data;
+            const result = await service.getUserStats(publicId);
             return reply.send({ data: result });
         }
     );
 
     fastify.get(
-        '/users/perform-history/:entityId',
+        '/users/perform-history/:publicId',
         {
             preHandler: [fastify.optionalAuth],
             schema: {
-                params: idParamJson,
+                params: publicIdParamJson,
                 querystring: defaultPaginationJson,
                 tags: ['User'],
                 summary: '유저 관람 기록 조회',
@@ -112,18 +115,18 @@ export async function userRoutes(fastify: FastifyInstance) {
         },
         async (request, reply) => {
             const { offset, limit } = request.query as DefaultPaginationType;
-            const parsed = idParamSchema.safeParse(request.params);
+            const parsed = publicIdParamSchema.safeParse(request.params);
             if (!parsed.success) {
                 throw new BadRequestError(`허용되지 않은 파라미터입니다. ${parsed.error.message}`);
             }
-            const { entityId } = parsed.data;
-            let userId = null;
-            if (request.user) {
-                userId = request.user.userId;
-            }
-
+            const { publicId } = parsed.data;
             const service = new UserService(request.server.prisma);
-            const result = await service.getUserPerformHistory(entityId, userId, offset, limit);
+            const result = await service.getUserPerformHistory(
+                publicId,
+                request.userId,
+                offset,
+                limit
+            );
 
             return reply.send({ data: result });
         }
@@ -148,7 +151,10 @@ export async function userRoutes(fastify: FastifyInstance) {
         async (request, reply) => {
             const { entityIds } = request.body as { entityIds: number[] };
             const service = new UserService(request.server.prisma);
-            const userId = request.user.userId;
+            const userId = request.userId;
+            if (!userId) {
+                throw new NotFoundError('사용자를 찾을 수 없습니다.');
+            }
             const result = await service.deleteUserAttendanceRecords(userId, entityIds);
 
             return reply.send({ data: result });
@@ -156,12 +162,12 @@ export async function userRoutes(fastify: FastifyInstance) {
     );
 
     fastify.get(
-        '/users/favorite-clubs/:entityId',
+        '/users/favorite-clubs/:publicId',
         {
             preHandler: [fastify.optionalAuth],
             schema: {
                 tags: ['User'],
-                params: idParamJson,
+                params: publicIdParamJson,
                 querystring: defaultPaginationJson,
                 summary: '유저 관심 클럽 조회',
                 description: '유저 관심 클럽 조회',
@@ -174,17 +180,18 @@ export async function userRoutes(fastify: FastifyInstance) {
         },
         async (request, reply) => {
             const { offset, limit } = request.query as DefaultPaginationType;
-            const parsed = idParamSchema.safeParse(request.params);
+            const parsed = publicIdParamSchema.safeParse(request.params);
             if (!parsed.success) {
                 throw new BadRequestError(`허용되지 않은 파라미터입니다. ${parsed.error.message}`);
             }
-            const { entityId } = parsed.data;
-            let userId = null;
-            if (request.user) {
-                userId = request.user.userId;
-            }
+            const { publicId } = parsed.data;
             const service = new UserService(request.server.prisma);
-            const result = await service.getUserFavoriteClubs(entityId, userId, offset, limit);
+            const result = await service.getUserFavoriteClubs(
+                publicId,
+                request.userId,
+                offset,
+                limit
+            );
 
             return reply.send({ data: result });
         }
@@ -209,7 +216,10 @@ export async function userRoutes(fastify: FastifyInstance) {
         async (request, reply) => {
             const { entityIds } = request.body as { entityIds: number[] };
             const service = new UserService(request.server.prisma);
-            const userId = request.user.userId;
+            const userId = request.userId;
+            if (!userId) {
+                throw new NotFoundError('사용자를 찾을 수 없습니다.');
+            }
             const result = await service.deleteUserFavoriteClubs(userId, entityIds);
 
             return reply.send({ data: result });
@@ -229,7 +239,10 @@ export async function userRoutes(fastify: FastifyInstance) {
         },
         async (request, reply) => {
             const service = new UserService(request.server.prisma);
-            const userId = request.user.userId;
+            const userId = request.userId;
+            if (!userId) {
+                throw new NotFoundError('사용자를 찾을 수 없습니다.');
+            }
             const profileData = request.body as UserProfileEditType;
             const result = await service.updateUserProfile(userId, profileData);
             return reply.send({ data: result });
@@ -248,7 +261,10 @@ export async function userRoutes(fastify: FastifyInstance) {
         },
         async (request, reply) => {
             const service = new UserService(request.server.prisma);
-            const userId = request.user.userId;
+            const userId = request.userId;
+            if (!userId) {
+                throw new NotFoundError('사용자를 찾을 수 없습니다.');
+            }
             const result = await service.getUserPrivacySettings(userId);
             return reply.send({ data: result });
         }
@@ -267,7 +283,10 @@ export async function userRoutes(fastify: FastifyInstance) {
         },
         async (request, reply) => {
             const service = new UserService(request.server.prisma);
-            const userId = request.user.userId;
+            const userId = request.userId;
+            if (!userId) {
+                throw new NotFoundError('사용자를 찾을 수 없습니다.');
+            }
             const privacyData = request.body as UserPrivacySettingType;
             const result = await service.updateUserPrivacySettings(userId, privacyData);
             return reply.send({ data: result });

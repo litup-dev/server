@@ -14,6 +14,14 @@ export const idParamSchema = z.object({
         }),
 });
 
+export const publicIdParamSchema = z.object({
+    publicId: z.string().openapi({
+        type: 'string',
+        description: '공개 ID',
+        example: '0P1FFG0NFFZ28',
+    }),
+});
+
 // 여러 ID를 바디로 받는 스키마
 export const bodyIdsSchema = z.object({
     entityIds: z
@@ -124,6 +132,7 @@ export const successResJson = generateSchema(operationSuccessRes);
 export const errorResJson = generateSchema(errorResponseSchema);
 export const booleanSuccessResJson = generateSchema(successResponseSchema(z.boolean()));
 export const idParamJson = generateSchema(idParamSchema);
+export const publicIdParamJson = generateSchema(publicIdParamSchema);
 export const bodyIdsJson = generateSchema(bodyIdsSchema);
 export const defaultPaginationJson = generateSchema(defaultPaginationSchema);
 export const reviewCategoryJson = generateSchema(reviewCategorySuccessRes);
