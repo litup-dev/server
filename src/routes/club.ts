@@ -16,6 +16,7 @@ export async function clubRoutes(fastify: FastifyInstance) {
     fastify.get(
         '/clubs',
         {
+            preHandler: [fastify.optionalAuth],
             schema: {
                 querystring: getClubsJson,
                 tags: ['Clubs'],
@@ -30,9 +31,11 @@ export async function clubRoutes(fastify: FastifyInstance) {
         },
         async (request, reply) => {
             const query = request.query as GetClubsType;
-            console.log('query', query);
             const service = new ClubService(request.server.prisma);
-            const userId = parseJwtOptional(request.headers);
+            let userId = null;
+            if (request.user) {
+                userId = request.user.userId;
+            }
             const result = await service.getSearch(query, userId);
 
             return reply.send({
@@ -44,6 +47,7 @@ export async function clubRoutes(fastify: FastifyInstance) {
     fastify.get(
         '/clubs/:entityId',
         {
+            preHandler: [fastify.optionalAuth],
             schema: {
                 params: idParamJson,
                 tags: ['Clubs'],
@@ -64,7 +68,10 @@ export async function clubRoutes(fastify: FastifyInstance) {
             }
 
             const { entityId } = parsed.data;
-            const userId = parseJwtOptional(request.headers);
+            let userId = null;
+            if (request.user) {
+                userId = request.user.userId;
+            }
             const service = new ClubService(request.server.prisma);
             const result = await service.getById(entityId, userId);
 
@@ -75,6 +82,7 @@ export async function clubRoutes(fastify: FastifyInstance) {
     fastify.post(
         '/clubs/:entityId/favorite',
         {
+            preHandler: [fastify.requireAuth],
             schema: {
                 params: idParamJson,
                 tags: ['Clubs'],
@@ -96,7 +104,7 @@ export async function clubRoutes(fastify: FastifyInstance) {
 
             const { entityId } = parsed.data;
 
-            const { userId } = parseJwt(request.headers);
+            const userId = request.user.userId;
 
             const service = new ClubService(request.server.prisma);
             const result = await service.toggleFavorite(entityId, userId);

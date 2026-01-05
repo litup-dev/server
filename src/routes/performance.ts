@@ -108,6 +108,7 @@ export async function performanceRoutes(fastify: FastifyInstance) {
     fastify.get(
         '/performances/club/:entityId/calendar',
         {
+            preHandler: [fastify.optionalAuth],
             schema: {
                 params: idParamJson,
                 querystring: getPerformancesByMonthJson,
@@ -129,7 +130,10 @@ export async function performanceRoutes(fastify: FastifyInstance) {
 
             const { entityId } = parsed.data;
             const query = request.query as GetPerformanceCalendarType;
-            const userId = parseJwtOptional(request.headers);
+            let userId = null;
+            if (request.user) {
+                userId = request.user.userId;
+            }
             const service = new PerformanceService(request.server.prisma);
 
             const result = await service.getClubMonthlyPerformances({
@@ -147,6 +151,7 @@ export async function performanceRoutes(fastify: FastifyInstance) {
     fastify.post(
         '/performances/:entityId/attend',
         {
+            preHandler: [fastify.requireAuth],
             schema: {
                 params: idParamJson,
                 tags: ['Performances'],
@@ -169,7 +174,7 @@ export async function performanceRoutes(fastify: FastifyInstance) {
             }
 
             const { entityId } = parsed.data;
-            const { userId } = parseJwt(request.headers);
+            const userId = request.user.userId;
 
             const service = new PerformanceService(request.server.prisma);
             const result = await service.attendPerformance(userId, entityId);
@@ -182,6 +187,7 @@ export async function performanceRoutes(fastify: FastifyInstance) {
     fastify.get(
         '/performances/:entityId/attend',
         {
+            preHandler: [fastify.requireAuth],
             schema: {
                 params: idParamJson,
                 tags: ['Performances'],
@@ -204,7 +210,7 @@ export async function performanceRoutes(fastify: FastifyInstance) {
             }
 
             const { entityId } = parsed.data;
-            const { userId } = parseJwt(request.headers);
+            const userId = request.user.userId;
 
             const service = new PerformanceService(request.server.prisma);
             const result = await service.isUserAttending(userId, entityId);
@@ -217,6 +223,7 @@ export async function performanceRoutes(fastify: FastifyInstance) {
     fastify.get(
         '/performances/:entityId/details',
         {
+            preHandler: [fastify.optionalAuth],
             schema: {
                 params: idParamJson,
                 tags: ['Performances'],
@@ -239,7 +246,10 @@ export async function performanceRoutes(fastify: FastifyInstance) {
             }
 
             const { entityId } = parsed.data;
-            const userId = parseJwtOptional(request.headers);
+            let userId = null;
+            if (request.user) {
+                userId = request.user.userId;
+            }
             const service = new PerformanceService(request.server.prisma);
             const result = await service.getPerformanceDetails(entityId, userId);
             return reply.send({ data: result });

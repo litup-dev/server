@@ -8,6 +8,7 @@ export async function reportRoutes(fastify: FastifyInstance) {
     fastify.post(
         '/report',
         {
+            preHandler: [fastify.requireAuth],
             schema: {
                 tags: ['Report'],
                 summary: '신고하기',
@@ -21,7 +22,7 @@ export async function reportRoutes(fastify: FastifyInstance) {
             },
         },
         async (request, reply) => {
-            const { userId } = parseJwt(request.headers);
+            const userId = request.user.userId;
             const reportInfo = request.body as CreateReportType;
             const service = new ReportService(fastify.prisma);
             const result = await service.createReport(userId, reportInfo);

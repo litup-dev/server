@@ -88,6 +88,7 @@ export async function userRoutes(fastify: FastifyInstance) {
     fastify.get(
         '/users/perform-history/:entityId',
         {
+            preHandler: [fastify.optionalAuth],
             schema: {
                 params: idParamJson,
                 querystring: defaultPaginationJson,
@@ -108,7 +109,11 @@ export async function userRoutes(fastify: FastifyInstance) {
                 throw new BadRequestError(`허용되지 않은 파라미터입니다. ${parsed.error.message}`);
             }
             const { entityId } = parsed.data;
-            const userId = parseJwtOptional(request.headers);
+            let userId = null;
+            if (request.user) {
+                userId = request.user.userId;
+            }
+
             const service = new UserService(request.server.prisma);
             const result = await service.getUserPerformHistory(entityId, userId, offset, limit);
 
@@ -119,6 +124,7 @@ export async function userRoutes(fastify: FastifyInstance) {
     fastify.delete(
         '/users/perform-history',
         {
+            preHandler: [fastify.requireAuth],
             schema: {
                 tags: ['User'],
                 summary: '유저 관람 기록 삭제',
@@ -134,7 +140,7 @@ export async function userRoutes(fastify: FastifyInstance) {
         async (request, reply) => {
             const { entityIds } = request.body as { entityIds: number[] };
             const service = new UserService(request.server.prisma);
-            const { userId } = parseJwt(request.headers);
+            const userId = request.user.userId;
             const result = await service.deleteUserAttendanceRecords(userId, entityIds);
 
             return reply.send({ data: result });
@@ -144,6 +150,7 @@ export async function userRoutes(fastify: FastifyInstance) {
     fastify.get(
         '/users/favorite-clubs/:entityId',
         {
+            preHandler: [fastify.optionalAuth],
             schema: {
                 tags: ['User'],
                 params: idParamJson,
@@ -164,7 +171,10 @@ export async function userRoutes(fastify: FastifyInstance) {
                 throw new BadRequestError(`허용되지 않은 파라미터입니다. ${parsed.error.message}`);
             }
             const { entityId } = parsed.data;
-            const userId = parseJwtOptional(request.headers);
+            let userId = null;
+            if (request.user) {
+                userId = request.user.userId;
+            }
             const service = new UserService(request.server.prisma);
             const result = await service.getUserFavoriteClubs(entityId, userId, offset, limit);
 
@@ -175,6 +185,7 @@ export async function userRoutes(fastify: FastifyInstance) {
     fastify.delete(
         '/users/favorite-clubs',
         {
+            preHandler: [fastify.requireAuth],
             schema: {
                 tags: ['User'],
                 summary: '유저 관심 클럽 삭제',
@@ -190,7 +201,7 @@ export async function userRoutes(fastify: FastifyInstance) {
         async (request, reply) => {
             const { entityIds } = request.body as { entityIds: number[] };
             const service = new UserService(request.server.prisma);
-            const { userId } = parseJwt(request.headers);
+            const userId = request.user.userId;
             const result = await service.deleteUserFavoriteClubs(userId, entityIds);
 
             return reply.send({ data: result });
@@ -200,6 +211,7 @@ export async function userRoutes(fastify: FastifyInstance) {
     fastify.patch(
         '/users/info',
         {
+            preHandler: [fastify.requireAuth],
             schema: {
                 tags: ['User'],
                 summary: '유저 프로필 수정',
@@ -209,7 +221,7 @@ export async function userRoutes(fastify: FastifyInstance) {
         },
         async (request, reply) => {
             const service = new UserService(request.server.prisma);
-            const { userId } = parseJwt(request.headers);
+            const userId = request.user.userId;
             const profileData = request.body as UserProfileEditType;
             const result = await service.updateUserProfile(userId, profileData);
             return reply.send({ data: result });
@@ -219,6 +231,7 @@ export async function userRoutes(fastify: FastifyInstance) {
     fastify.get(
         '/users/settings/privacy',
         {
+            preHandler: [fastify.requireAuth],
             schema: {
                 tags: ['User'],
                 summary: '유저 정보 공개범위 조회',
@@ -227,7 +240,7 @@ export async function userRoutes(fastify: FastifyInstance) {
         },
         async (request, reply) => {
             const service = new UserService(request.server.prisma);
-            const { userId } = parseJwt(request.headers);
+            const userId = request.user.userId;
             const result = await service.getUserPrivacySettings(userId);
             return reply.send({ data: result });
         }
@@ -236,6 +249,7 @@ export async function userRoutes(fastify: FastifyInstance) {
     fastify.patch(
         '/users/settings/privacy',
         {
+            preHandler: [fastify.requireAuth],
             schema: {
                 tags: ['User'],
                 summary: '유저 정보 공개범위 수정',
@@ -245,7 +259,7 @@ export async function userRoutes(fastify: FastifyInstance) {
         },
         async (request, reply) => {
             const service = new UserService(request.server.prisma);
-            const { userId } = parseJwt(request.headers);
+            const userId = request.user.userId;
             const privacyData = request.body as UserPrivacySettingType;
             const result = await service.updateUserPrivacySettings(userId, privacyData);
             return reply.send({ data: result });

@@ -21,6 +21,14 @@ export const createUserSchema = z.object({
     }),
 });
 
+export const accessTokenSchema = z.object({
+    accessToken: z.string().openapi({
+        type: 'string',
+        description: '액세스 토큰',
+        example: 'bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+    }),
+});
+
 export const loginSchema = userSimpleSchema.extend({
     accessToken: z.string().openapi({
         type: 'string',
@@ -31,9 +39,11 @@ export const loginSchema = userSimpleSchema.extend({
 
 // 응답 스키마
 export const loginRes = successResponseSchema(loginSchema);
+export const accessTokenRes = successResponseSchema(accessTokenSchema);
 // Json 스키마
 export const createUserJson = generateSchema(createUserSchema);
 export const loginJson = generateSchema(loginRes);
+export const accessTokenJson = generateSchema(accessTokenRes);
 
 // 타입 추출
 export type CreateUserType = z.infer<typeof createUserSchema>;
