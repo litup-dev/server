@@ -18,3 +18,8 @@ export enum ReviewSortBy {
     RECENT = '-createdAt',
     OLDEST = '+createdAt',
 }
+
+export enum PerformanceReviewSortBy {
+    RECENT = '-createdAt',
+    OLDEST = '+createdAt',
+}

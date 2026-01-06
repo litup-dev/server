@@ -1,5 +1,6 @@
 import { z, generateSchema } from '@/common/zod.js';
 import { paginatedResponseSchema, successResponseSchema } from '@/schemas/common.schema.js';
+import { PerformanceReviewSortBy } from '@/types/search.types';
 
 export const performanceReviewSchema = z.object({
     id: z.number(),
@@ -19,6 +20,31 @@ export const performanceReviewListResponseSchema = z.object({
     total: z.number(),
     offset: z.number(),
     limit: z.number(),
+});
+
+export const getPerformanceReviewsByUserSchema = z.object({
+    sort: z.nativeEnum(PerformanceReviewSortBy).optional().openapi({
+        description: '정렬 기준',
+        example: '-createdAt',
+    }),
+    offset: z
+        .preprocess((val) => {
+            if (typeof val === 'string') return parseInt(val, 10);
+            return val;
+        }, z.number().min(0).default(0))
+        .openapi({
+            description: '페이징 오프셋',
+            example: 0,
+        }),
+    limit: z
+        .preprocess((val) => {
+            if (typeof val === 'string') return parseInt(val, 10);
+            return val;
+        }, z.number().min(1).max(100).default(10))
+        .openapi({
+            description: '페이징 제한',
+            example: 10,
+        }),
 });
 
 export const createPerformanceReviewSchema = z.object({
@@ -53,9 +79,11 @@ export const performanceReviewListResJson = generateSchema(performanceReviewList
 export const performanceReviewResJson = generateSchema(performanceReviewRes);
 export const createPerformanceReviewJson = generateSchema(createPerformanceReviewSchema);
 export const performanceReviewLikeResJson = generateSchema(performanceReviewLikeRes);
+export const getPerformanceReviewsByUserJson = generateSchema(getPerformanceReviewsByUserSchema);
 
 // 타입 추출
 export type PerformanceReviewType = z.infer<typeof performanceReviewSchema>;
 export type PerformanceReviewListType = z.infer<typeof performanceReviewListRes>;
 export type PerformanceReviewListResponseType = z.infer<typeof performanceReviewListResponseSchema>;
 export type PerformanceReviewLikeResponseType = z.infer<typeof performanceReviewLikeResponseSchema>;
+export type GetPerformanceReviewsByUserType = z.infer<typeof getPerformanceReviewsByUserSchema>;

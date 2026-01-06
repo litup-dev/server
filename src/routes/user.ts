@@ -21,6 +21,14 @@ import {
 import { UserService } from '@/services/user.service.js';
 import { FastifyInstance } from 'fastify';
 import { parseJwt, parseJwtOptional } from '@/utils/jwt.js';
+import { getReviewsJson, GetReviewsType, reviewListResJson } from '@/schemas/review.schema';
+import { ReviewService } from '@/services/review.service';
+import {
+    getPerformanceReviewsByUserJson,
+    GetPerformanceReviewsByUserType,
+    performanceReviewListResJson,
+} from '@/schemas/performanceReview.schema';
+import { PerformanceReviewService } from '@/services/performanceReview.service';
 
 export async function userRoutes(fastify: FastifyInstance) {
     fastify.get(
@@ -241,6 +249,62 @@ export async function userRoutes(fastify: FastifyInstance) {
             const privacyData = request.body as UserPrivacySettingType;
             const result = await service.updateUserPrivacySettings(userId, privacyData);
             return reply.send({ data: result });
+        }
+    );
+
+    fastify.get(
+        '/users/me/club-reviews',
+        {
+            schema: {
+                querystring: getReviewsJson,
+                tags: ['User'],
+                summary: '내가 작성한 모든 클럽의 리뷰 목록 조회',
+                description: '내가 작성한 모든 클럽의 리뷰 목록 조회',
+                response: {
+                    200: reviewListResJson,
+                    400: errorResJson,
+                    500: errorResJson,
+                },
+            },
+        },
+        async (request, reply) => {
+            const query = request.query as GetReviewsType;
+
+            const { userId } = parseJwt(request.headers);
+
+            const service = new ReviewService(request.server.prisma);
+            const result = await service.getReviewsByUserId(userId, query);
+
+            return reply.send({
+                data: result,
+            });
+        }
+    );
+
+    fastify.get(
+        '/users/me/perform-review',
+        {
+            schema: {
+                querystring: getPerformanceReviewsByUserJson,
+                tags: ['User'],
+                summary: '유저 모든 공연 한줄평 조회',
+                description: '유저 모든 한줄평 목록 조회',
+                response: {
+                    200: performanceReviewListResJson,
+                    400: errorResJson,
+                    500: errorResJson,
+                },
+            },
+        },
+        async (request, reply) => {
+            const query = request.query as GetPerformanceReviewsByUserType;
+            const service = new PerformanceReviewService(request.server.prisma);
+            // const { userId } = parseJwt(request.headers);
+            const userId = 1;
+            const result = await service.getReviewsByUserId(userId, query);
+            return reply.send({
+                data: result,
+            });
         }
     );
 }

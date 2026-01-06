@@ -1,6 +1,7 @@
 import { ConflictError, ForbiddenError, NotFoundError } from '@/common/error.js';
 import { OperationSuccessType } from '@/schemas/common.schema.js';
 import {
+    GetPerformanceReviewsByUserType,
     PerformanceReviewLikeResponseType,
     PerformanceReviewListResponseType,
     PerformanceReviewType,
@@ -37,6 +38,61 @@ export class PerformanceReviewService {
                 take: limit,
             }),
             this.prisma.perform_review_tb.count({ where: { perform_id: performId } }),
+        ]);
+
+        if (reviews.length === 0) {
+            return { items: [], total: total, offset, limit };
+        }
+
+        return {
+            items: reviews.map((r) => ({
+                id: r.id,
+                content: r.content,
+                likeCount: r.like_count,
+                createdAt: r.created_at instanceof Date ? r.created_at.toISOString() : r.created_at,
+                updatedAt: r.updated_at instanceof Date ? r.updated_at.toISOString() : r.updated_at,
+                user: {
+                    id: r.user_tb.id,
+                    nickname: r.user_tb.nickname,
+                    profile_path: r.user_tb.profile_path ?? null,
+                },
+            })),
+            total,
+            offset,
+            limit,
+        };
+    }
+
+    async getReviewsByUserId(
+        userId: number,
+        query: GetPerformanceReviewsByUserType
+    ): Promise<PerformanceReviewListResponseType> {
+        const orderBy = this.buildOrderByForObject(query.sort);
+        const offset = query.offset ?? 0;
+        const limit = query.limit ?? 10;
+
+        const [reviews, total] = await Promise.all([
+            this.prisma.perform_review_tb.findMany({
+                where: { user_id: userId },
+                select: {
+                    id: true,
+                    content: true,
+                    like_count: true,
+                    created_at: true,
+                    updated_at: true,
+                    user_tb: {
+                        select: {
+                            id: true,
+                            nickname: true,
+                            profile_path: true,
+                        },
+                    },
+                },
+                orderBy,
+                skip: offset,
+                take: limit,
+            }),
+            this.prisma.perform_review_tb.count({ where: { user_id: userId } }),
         ]);
 
         if (reviews.length === 0) {
@@ -246,5 +302,20 @@ export class PerformanceReviewService {
         });
 
         return { reviewId, totalLikeCount: Number(updated?.like_count ?? 0) };
+    }
+
+    private buildOrderByForObject(sortBy?: string): { [key: string]: 'asc' | 'desc' } {
+        const defaultOrder = { created_at: 'desc' as const };
+
+        if (!sortBy) return defaultOrder;
+        const [direction, field] = [sortBy[0], sortBy.slice(1)];
+        const order = direction === '-' ? 'desc' : 'asc';
+
+        switch (field) {
+            case 'createdAt':
+                return { created_at: order };
+            default:
+                return defaultOrder;
+        }
     }
 }
