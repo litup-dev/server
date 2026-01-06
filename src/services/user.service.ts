@@ -1,4 +1,4 @@
-import { NotFoundError } from '@/common/error.js';
+import { BadRequestError, NotFoundError } from '@/common/error.js';
 import { ClubListSimpleResponseType } from '@/schemas/club.schema.js';
 import { OperationSuccessType } from '@/schemas/common.schema.js';
 import { PerformanceRecordsType } from '@/schemas/performance.schema.js';
@@ -290,6 +290,17 @@ export class UserService {
 
         if (!user) {
             throw new NotFoundError('사용자를 찾을 수 없습니다.');
+        }
+
+        const isExistNickname = await this.prisma.user_tb.findFirst({
+            where: {
+                nickname: profileData.nickname.trim(),
+                NOT: { id: userId },
+            },
+        });
+
+        if (isExistNickname) {
+            throw new BadRequestError('이미 사용 중인 닉네임입니다.');
         }
 
         const updatedUser = await this.prisma.user_tb.update({
