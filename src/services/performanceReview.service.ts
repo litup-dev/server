@@ -12,19 +12,17 @@ export class PerformanceReviewService {
     constructor(private prisma: PrismaClient) {}
 
     async getReviewsByPerformanceId(
+        userId: number | null,
         performId: number,
         offset = 0,
         limit = 20
     ): Promise<PerformanceReviewListResponseType> {
+        console.log('userId:', userId);
+        console.log('performId:', performId);
         const [reviews, total] = await Promise.all([
             this.prisma.perform_review_tb.findMany({
                 where: { perform_id: performId },
-                select: {
-                    id: true,
-                    content: true,
-                    like_count: true,
-                    created_at: true,
-                    updated_at: true,
+                include: {
                     user_tb: {
                         select: {
                             id: true,
@@ -32,6 +30,11 @@ export class PerformanceReviewService {
                             profile_path: true,
                         },
                     },
+                    perform_review_like_tb: userId
+                        ? {
+                              where: { user_id: userId },
+                          }
+                        : false,
                 },
                 orderBy: { created_at: 'desc' },
                 skip: offset,
@@ -43,6 +46,7 @@ export class PerformanceReviewService {
         if (reviews.length === 0) {
             return { items: [], total: total, offset, limit };
         }
+        console.log(reviews);
 
         return {
             items: reviews.map((r) => ({
@@ -56,6 +60,8 @@ export class PerformanceReviewService {
                     nickname: r.user_tb.nickname,
                     profile_path: r.user_tb.profile_path ?? null,
                 },
+                isLiked:
+                    r.perform_review_like_tb && r.perform_review_like_tb.length > 0 ? true : false,
             })),
             total,
             offset,

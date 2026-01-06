@@ -13,6 +13,10 @@ export const performanceReviewSchema = z.object({
         nickname: z.string().nullable(),
         profile_path: z.string().nullable(),
     }),
+    isLiked: z.boolean().optional().openapi({
+        description: '현재 사용자가 해당 한줄평을 좋아요했는지 여부',
+        example: true,
+    }),
 });
 
 export const performanceReviewListResponseSchema = z.object({

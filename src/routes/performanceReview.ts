@@ -15,7 +15,7 @@ import {
     performanceReviewLikeResJson,
 } from '@/schemas/performanceReview.schema.js';
 import { BadRequestError } from '@/common/error.js';
-import { parseJwt } from '@/utils/jwt.js';
+import { parseJwt, parseJwtOptional } from '@/utils/jwt.js';
 
 export async function performanceReviewRoutes(fastify: FastifyInstance) {
     fastify.get(
@@ -37,8 +37,9 @@ export async function performanceReviewRoutes(fastify: FastifyInstance) {
         async (request, reply) => {
             const { entityId } = request.params as IdParamType;
             const { offset, limit } = request.query as { offset: number; limit: number };
+            const userId = parseJwtOptional(request.headers);
             const service = new PerformanceReviewService(request.server.prisma);
-            const result = await service.getReviewsByPerformanceId(entityId, offset, limit);
+            const result = await service.getReviewsByPerformanceId(userId, entityId, offset, limit);
             return reply.send({
                 data: result,
             });
