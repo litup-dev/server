@@ -202,11 +202,6 @@ export class ClubService {
         const countQuery = `
             SELECT COUNT(*) as count
             FROM club_tb c
-            WHERE ST_DWithin(
-                c.location::geography,
-                ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography,
-                $3 * 1000
-            )
             ${whereClause}
         `;
 
