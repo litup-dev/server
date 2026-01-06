@@ -21,7 +21,7 @@ import {
 import { UserService } from '@/services/user.service.js';
 import { FastifyInstance } from 'fastify';
 import { parseJwt, parseJwtOptional } from '@/utils/jwt.js';
-import { getReviewsJson, GetReviewsType, reviewListResJson } from '@/schemas/review.schema';
+import { getReviewsForUserJson, GetReviewsType, reviewListResJson } from '@/schemas/review.schema';
 import { ReviewService } from '@/services/review.service';
 import {
     getPerformanceReviewsByUserJson,
@@ -256,7 +256,7 @@ export async function userRoutes(fastify: FastifyInstance) {
         '/users/me/club-reviews',
         {
             schema: {
-                querystring: getReviewsJson,
+                querystring: getReviewsForUserJson,
                 tags: ['User'],
                 summary: '내가 작성한 모든 클럽의 리뷰 목록 조회',
                 description: '내가 작성한 모든 클럽의 리뷰 목록 조회',

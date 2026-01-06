@@ -12,7 +12,7 @@ import {
 } from '@/schemas/review.schema.js';
 import { idParamSchema, idParamJson, errorResJson } from '@/schemas/common.schema.js';
 import { BadRequestError, NotFoundError } from '@/common/error.js';
-import { parseJwt } from '@/utils/jwt.js';
+import { parseJwt, parseJwtOptional } from '@/utils/jwt.js';
 
 export async function reviewRoutes(fastify: FastifyInstance) {
     fastify.get(
@@ -39,47 +39,10 @@ export async function reviewRoutes(fastify: FastifyInstance) {
 
             const { entityId } = parsed.data;
             const query = request.query as GetReviewsType;
+            const userId = parseJwtOptional(request.headers);
 
             const service = new ReviewService(request.server.prisma);
-            const result = await service.getReviewsByClubId(entityId, query);
-
-            request.log.info(`Found ${result.items.length} reviews for club ${entityId}`);
-
-            return reply.send({
-                data: result,
-            });
-        }
-    );
-
-    fastify.get(
-        '/clubs/:entityId/reviews/me',
-        {
-            schema: {
-                params: idParamJson,
-                querystring: getReviewsJson,
-                tags: ['Reviews'],
-                summary: '내가 작성한 클럽의 리뷰 목록 조회',
-                description: '내가 작성한 클럽의 리뷰 목록 조회',
-                response: {
-                    200: reviewListResJson,
-                    400: errorResJson,
-                    500: errorResJson,
-                },
-            },
-        },
-        async (request, reply) => {
-            const parsed = idParamSchema.safeParse(request.params);
-            if (!parsed.success) {
-                throw new BadRequestError(`허용되지 않은 파라미터입니다. ${parsed.error.message}`);
-            }
-
-            const { entityId } = parsed.data;
-            const query = request.query as GetReviewsType;
-
-            const { userId } = parseJwt(request.headers);
-
-            const service = new ReviewService(request.server.prisma);
-            const result = await service.getReviewsByClubIdAndUserId(entityId, userId, query);
+            const result = await service.getReviewsByClubId(userId, entityId, query);
 
             request.log.info(`Found ${result.items.length} reviews for club ${entityId}`);
 

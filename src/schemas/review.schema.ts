@@ -85,6 +85,15 @@ export const updateReviewSchema = z.object({
 
 // 리뷰 목록 조회 쿼리 파라미터 스키마
 export const getReviewsSchema = z.object({
+    isMine: z
+        .preprocess((val) => {
+            if (typeof val === 'string') return val === 'true';
+            return val;
+        }, z.boolean().optional())
+        .openapi({
+            description: '현재 로그인한 사용자가 작성한 리뷰만 필터링',
+            example: true,
+        }),
     sort: z.nativeEnum(ReviewSortBy).optional().openapi({
         description: '정렬 기준',
         example: '-createdAt',
@@ -109,6 +118,12 @@ export const getReviewsSchema = z.object({
         }),
 });
 
+export const getReviewsForUserSchema = getReviewsSchema.pick({
+    sort: true,
+    offset: true,
+    limit: true,
+});
+
 // 리뷰 목록 응답 스키마
 export const reviewListResponseSchema = z.object({
     items: z.array(reviewSchema),
@@ -125,6 +140,7 @@ export const reviewListRes = paginatedResponseSchema(reviewSchema);
 export const createReviewJson = generateSchema(createReviewSchema);
 export const updateReviewJson = generateSchema(updateReviewSchema);
 export const getReviewsJson = generateSchema(getReviewsSchema);
+export const getReviewsForUserJson = generateSchema(getReviewsForUserSchema);
 export const reviewDetailResJson = generateSchema(reviewDetailRes);
 export const reviewListResJson = generateSchema(reviewListRes);
 

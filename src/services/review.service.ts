@@ -14,17 +14,21 @@ export class ReviewService {
     constructor(private prisma: PrismaClient) {}
 
     async getReviewsByClubId(
+        userId: number | null,
         clubId: number,
         query: GetReviewsType
     ): Promise<ReviewListResponseType> {
         const orderBy = this.buildOrderByForObject(query.sort);
-        console.log('orderBy', orderBy);
         const offset = query.offset ?? 0;
         const limit = query.limit ?? 10;
+        const isMine = query.isMine ?? false;
+
+        const whereClause =
+            isMine && userId !== null ? { club_id: clubId, user_id: userId } : { club_id: clubId };
 
         const [reviews, total] = await Promise.all([
             this.prisma.club_review_tb.findMany({
-                where: { club_id: clubId },
+                where: whereClause,
                 include: {
                     user_tb: {
                         select: {
