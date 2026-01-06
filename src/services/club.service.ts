@@ -140,12 +140,10 @@ export class ClubService {
         userId: number | null
     ): Promise<ClubSearchResponseType> {
         const { searchKey, area, latitude, longitude, keywords, sort, offset, limit } = parameters;
-        // 반경
-        const radiusKm = 5;
 
         const conditions: string[] = [];
-        const params: any[] = [longitude, latitude, radiusKm];
-        let paramIndex = 4;
+        const params: any[] = [longitude, latitude];
+        let paramIndex = 3;
 
         if (searchKey) {
             conditions.push(`c.name ILIKE '%' || $${paramIndex} || '%'`);
@@ -190,11 +188,7 @@ export class ClubService {
                     ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography
                 ) as distance
             FROM club_tb c
-            WHERE ST_DWithin(
-                c.location::geography,
-                ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography,
-                $3 * 1000
-            )
+            WHERE 1=1
             ${whereClause}
             ${orderByClause}
             OFFSET $${paramIndex}
@@ -464,7 +458,7 @@ export class ClubService {
         }
     }
     private buildOrderByForRaw(sortBy?: string) {
-        const defaultOrder: string = `ORDER BY c.created_at DESC, distance ASC`;
+        const defaultOrder: string = `ORDER BY distance ASC, c.created_at DESC`;
 
         if (!sortBy) return defaultOrder;
         const [direction, field] = [sortBy[0], sortBy.slice(1)];
