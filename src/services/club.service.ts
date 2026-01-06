@@ -466,11 +466,11 @@ export class ClubService {
 
         switch (field) {
             case 'reviewCount':
-                return `ORDER BY c.review_cnt ${order.toUpperCase()}, distance ASC, created_at DESC`;
+                return `ORDER BY distance ASC, c.review_cnt ${order.toUpperCase()}, created_at DESC`;
             case 'rating':
-                return `ORDER BY c.avg_rating ${order.toUpperCase()}, distance ASC, created_at DESC`;
+                return `ORDER BY distance ASC, c.avg_rating ${order.toUpperCase()}, created_at DESC`;
             case 'reviewCreatedAt':
-                return `ORDER BY c.latest_review_at ${order.toUpperCase()}, distance ASC, created_at DESC`;
+                return `ORDER BY distance ASC, c.latest_review_at ${order.toUpperCase()}, created_at DESC`;
             default:
                 return defaultOrder;
         }
