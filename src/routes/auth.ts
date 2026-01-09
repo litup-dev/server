@@ -10,6 +10,8 @@ import { TokenService } from '@/services/token.service';
 import { randomUUID } from 'crypto';
 import path from 'path';
 import { InvalidTokenError, NotFoundError } from '@/common/error';
+import { UserService } from '@/services/user.service';
+import { getTsid } from 'tsid-ts';
 
 export async function authRoutes(fastify: FastifyInstance) {
     fastify.get(
@@ -90,11 +92,30 @@ export async function authRoutes(fastify: FastifyInstance) {
                 const body = request.body as any;
                 const userId = body.userId;
                 const tokenService = new TokenService(fastify);
+                const userService = new UserService(fastify.prisma);
+                const user = await userService.getUserById(userId);
+                if (user.publicId === '0') {
+                    console.log(user);
 
-                const accessToken = tokenService.generateJwtToken(userId);
+                    const publicId = getTsid().toString();
+                    await fastify.prisma.user_tb.update({
+                        where: {
+                            id: userId,
+                        },
+                        data: {
+                            public_id: publicId,
+                        },
+                    });
+                    user.publicId = publicId;
+                }
+
+                const accessToken = tokenService.generateJwtToken(user.publicId);
                 const refreshTokenId = randomUUID();
-                const refreshToken = tokenService.generateRefreshToken(userId, refreshTokenId);
-                await tokenService.saveRefreshToken(refreshTokenId, userId);
+                const refreshToken = tokenService.generateRefreshToken(
+                    user.publicId,
+                    refreshTokenId
+                );
+                await tokenService.saveRefreshToken(refreshTokenId, user.publicId);
 
                 reply.setCookie('refreshToken', refreshToken, {
                     httpOnly: true,
@@ -105,7 +126,7 @@ export async function authRoutes(fastify: FastifyInstance) {
 
                 reply.send({
                     data: {
-                        id: userId,
+                        publicId: user.publicId,
                         nickname: 'devuser',
                         profilePath: null,
                         accessToken: `Bearer ${accessToken}`,
