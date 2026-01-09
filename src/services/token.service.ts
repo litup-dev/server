@@ -17,6 +17,7 @@ export class TokenService {
                 type: 'access',
             },
             {
+                // expiresIn: '10s',
                 expiresIn: JWT_ACCESS_TOKEN_EXPIRES_IN,
             }
         );
