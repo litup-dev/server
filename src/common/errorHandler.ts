@@ -29,6 +29,20 @@ export function setupErrorHandler(fastify: FastifyInstance) {
             });
         }
 
+        /**
+         * 401과 403 에러를 커스텀하게 처리함.
+         */
+        if (error.statusCode && error.statusCode >= 10000) {
+            const httpStatusCode = error.statusCode % 10000;
+            return reply.status(httpStatusCode).send({
+                error: {
+                    statusCode: error.statusCode,
+                    message: error.message,
+                    code: error.code || 'UNKNOWN_ERROR',
+                },
+            });
+        }
+
         if (error.statusCode && error.statusCode < 500) {
             return reply.status(error.statusCode).send({
                 error: {
