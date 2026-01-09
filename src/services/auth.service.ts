@@ -5,6 +5,7 @@ import { UserSimpleType } from '@/schemas/user.schema.js';
 import { PrismaClient } from '@prisma/client';
 import { NicknameService } from '@/services/nickname.service.js';
 import fastify, { FastifyInstance, FastifyRequest } from 'fastify';
+import { getTsid } from 'tsid-ts';
 
 export class AuthService {
     constructor(private prisma: PrismaClient) {}
@@ -29,21 +30,42 @@ export class AuthService {
         });
 
         if (existingUser) {
-            // throw new ConflictError('이미 존재하는 사용자입니다.');
-            // 소셜 로그인만 존재해 로그인, 회원가입에 대한 구분이 애매함.
-            return {
-                publicId: existingUser.public_id,
-                nickname: existingUser.nickname,
-                profilePath: existingUser.profile_path ?? null,
-            };
+            // 만약 공용아이디가 0이면 새로 tsid 발급 후 DB 저장
+            // 기존 유저때문에 이 과정을 거침.
+            if (existingUser.public_id && existingUser.public_id == '0') {
+                const tsid = getTsid().toString();
+
+                await this.prisma.user_tb.update({
+                    where: {
+                        id: existingUser.id,
+                    },
+                    data: {
+                        public_id: tsid,
+                    },
+                });
+
+                return {
+                    publicId: tsid,
+                    nickname: existingUser.nickname,
+                    profilePath: existingUser.profile_path ?? null,
+                };
+            } else {
+                return {
+                    publicId: existingUser.public_id,
+                    nickname: existingUser.nickname,
+                    profilePath: existingUser.profile_path ?? null,
+                };
+            }
         }
 
         // 추후 닉네임 로직 생성필요
         const nicknameService = new NicknameService(this.prisma);
         const generateNickname = await nicknameService.generateNickname(email);
+        const publicId = getTsid().toString();
 
         const newUser = await this.prisma.user_tb.create({
             data: {
+                public_id: publicId,
                 social_id: socialCode.id,
                 nickname: generateNickname,
                 provider_id: providerId,
