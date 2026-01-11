@@ -36,6 +36,12 @@ export class PerformanceReviewService {
                               where: { user_id: userId },
                           }
                         : false,
+                    perform_tb: {
+                        select: {
+                            id: true,
+                            title: true,
+                        },
+                    },
                 },
                 orderBy: { created_at: 'desc' },
                 skip: offset,
@@ -61,6 +67,8 @@ export class PerformanceReviewService {
                     nickname: r.user_tb.nickname,
                     profile_path: r.user_tb.profile_path ?? null,
                 },
+                performId: r.perform_tb.id,
+                performTitle: r.perform_tb.title,
                 isLiked:
                     r.perform_review_like_tb && r.perform_review_like_tb.length > 0 ? true : false,
             })),

@@ -13,6 +13,14 @@ export const performanceReviewSchema = z.object({
         nickname: z.string().nullable(),
         profile_path: z.string().nullable(),
     }),
+    performId: z.number().optional().openapi({
+        description: '공연 ID',
+        example: 1,
+    }),
+    performTitle: z.string().nullable().optional().openapi({
+        description: '공연 제목',
+        example: 'Indie Night',
+    }),
     isLiked: z.boolean().optional().openapi({
         description: '현재 사용자가 해당 한줄평을 좋아요했는지 여부',
         example: true,
