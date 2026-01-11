@@ -61,7 +61,7 @@ export class ReviewService {
                 take: limit,
             }),
             this.prisma.club_review_tb.count({
-                where: { club_id: clubId },
+                where: whereClause,
             }),
         ]);
 
