@@ -26,6 +26,13 @@ export const performanceReviewListResponseSchema = z.object({
     limit: z.number(),
 });
 
+export const performanceReviewListResponseWithoutUserInfoSchema = z.object({
+    items: z.array(performanceReviewSchema),
+    total: z.number(),
+    offset: z.number(),
+    limit: z.number(),
+});
+
 export const getPerformanceReviewsByUserSchema = z.object({
     sort: z.nativeEnum(PerformanceReviewSortBy).optional().openapi({
         description: '정렬 기준',

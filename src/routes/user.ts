@@ -306,4 +306,30 @@ export async function userRoutes(fastify: FastifyInstance) {
             });
         }
     );
+
+    fastify.get(
+        '/users/me/liked-review',
+        {
+            schema: {
+                querystring: getPerformanceReviewsByUserJson,
+                tags: ['User'],
+                summary: '유저 좋아요한 공연 한줄평 목록 조회',
+                description: '유저 좋아요한 공연 한줄평 목록 조회',
+                response: {
+                    200: performanceReviewListResJson,
+                    400: errorResJson,
+                    500: errorResJson,
+                },
+            },
+        },
+        async (request, reply) => {
+            const query = request.query as GetPerformanceReviewsByUserType;
+            const service = new PerformanceReviewService(request.server.prisma);
+            const { userId } = parseJwt(request.headers);
+            const result = await service.getLikedReviewsByUserId(userId, query);
+            return reply.send({
+                data: result,
+            });
+        }
+    );
 }

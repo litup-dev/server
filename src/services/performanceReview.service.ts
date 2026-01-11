@@ -124,6 +124,65 @@ export class PerformanceReviewService {
         };
     }
 
+    async getLikedReviewsByUserId(
+        userId: number,
+        query: GetPerformanceReviewsByUserType
+    ): Promise<PerformanceReviewListResponseType> {
+        const orderBy = this.buildOrderByForObject(query.sort);
+        const offset = query.offset ?? 0;
+        const limit = query.limit ?? 10;
+
+        const [likes, total] = await Promise.all([
+            this.prisma.perform_review_like_tb.findMany({
+                where: { user_id: userId },
+                include: {
+                    perform_review_tb: {
+                        include: {
+                            user_tb: {
+                                select: {
+                                    id: true,
+                                    nickname: true,
+                                    profile_path: true,
+                                },
+                            },
+                        },
+                    },
+                },
+                orderBy: { created_at: orderBy.created_at ?? 'desc' },
+                skip: offset,
+                take: limit,
+            }),
+            this.prisma.perform_review_like_tb.count({ where: { user_id: userId } }),
+        ]);
+
+        if (likes.length === 0) {
+            return { items: [], total: total, offset, limit };
+        }
+
+        return {
+            items: likes.map((like) => {
+                const r = like.perform_review_tb;
+                return {
+                    id: r.id,
+                    content: r.content,
+                    likeCount: r.like_count,
+                    createdAt:
+                        r.created_at instanceof Date ? r.created_at.toISOString() : r.created_at,
+                    updatedAt:
+                        r.updated_at instanceof Date ? r.updated_at.toISOString() : r.updated_at,
+                    user: {
+                        id: r.user_tb.id,
+                        nickname: r.user_tb.nickname,
+                        profile_path: r.user_tb.profile_path ?? null,
+                    },
+                };
+            }),
+            total,
+            offset,
+            limit,
+        };
+    }
+
     async createReview(
         performId: number,
         userId: number,
