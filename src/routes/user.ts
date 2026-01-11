@@ -277,10 +277,10 @@ export async function userRoutes(fastify: FastifyInstance) {
         async (request, reply) => {
             const query = request.query as CommonSortType;
 
-            const { userId } = parseJwt(request.headers);
+            // const { userId } = parseJwt(request.headers);
 
             const service = new ReviewService(request.server.prisma);
-            const result = await service.getReviewsByUserId(userId, query);
+            const result = await service.getReviewsByUserId(3, query);
 
             return reply.send({
                 data: result,

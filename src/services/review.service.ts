@@ -137,7 +137,7 @@ export class ReviewService {
                     },
                 },
             },
-            orderBy, // 리뷰 자체는 최신순/오래된순 정렬
+            orderBy,
         });
 
         const clubMap = new Map<number, any>();
@@ -149,12 +149,15 @@ export class ReviewService {
                 clubMap.set(clubId, {
                     id: clubId,
                     name: review.club_tb.name ?? null,
+                    total: 0,
                     reviews: [],
-                    latestReviewDate: review.created_at, // 클럽의 가장 최근 리뷰 날짜 저장
+                    latestReviewDate: review.created_at,
                 });
             }
 
-            clubMap.get(clubId).reviews.push({
+            const club = clubMap.get(clubId);
+            club.total += 1;
+            club.reviews.push({
                 id: review.id,
                 rating: review.rating,
                 content: review.content,

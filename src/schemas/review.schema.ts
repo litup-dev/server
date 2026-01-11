@@ -146,6 +146,7 @@ export const reviewForUserSchema = reviewSchema.pick({
 export const reviewClubSchema = z.object({
     id: z.number(),
     name: z.string().nullable(),
+    total: z.number(),
     reviews: z.array(reviewForUserSchema),
 });
 
