@@ -22,6 +22,11 @@ const clubKeywordSchema = z.object({
     name: z.string().nullable(),
 });
 
+const clubSnsLinkSchema = z.object({
+    platform: z.string().nullable(),
+    url: z.string().nullable(),
+});
+
 // 예정 공연 스키마
 const upcomingPerformSchema = z.object({
     id: z.number(),
@@ -51,6 +56,7 @@ export const clubSchema = z.object({
     keywords: z.array(clubKeywordSchema).optional().nullable(),
     upcomingPerforms: z.array(upcomingPerformSchema).optional().nullable(),
     isFavorite: z.boolean().optional().nullable(),
+    snsLinks: z.array(clubSnsLinkSchema).nullable(),
 });
 
 // 클럽 정보 간소화 스키마

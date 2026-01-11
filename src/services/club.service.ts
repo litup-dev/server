@@ -364,6 +364,20 @@ export class ClubService {
                 isMain: img.is_main,
             })),
             isFavorite: club.favorite_tb && club.favorite_tb.length > 0 ? true : false,
+            snsLinks: (() => {
+                if (
+                    !club.sns_links ||
+                    !Array.isArray(club.sns_links) ||
+                    club.sns_links.length === 0
+                ) {
+                    return [];
+                }
+                const firstItem = club.sns_links[0] as Record<string, string>;
+                return Object.entries(firstItem).map(([platform, url]) => ({
+                    platform,
+                    url,
+                }));
+            })(),
         };
     }
 
