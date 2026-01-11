@@ -132,9 +132,29 @@ export const reviewListResponseSchema = z.object({
     limit: z.number(),
 });
 
+export const reviewForUserSchema = reviewSchema.pick({
+    id: true,
+    rating: true,
+    content: true,
+    createdAt: true,
+    updatedAt: true,
+    user: true,
+    keywords: true,
+    images: true,
+});
+
+export const reviewClubSchema = z.object({
+    id: z.number(),
+    name: z.string().nullable(),
+    reviews: z.array(reviewForUserSchema),
+});
+
+export const reviewListResponseByUserSchema = z.array(reviewClubSchema);
+
 // 응답 스키마
 export const reviewDetailRes = successResponseSchema(reviewSchema);
 export const reviewListRes = paginatedResponseSchema(reviewSchema);
+export const reviewListResponseByUserRes = successResponseSchema(reviewListResponseByUserSchema);
 
 // JSON Schema
 export const createReviewJson = generateSchema(createReviewSchema);
@@ -143,6 +163,7 @@ export const getReviewsJson = generateSchema(getReviewsSchema);
 export const getReviewsForUserJson = generateSchema(getReviewsForUserSchema);
 export const reviewDetailResJson = generateSchema(reviewDetailRes);
 export const reviewListResJson = generateSchema(reviewListRes);
+export const reviewListResponseByUserResJson = generateSchema(reviewListResponseByUserRes);
 
 // 타입 추출
 export type ReviewType = z.infer<typeof reviewSchema>;
@@ -151,3 +172,4 @@ export type UpdateReviewType = z.infer<typeof updateReviewSchema>;
 export type GetReviewsType = z.infer<typeof getReviewsSchema>;
 export type ReviewDetailResponseType = z.infer<typeof reviewDetailRes>;
 export type ReviewListResponseType = z.infer<typeof reviewListResponseSchema>;
+export type ReviewListByUserResponseType = z.infer<typeof reviewListResponseByUserSchema>;

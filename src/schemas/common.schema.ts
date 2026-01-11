@@ -1,3 +1,4 @@
+import { commonCreatedAtSortBy } from './../types/search.types';
 import { z, generateSchema } from '@/common/zod.js';
 
 export const idParamSchema = z.object({
@@ -105,6 +106,13 @@ export const categorySchema = z.object({
     keywords: z.array(keywordSchema),
 });
 
+export const commonSortSchema = z.object({
+    sort: z.nativeEnum(commonCreatedAtSortBy).optional().openapi({
+        description: '정렬 기준',
+        example: '-createdAt',
+    }),
+});
+
 export const reviewCategorySchema = z.array(categorySchema);
 
 // 응답 스키마 -> 성공, 페이징에 대한 공통적인 스키마로 만드는 과정 해당 파일을 generateSchema로 감싸서 fastify가 읽게함
@@ -119,9 +127,11 @@ export const idParamJson = generateSchema(idParamSchema);
 export const bodyIdsJson = generateSchema(bodyIdsSchema);
 export const defaultPaginationJson = generateSchema(defaultPaginationSchema);
 export const reviewCategoryJson = generateSchema(reviewCategorySuccessRes);
+export const commonSortJson = generateSchema(commonSortSchema);
 
 // 타입 추출
 export type OperationSuccessType = z.infer<typeof operationSuccessResponseSchema>;
 export type IdParamType = z.infer<typeof idParamSchema>;
 export type DefaultPaginationType = z.infer<typeof defaultPaginationSchema>;
 export type ReviewCategoryType = z.infer<typeof reviewCategorySchema>;
+export type CommonSortType = z.infer<typeof commonSortSchema>;

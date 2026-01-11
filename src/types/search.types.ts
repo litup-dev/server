@@ -5,6 +5,11 @@ export enum ClubSearchArea {
     NEARBY = 'nearby',
 }
 
+export enum commonCreatedAtSortBy {
+    RECENT = '-createdAt',
+    OLDEST = '+createdAt',
+}
+
 export enum ClubSortBy {
     REVIEW_COUNT_DESC = '-reviewCount',
     REVIEW_COUNT_ASC = '+reviewCount',

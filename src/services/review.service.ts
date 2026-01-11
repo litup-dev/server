@@ -1,13 +1,14 @@
 import { PrismaClient } from '@prisma/client';
 import { ForbiddenError, NotFoundError } from '@/common/error.js';
 import { SavedFileInfo } from '@/types/file.types.js';
-import { OperationSuccessType } from '@/schemas/common.schema.js';
+import { CommonSortType, OperationSuccessType } from '@/schemas/common.schema.js';
 import {
     ReviewType,
     ReviewListResponseType,
     CreateReviewType,
     UpdateReviewType,
     GetReviewsType,
+    ReviewListByUserResponseType,
 } from '@/schemas/review.schema.js';
 
 export class ReviewService {
@@ -98,55 +99,63 @@ export class ReviewService {
 
     async getReviewsByUserId(
         userId: number,
-        query: GetReviewsType
-    ): Promise<ReviewListResponseType> {
+        query: CommonSortType
+    ): Promise<ReviewListByUserResponseType> {
         const orderBy = this.buildOrderByForObject(query.sort);
-        const offset = query.offset ?? 0;
-        const limit = query.limit ?? 10;
 
-        const [reviews, total] = await Promise.all([
-            this.prisma.club_review_tb.findMany({
-                where: { user_id: userId },
-                include: {
-                    user_tb: {
-                        select: {
-                            id: true,
-                            nickname: true,
-                            profile_path: true,
-                        },
+        const reviews = await this.prisma.club_review_tb.findMany({
+            where: { user_id: userId },
+            include: {
+                club_tb: {
+                    select: {
+                        id: true,
+                        name: true,
                     },
-                    club_review_keyword_tb: {
-                        include: {
-                            keyword_tb: {
-                                select: {
-                                    id: true,
-                                    name: true,
-                                },
+                },
+                user_tb: {
+                    select: {
+                        id: true,
+                        nickname: true,
+                        profile_path: true,
+                    },
+                },
+                club_review_keyword_tb: {
+                    include: {
+                        keyword_tb: {
+                            select: {
+                                id: true,
+                                name: true,
                             },
                         },
                     },
-                    review_img_tb: {
-                        select: {
-                            id: true,
-                            file_path: true,
-                            is_main: true,
-                        },
+                },
+                review_img_tb: {
+                    select: {
+                        id: true,
+                        file_path: true,
+                        is_main: true,
                     },
                 },
-                orderBy,
-                skip: offset,
-                take: limit,
-            }),
-            this.prisma.club_review_tb.count({
-                where: { user_id: userId },
-            }),
-        ]);
+            },
+            orderBy, // 리뷰 자체는 최신순/오래된순 정렬
+        });
 
-        return {
-            items: reviews.map((review) => ({
+        const clubMap = new Map<number, any>();
+
+        reviews.forEach((review) => {
+            const clubId = review.club_id;
+
+            if (!clubMap.has(clubId)) {
+                clubMap.set(clubId, {
+                    id: clubId,
+                    name: review.club_tb.name ?? null,
+                    reviews: [],
+                    latestReviewDate: review.created_at, // 클럽의 가장 최근 리뷰 날짜 저장
+                });
+            }
+
+            clubMap.get(clubId).reviews.push({
                 id: review.id,
-                clubId: review.club_id,
-                userId: review.user_id,
                 rating: review.rating,
                 content: review.content,
                 createdAt: review.created_at ? review.created_at.toISOString() : null,
@@ -167,11 +176,14 @@ export class ReviewService {
                     filePath: img.file_path,
                     isMain: img.is_main,
                 })),
-            })),
-            total,
-            offset,
-            limit,
-        };
+            });
+        });
+
+        const sortedClubs = Array.from(clubMap.values()).sort((a, b) => {
+            return b.latestReviewDate.getTime() - a.latestReviewDate.getTime();
+        });
+
+        return sortedClubs.map(({ latestReviewDate, ...club }) => club);
     }
 
     async getById(id: number): Promise<ReviewType> {

@@ -1,6 +1,8 @@
 import { BadRequestError } from '@/common/error.js';
 import {
     bodyIdsJson,
+    commonSortJson,
+    CommonSortType,
     defaultPaginationJson,
     DefaultPaginationType,
     errorResJson,
@@ -21,7 +23,12 @@ import {
 import { UserService } from '@/services/user.service.js';
 import { FastifyInstance } from 'fastify';
 import { parseJwt, parseJwtOptional } from '@/utils/jwt.js';
-import { getReviewsForUserJson, GetReviewsType, reviewListResJson } from '@/schemas/review.schema';
+import {
+    getReviewsForUserJson,
+    GetReviewsType,
+    reviewListResJson,
+    reviewListResponseByUserResJson,
+} from '@/schemas/review.schema';
 import { ReviewService } from '@/services/review.service';
 import {
     getPerformanceReviewsByUserJson,
@@ -256,24 +263,24 @@ export async function userRoutes(fastify: FastifyInstance) {
         '/users/me/club-reviews',
         {
             schema: {
-                querystring: getReviewsForUserJson,
+                querystring: commonSortJson,
                 tags: ['User'],
                 summary: '내가 작성한 모든 클럽의 리뷰 목록 조회',
                 description: '내가 작성한 모든 클럽의 리뷰 목록 조회',
                 response: {
-                    200: reviewListResJson,
+                    200: reviewListResponseByUserResJson,
                     400: errorResJson,
                     500: errorResJson,
                 },
             },
         },
         async (request, reply) => {
-            const query = request.query as GetReviewsType;
+            const query = request.query as CommonSortType;
 
-            const { userId } = parseJwt(request.headers);
+            // const { userId } = parseJwt(request.headers);
 
             const service = new ReviewService(request.server.prisma);
-            const result = await service.getReviewsByUserId(userId, query);
+            const result = await service.getReviewsByUserId(3, query);
 
             return reply.send({
                 data: result,
