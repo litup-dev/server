@@ -19,8 +19,20 @@ export const performanceReviewSchema = z.object({
     }),
 });
 
-export const performanceReviewListResponseSchema = z.object({
+export const performanceReviewForUserSchema = performanceReviewSchema.extend({
+    performId: z.number(),
+    performTitle: z.string().nullable(),
+});
+
+export const performanceReviewListSchema = z.object({
     items: z.array(performanceReviewSchema),
+    total: z.number(),
+    offset: z.number(),
+    limit: z.number(),
+});
+
+export const performanceReviewListForUserSchema = z.object({
+    items: z.array(performanceReviewForUserSchema),
     total: z.number(),
     offset: z.number(),
     limit: z.number(),
@@ -82,11 +94,15 @@ export const performanceReviewLikeResponseSchema = z.object({
 
 // 응답 스키마
 export const performanceReviewListRes = paginatedResponseSchema(performanceReviewSchema);
+export const performanceReviewListForUserRes = paginatedResponseSchema(
+    performanceReviewForUserSchema
+);
 export const performanceReviewRes = successResponseSchema(performanceReviewSchema);
 export const performanceReviewLikeRes = successResponseSchema(performanceReviewLikeResponseSchema);
 
 // JSON Schema
 export const performanceReviewListResJson = generateSchema(performanceReviewListRes);
+export const performanceReviewListForUserResJson = generateSchema(performanceReviewListForUserRes);
 export const performanceReviewResJson = generateSchema(performanceReviewRes);
 export const createPerformanceReviewJson = generateSchema(createPerformanceReviewSchema);
 export const performanceReviewLikeResJson = generateSchema(performanceReviewLikeRes);
@@ -95,6 +111,7 @@ export const getPerformanceReviewsByUserJson = generateSchema(getPerformanceRevi
 // 타입 추출
 export type PerformanceReviewType = z.infer<typeof performanceReviewSchema>;
 export type PerformanceReviewListType = z.infer<typeof performanceReviewListRes>;
-export type PerformanceReviewListResponseType = z.infer<typeof performanceReviewListResponseSchema>;
+export type PerformanceReviewListResponseType = z.infer<typeof performanceReviewListSchema>;
+export type PerformanceReviewListForUserType = z.infer<typeof performanceReviewListForUserSchema>;
 export type PerformanceReviewLikeResponseType = z.infer<typeof performanceReviewLikeResponseSchema>;
 export type GetPerformanceReviewsByUserType = z.infer<typeof getPerformanceReviewsByUserSchema>;

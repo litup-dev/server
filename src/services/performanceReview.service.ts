@@ -3,6 +3,7 @@ import { OperationSuccessType } from '@/schemas/common.schema.js';
 import {
     GetPerformanceReviewsByUserType,
     PerformanceReviewLikeResponseType,
+    PerformanceReviewListForUserType,
     PerformanceReviewListResponseType,
     PerformanceReviewType,
 } from '@/schemas/performanceReview.schema.js';
@@ -72,7 +73,7 @@ export class PerformanceReviewService {
     async getReviewsByUserId(
         userId: number,
         query: GetPerformanceReviewsByUserType
-    ): Promise<PerformanceReviewListResponseType> {
+    ): Promise<PerformanceReviewListForUserType> {
         const orderBy = this.buildOrderByForObject(query.sort);
         const offset = query.offset ?? 0;
         const limit = query.limit ?? 10;
@@ -92,6 +93,15 @@ export class PerformanceReviewService {
                             nickname: true,
                             profile_path: true,
                         },
+                    },
+                    perform_tb: {
+                        select: {
+                            id: true,
+                            title: true,
+                        },
+                    },
+                    perform_review_like_tb: {
+                        where: { user_id: userId },
                     },
                 },
                 orderBy,
@@ -117,6 +127,10 @@ export class PerformanceReviewService {
                     nickname: r.user_tb.nickname,
                     profile_path: r.user_tb.profile_path ?? null,
                 },
+                performId: r.perform_tb.id,
+                performTitle: r.perform_tb.title,
+                isLiked:
+                    r.perform_review_like_tb && r.perform_review_like_tb.length > 0 ? true : false,
             })),
             total,
             offset,
@@ -127,7 +141,7 @@ export class PerformanceReviewService {
     async getLikedReviewsByUserId(
         userId: number,
         query: GetPerformanceReviewsByUserType
-    ): Promise<PerformanceReviewListResponseType> {
+    ): Promise<PerformanceReviewListForUserType> {
         const orderBy = this.buildOrderByForObject(query.sort);
         const offset = query.offset ?? 0;
         const limit = query.limit ?? 10;
@@ -145,10 +159,16 @@ export class PerformanceReviewService {
                                     profile_path: true,
                                 },
                             },
+                            perform_tb: {
+                                select: {
+                                    id: true,
+                                    title: true,
+                                },
+                            },
                         },
                     },
                 },
-                orderBy: { created_at: orderBy.created_at ?? 'desc' },
+                orderBy,
                 skip: offset,
                 take: limit,
             }),
@@ -175,6 +195,9 @@ export class PerformanceReviewService {
                         nickname: r.user_tb.nickname,
                         profile_path: r.user_tb.profile_path ?? null,
                     },
+                    performId: r.perform_tb.id,
+                    performTitle: r.perform_tb.title,
+                    isLiked: true,
                 };
             }),
             total,

@@ -33,6 +33,7 @@ import { ReviewService } from '@/services/review.service';
 import {
     getPerformanceReviewsByUserJson,
     GetPerformanceReviewsByUserType,
+    performanceReviewListForUserResJson,
     performanceReviewListResJson,
 } from '@/schemas/performanceReview.schema';
 import { PerformanceReviewService } from '@/services/performanceReview.service';
@@ -297,7 +298,7 @@ export async function userRoutes(fastify: FastifyInstance) {
                 summary: '유저 모든 공연 한줄평 조회',
                 description: '유저 모든 한줄평 목록 조회',
                 response: {
-                    200: performanceReviewListResJson,
+                    200: performanceReviewListForUserResJson,
                     400: errorResJson,
                     500: errorResJson,
                 },
@@ -323,7 +324,7 @@ export async function userRoutes(fastify: FastifyInstance) {
                 summary: '유저 좋아요한 공연 한줄평 목록 조회',
                 description: '유저 좋아요한 공연 한줄평 목록 조회',
                 response: {
-                    200: performanceReviewListResJson,
+                    200: performanceReviewListForUserResJson,
                     400: errorResJson,
                     500: errorResJson,
                 },
@@ -334,6 +335,7 @@ export async function userRoutes(fastify: FastifyInstance) {
             const service = new PerformanceReviewService(request.server.prisma);
             const { userId } = parseJwt(request.headers);
             const result = await service.getLikedReviewsByUserId(userId, query);
+            console.log(result);
             return reply.send({
                 data: result,
             });
