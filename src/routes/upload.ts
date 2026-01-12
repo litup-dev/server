@@ -7,7 +7,6 @@ import { ReviewService } from '@/services/review.service.js';
 import { UserService } from '@/services/user.service.js';
 import { MultiFileWithBuffer, UploadedFileInfo, UploadType } from '@/types/file.types.js';
 import { FileManager } from '@/utils/fileManager.js';
-import { parseJwt } from '@/utils/jwt';
 import { MultipartFile } from '@fastify/multipart';
 import { FastifyInstance } from 'fastify';
 

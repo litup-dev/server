@@ -1,14 +1,10 @@
-import { access, fstat } from 'fs';
-import { API_PREFIX, HOST, NODE_ENV, PORT } from '@/common/constants';
-import { accessTokenJson, createUserJson, loginJson } from '@/schemas/auth.schema.js';
+import { NODE_ENV } from '@/common/constants';
+import { accessTokenJson, loginJson } from '@/schemas/auth.schema.js';
 import { errorResJson, successResJson } from '@/schemas/common.schema.js';
-import { userDefaultJson } from '@/schemas/user.schema.js';
 import { AuthService } from '@/services/auth.service.js';
-import { parseJwt } from '@/utils/jwt.js';
 import { FastifyInstance } from 'fastify';
 import { TokenService } from '@/services/token.service';
 import { randomUUID } from 'crypto';
-import path from 'path';
 import { InvalidTokenError, NotFoundError } from '@/common/error';
 import { UserService } from '@/services/user.service';
 import { getTsid } from 'tsid-ts';

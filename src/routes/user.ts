@@ -6,8 +6,6 @@ import {
     defaultPaginationJson,
     DefaultPaginationType,
     errorResJson,
-    idParamJson,
-    idParamSchema,
     publicIdParamJson,
     publicIdParamSchema,
     successResJson,
@@ -24,19 +22,12 @@ import {
 } from '@/schemas/user.schema.js';
 import { UserService } from '@/services/user.service.js';
 import { FastifyInstance } from 'fastify';
-import { parseJwt, parseJwtOptional } from '@/utils/jwt.js';
-import {
-    getReviewsForUserJson,
-    GetReviewsType,
-    reviewListResJson,
-    reviewListResponseByUserResJson,
-} from '@/schemas/review.schema';
+import { reviewListResponseByUserResJson } from '@/schemas/review.schema';
 import { ReviewService } from '@/services/review.service';
 import {
     getPerformanceReviewsByUserJson,
     GetPerformanceReviewsByUserType,
     performanceReviewListForUserResJson,
-    performanceReviewListResJson,
 } from '@/schemas/performanceReview.schema';
 import { PerformanceReviewService } from '@/services/performanceReview.service';
 
@@ -296,6 +287,7 @@ export async function userRoutes(fastify: FastifyInstance) {
     fastify.get(
         '/users/me/club-reviews',
         {
+            preHandler: [fastify.requireAuth],
             schema: {
                 querystring: commonSortJson,
                 tags: ['User'],
@@ -311,7 +303,10 @@ export async function userRoutes(fastify: FastifyInstance) {
         async (request, reply) => {
             const query = request.query as CommonSortType;
 
-            const { userId } = parseJwt(request.headers);
+            const userId = request.userId;
+            if (!userId) {
+                throw new NotFoundError('사용자를 찾을 수 없습니다.');
+            }
 
             const service = new ReviewService(request.server.prisma);
             const result = await service.getReviewsByUserId(userId, query);
@@ -325,6 +320,7 @@ export async function userRoutes(fastify: FastifyInstance) {
     fastify.get(
         '/users/me/perform-review',
         {
+            preHandler: [fastify.requireAuth],
             schema: {
                 querystring: getPerformanceReviewsByUserJson,
                 tags: ['User'],
@@ -340,7 +336,10 @@ export async function userRoutes(fastify: FastifyInstance) {
         async (request, reply) => {
             const query = request.query as GetPerformanceReviewsByUserType;
             const service = new PerformanceReviewService(request.server.prisma);
-            const { userId } = parseJwt(request.headers);
+            const userId = request.userId;
+            if (!userId) {
+                throw new NotFoundError('사용자를 찾을 수 없습니다.');
+            }
             const result = await service.getReviewsByUserId(userId, query);
             return reply.send({
                 data: result,
@@ -351,6 +350,7 @@ export async function userRoutes(fastify: FastifyInstance) {
     fastify.get(
         '/users/me/liked-review',
         {
+            preHandler: [fastify.requireAuth],
             schema: {
                 querystring: getPerformanceReviewsByUserJson,
                 tags: ['User'],
@@ -366,7 +366,10 @@ export async function userRoutes(fastify: FastifyInstance) {
         async (request, reply) => {
             const query = request.query as GetPerformanceReviewsByUserType;
             const service = new PerformanceReviewService(request.server.prisma);
-            const { userId } = parseJwt(request.headers);
+            const userId = request.userId;
+            if (!userId) {
+                throw new NotFoundError('사용자를 찾을 수 없습니다.');
+            }
             const result = await service.getLikedReviewsByUserId(userId, query);
             console.log(result);
             return reply.send({
