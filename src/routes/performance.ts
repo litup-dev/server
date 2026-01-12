@@ -19,7 +19,6 @@ import {
     booleanSuccessResJson,
 } from '@/schemas/common.schema.js';
 import { BadRequestError, NotFoundError } from '@/common/error.js';
-import { parseJwt, parseJwtOptional } from '@/utils/jwt.js';
 
 export async function performanceRoutes(fastify: FastifyInstance) {
     fastify.get(

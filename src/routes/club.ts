@@ -9,8 +9,6 @@ import {
 } from '@/schemas/club.schema.js';
 import { idParamSchema, idParamJson, errorResJson } from '@/schemas/common.schema.js';
 import { BadRequestError, NotFoundError } from '@/common/error.js';
-import { parseJwt, parseJwtOptional } from '@/utils/jwt.js';
-import { parse } from 'path';
 
 export async function clubRoutes(fastify: FastifyInstance) {
     fastify.get(
