@@ -39,7 +39,14 @@ export class UserService {
 
     async getUserStats(userId: number): Promise<UserStatsType> {
         const attendCount = await this.prisma.attend_tb.count({
-            where: { user_id: userId },
+            where: {
+                user_id: userId,
+                perform_tb: {
+                    perform_date: {
+                        gte: new Date(),
+                    },
+                },
+            },
         });
 
         const performReviewCount = await this.prisma.perform_review_tb.count({
