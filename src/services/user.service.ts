@@ -17,11 +17,10 @@ export class UserService {
     async getUserById(userId: number): Promise<UserInfoType> {
         const user = await this.prisma.user_tb.findUnique({
             where: { id: userId },
-            select: {
-                id: true,
-                nickname: true,
-                profile_path: true,
-                bio: true,
+            include: {
+                social_code: {
+                    select: { code: true, name: true },
+                },
             },
         });
 
@@ -34,6 +33,8 @@ export class UserService {
             nickname: user.nickname,
             profilePath: user.profile_path ?? null,
             bio: user.bio ?? null,
+            socialCode: user.social_code.code ?? null,
+            socialName: user.social_code.name ?? null,
         };
     }
 
@@ -317,12 +318,19 @@ export class UserService {
                 bio: profileData.bio,
                 updated_at: new Date(),
             },
+            include: {
+                social_code: {
+                    select: { code: true, name: true },
+                },
+            },
         });
         return {
             id: updatedUser.id,
             nickname: updatedUser.nickname,
             profilePath: updatedUser.profile_path ?? null,
             bio: updatedUser.bio ?? null,
+            socialCode: updatedUser.social_code.code ?? null,
+            socialName: updatedUser.social_code.name ?? null,
         };
     }
 
