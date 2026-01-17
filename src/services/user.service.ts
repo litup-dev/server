@@ -1,4 +1,4 @@
-import { BadRequestError, NotFoundError } from '@/common/error.js';
+import { BadRequestError, NotFoundError, ResourceAccessDeniedError } from '@/common/error.js';
 import { ClubListSimpleResponseType } from '@/schemas/club.schema.js';
 import { OperationSuccessType } from '@/schemas/common.schema.js';
 import { PerformanceRecordsType } from '@/schemas/performance.schema.js';
@@ -112,10 +112,10 @@ export class UserService {
             });
             const privacy = privacyRule?.perform_history_privacy;
             if (privacy === 'private') {
-                throw new NotFoundError('비공개 상태입니다.');
+                throw new ResourceAccessDeniedError();
             } else if (privacy === 'friends') {
                 if (requesterId === null) {
-                    throw new NotFoundError('비공개 상태입니다.');
+                    throw new ResourceAccessDeniedError();
                 }
                 // 추후 친구 관계 생기면 로직 추가
             }
@@ -233,10 +233,10 @@ export class UserService {
             });
             const privacy = privacyRule?.favorite_clubs_privacy;
             if (privacy === 'private') {
-                throw new NotFoundError('비공개 상태입니다.');
+                throw new ResourceAccessDeniedError();
             } else if (privacy === 'friends') {
                 if (requesterId === null) {
-                    throw new NotFoundError('비공개 상태입니다.');
+                    throw new ResourceAccessDeniedError();
                 }
                 // 추후 친구 관계 생기면 로직 추가
             }
