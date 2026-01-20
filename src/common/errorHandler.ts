@@ -29,6 +29,16 @@ export function setupErrorHandler(fastify: FastifyInstance) {
             });
         }
 
+        if (error.code === 'FST_REQ_FILE_TOO_LARGE') {
+            return reply.status(413).send({
+                error: {
+                    statusCode: 413,
+                    message: '업로드 가능한 파일 크기를 초과했습니다.',
+                    code: error.code,
+                },
+            });
+        }
+
         /**
          * 401과 403 에러를 커스텀하게 처리함.
          */

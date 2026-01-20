@@ -4,6 +4,7 @@ import { SavedFileInfo, UPLOAD_CONFIGS, UploadedFileInfo, UploadType } from '@/t
 import { randomUUID } from 'crypto';
 import path from 'path';
 import { getCompactKoreaTimestamp } from './time.js';
+import { MAX_FILE_SIZE } from '@/common/constants.js';
 
 export class FileManager {
     private storage: IStorageAdapter;
@@ -15,7 +16,7 @@ export class FileManager {
         this.allowedMimeTypes = process.env.ALLOWED_IMAGE_MIME
             ? process.env.ALLOWED_IMAGE_MIME.split(',')
             : ['image/png', 'image/jpeg', 'image/webp'];
-        this.maxFileSize = parseInt(process.env.MAX_FILE_SIZE || '5242880');
+        this.maxFileSize = MAX_FILE_SIZE || parseInt('5242880');
     }
 
     /**

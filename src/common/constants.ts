@@ -29,3 +29,4 @@ export const KAKAO_CLIENT_ID = process.env.KAKAO_CLIENT_ID!;
 export const KAKAO_CLIENT_SECRET = process.env.KAKAO_CLIENT_SECRET!;
 export const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID!;
 export const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!;
+export const MAX_FILE_SIZE = Number(process.env.MAX_FILE_SIZE) || 5242880;

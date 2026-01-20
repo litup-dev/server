@@ -1,4 +1,4 @@
-import { BadRequestError, NotFoundError } from '@/common/error.js';
+import { BadRequestError, NotFoundError, ResourceAccessDeniedError } from '@/common/error.js';
 import { ClubListSimpleResponseType } from '@/schemas/club.schema.js';
 import { OperationSuccessType } from '@/schemas/common.schema.js';
 import { PerformanceRecordsType } from '@/schemas/performance.schema.js';
@@ -31,11 +31,10 @@ export class UserService {
     async getUserByPublicId(publicId: string): Promise<UserInfoType> {
         const user = await this.prisma.user_tb.findFirst({
             where: { public_id: publicId },
-            select: {
-                public_id: true,
-                nickname: true,
-                profile_path: true,
-                bio: true,
+            include: {
+                social_code: {
+                    select: { code: true, name: true },
+                },
             },
         });
         if (!user) {
@@ -46,17 +45,18 @@ export class UserService {
             nickname: user.nickname,
             profilePath: user.profile_path ?? null,
             bio: user.bio ?? null,
+            socialCode: user.social_code.code ?? null,
+            socialName: user.social_code.name ?? null,
         };
     }
 
     async getUserById(userId: number): Promise<UserInfoType> {
         const user = await this.prisma.user_tb.findUnique({
             where: { id: userId },
-            select: {
-                public_id: true,
-                nickname: true,
-                profile_path: true,
-                bio: true,
+            include: {
+                social_code: {
+                    select: { code: true, name: true },
+                },
             },
         });
 
@@ -69,13 +69,22 @@ export class UserService {
             nickname: user.nickname,
             profilePath: user.profile_path ?? null,
             bio: user.bio ?? null,
+            socialCode: user.social_code.code ?? null,
+            socialName: user.social_code.name ?? null,
         };
     }
 
     async getUserStats(publicId: string): Promise<UserStatsType> {
         const userId = await this.getUserIdByPublicId(publicId);
         const attendCount = await this.prisma.attend_tb.count({
-            where: { user_id: userId },
+            where: {
+                user_id: userId,
+                perform_tb: {
+                    perform_date: {
+                        gte: new Date(),
+                    },
+                },
+            },
         });
 
         const performReviewCount = await this.prisma.perform_review_tb.count({
@@ -103,10 +112,10 @@ export class UserService {
             });
             const privacy = privacyRule?.perform_history_privacy;
             if (privacy === 'private') {
-                throw new NotFoundError('비공개 상태입니다.');
+                throw new ResourceAccessDeniedError();
             } else if (privacy === 'friends') {
                 if (requesterId === null) {
-                    throw new NotFoundError('비공개 상태입니다.');
+                    throw new ResourceAccessDeniedError();
                 }
                 // 추후 친구 관계 생기면 로직 추가
             }
@@ -224,10 +233,10 @@ export class UserService {
             });
             const privacy = privacyRule?.favorite_clubs_privacy;
             if (privacy === 'private') {
-                throw new NotFoundError('비공개 상태입니다.');
+                throw new ResourceAccessDeniedError();
             } else if (privacy === 'friends') {
                 if (requesterId === null) {
-                    throw new NotFoundError('비공개 상태입니다.');
+                    throw new ResourceAccessDeniedError();
                 }
                 // 추후 친구 관계 생기면 로직 추가
             }
@@ -348,12 +357,19 @@ export class UserService {
                 bio: profileData.bio,
                 updated_at: new Date(),
             },
+            include: {
+                social_code: {
+                    select: { code: true, name: true },
+                },
+            },
         });
         return {
             publicId: updatedUser.public_id,
             nickname: updatedUser.nickname,
             profilePath: updatedUser.profile_path ?? null,
             bio: updatedUser.bio ?? null,
+            socialCode: updatedUser.social_code.code ?? null,
+            socialName: updatedUser.social_code.name ?? null,
         };
     }
 

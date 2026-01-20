@@ -6,6 +6,9 @@ export const BadRequestError = createError('BAD_REQUEST', '%s', 400);
 export const ForbiddenError = createError('FORBIDDEN', '%s', 403);
 export const UnauthorizedError = createError('UNAUTHORIZED', '%s', 401);
 
+// Social Error
+export const ResourceAccessDeniedError = createError('FORBIDDEN', '접근 권한이 없습니다.', 10403);
+
 // JWT ERROR
 export const InvalidTokenError = createError('INVALID_TOKEN', '%s', 401);
 export const NoAuthorizationInCookieError = createError(

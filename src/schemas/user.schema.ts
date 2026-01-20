@@ -49,12 +49,25 @@ export const userDefaultSchema = z.object({
     }),
 });
 
-export const userInfoSchema = userDefaultSchema.pick({
-    publicId: true,
-    nickname: true,
-    profilePath: true,
-    bio: true,
-});
+export const userInfoSchema = userDefaultSchema
+    .pick({
+        publicId: true,
+        nickname: true,
+        profilePath: true,
+        bio: true,
+    })
+    .extend({
+        socialCode: z.string().nullable().openapi({
+            type: 'string',
+            description: '소셜 로그인 코드',
+            example: 'GOOGLE',
+        }),
+        socialName: z.string().nullable().openapi({
+            type: 'string',
+            description: '소셜 로그인 이름',
+            example: 'Google',
+        }),
+    });
 
 export const userSimpleSchema = userDefaultSchema.pick({
     publicId: true,

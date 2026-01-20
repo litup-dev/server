@@ -180,10 +180,19 @@ export class ReviewService {
                     isMain: img.is_main,
                 })),
             });
+            if (club.reviews.length === 1) {
+                club.latestReviewDate = review.created_at;
+            }
         });
 
+        const sortDirection = orderBy.created_at || 'desc';
+
         const sortedClubs = Array.from(clubMap.values()).sort((a, b) => {
-            return b.latestReviewDate.getTime() - a.latestReviewDate.getTime();
+            if (sortDirection === 'desc') {
+                return b.latestReviewDate.getTime() - a.latestReviewDate.getTime();
+            } else {
+                return a.latestReviewDate.getTime() - b.latestReviewDate.getTime();
+            }
         });
 
         return sortedClubs.map(({ latestReviewDate, ...club }) => club);
