@@ -6,6 +6,7 @@ import {
     KAKAO_CLIENT_ID,
     GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET,
+    NODE_ENV,
 } from './../common/constants';
 import oauth2 from '@fastify/oauth2';
 import { FastifyInstance } from 'fastify';
@@ -27,7 +28,10 @@ export async function registerOauth(fastify: FastifyInstance) {
             },
         },
         startRedirectPath: `${API_PREFIX}/auth/kakao`,
-        callbackUri: `http://${HOST}:${PORT}${API_PREFIX}/auth/kakao/callback`,
+        callbackUri:
+            NODE_ENV === 'production'
+                ? `https://litup.kr${API_PREFIX}/auth/kakao/callback`
+                : `http://220.93.50.45:${PORT}${API_PREFIX}/auth/kakao/callback`,
         callbackUriParams: {
             response_type: 'code',
         },
@@ -53,7 +57,10 @@ export async function registerOauth(fastify: FastifyInstance) {
             },
         },
         startRedirectPath: `${API_PREFIX}/auth/google`,
-        callbackUri: `http://${HOST}:${PORT}${API_PREFIX}/auth/google/callback`,
+        callbackUri:
+            NODE_ENV === 'production'
+                ? `https://litup.kr${API_PREFIX}/auth/google/callback`
+                : `http://220.93.50.45:${PORT}${API_PREFIX}/auth/google/callback`,
         callbackUriParams: {
             response_type: 'code',
         },
