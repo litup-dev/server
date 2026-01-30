@@ -30,7 +30,7 @@ export async function registerOauth(fastify: FastifyInstance) {
         startRedirectPath: `${API_PREFIX}/auth/kakao`,
         callbackUri:
             NODE_ENV === 'production'
-                ? `https://litup.kr${API_PREFIX}/auth/kakao/callback`
+                ? `https://www.litup.kr${API_PREFIX}/auth/kakao/callback`
                 : `http://220.93.50.45:${PORT}${API_PREFIX}/auth/kakao/callback`,
         callbackUriParams: {
             response_type: 'code',
@@ -59,7 +59,7 @@ export async function registerOauth(fastify: FastifyInstance) {
         startRedirectPath: `${API_PREFIX}/auth/google`,
         callbackUri:
             NODE_ENV === 'production'
-                ? `https://litup.kr${API_PREFIX}/auth/google/callback`
+                ? `https://www.litup.kr${API_PREFIX}/auth/google/callback`
                 : `http://220.93.50.45:${PORT}${API_PREFIX}/auth/google/callback`,
         callbackUriParams: {
             response_type: 'code',
