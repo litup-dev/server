@@ -10,6 +10,7 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
 export class TokenService {
     constructor(private fastify: FastifyInstance) {}
+
     generateJwtToken(publicId: string): string {
         return this.fastify.jwt.sign(
             {
@@ -17,8 +18,7 @@ export class TokenService {
                 type: 'access',
             },
             {
-                // expiresIn: '10s',
-                expiresIn: JWT_ACCESS_TOKEN_EXPIRES_IN,
+                expiresIn: NODE_ENV === 'development' ? '30000d' : JWT_ACCESS_TOKEN_EXPIRES_IN,
             }
         );
     }

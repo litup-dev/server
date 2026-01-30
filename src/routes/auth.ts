@@ -123,8 +123,8 @@ export async function authRoutes(fastify: FastifyInstance) {
                 reply.send({
                     data: {
                         publicId: user.publicId,
-                        nickname: 'devuser',
-                        profilePath: null,
+                        nickname: user.nickname,
+                        profilePath: user.profilePath,
                         accessToken: `Bearer ${accessToken}`,
                     },
                 });
