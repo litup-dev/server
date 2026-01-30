@@ -10,7 +10,7 @@ const reviewKeywordSchema = z.object({
 
 // 사용자 정보 스키마
 const reviewUserSchema = z.object({
-    id: z.number(),
+    publicId: z.string().nullable(),
     nickname: z.string().nullable(),
     profilePath: z.string().nullable(),
 });
@@ -26,7 +26,7 @@ const reviewImageSchema = z.object({
 export const reviewSchema = z.object({
     id: z.number(),
     clubId: z.number().nullable(),
-    userId: z.number().nullable(),
+    publicId: z.string().nullable(),
     rating: z.number().nullable(),
     content: z.string().min(10).max(1000).nullable(),
     createdAt: z.string().nullable(),

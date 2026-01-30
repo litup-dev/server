@@ -33,7 +33,7 @@ export class ReviewService {
                 include: {
                     user_tb: {
                         select: {
-                            id: true,
+                            public_id: true,
                             nickname: true,
                             profile_path: true,
                         },
@@ -69,14 +69,14 @@ export class ReviewService {
             items: reviews.map((review) => ({
                 id: review.id,
                 clubId: review.club_id,
-                userId: review.user_id,
+                publicId: review.user_tb.public_id,
                 rating: review.rating,
                 content: review.content,
                 createdAt: review.created_at ? review.created_at.toISOString() : null,
                 updatedAt: review.updated_at ? review.updated_at.toISOString() : null,
                 user: review.user_tb
                     ? {
-                          id: review.user_tb.id,
+                          publicId: review.user_tb.public_id,
                           nickname: review.user_tb.nickname,
                           profilePath: review.user_tb.profile_path,
                       }
@@ -204,7 +204,7 @@ export class ReviewService {
             include: {
                 user_tb: {
                     select: {
-                        id: true,
+                        public_id: true,
                         nickname: true,
                         profile_path: true,
                     },
@@ -236,14 +236,14 @@ export class ReviewService {
         return {
             id: review.id,
             clubId: review.club_id,
-            userId: review.user_id,
+            publicId: review.user_tb.public_id,
             rating: review.rating,
             content: review.content,
             createdAt: review.created_at ? review.created_at.toISOString() : null,
             updatedAt: review.updated_at ? review.updated_at.toISOString() : null,
             user: review.user_tb
                 ? {
-                      id: review.user_tb.id,
+                      publicId: review.user_tb.public_id,
                       nickname: review.user_tb.nickname,
                       profilePath: review.user_tb.profile_path,
                   }
@@ -268,6 +268,13 @@ export class ReviewService {
                     user_id: userId,
                     rating: data.rating,
                     content: data.content ?? null,
+                },
+                include: {
+                    user_tb: {
+                        select: {
+                            public_id: true,
+                        },
+                    },
                 },
             });
 
@@ -301,7 +308,7 @@ export class ReviewService {
         return {
             id: result.id,
             clubId: result.club_id,
-            userId: result.user_id,
+            publicId: result.user_tb.public_id,
             rating: result.rating,
             content: result.content,
             createdAt: result.created_at ? result.created_at.toISOString() : null,
@@ -334,6 +341,13 @@ export class ReviewService {
             const updated = await tx.club_review_tb.update({
                 where: { id },
                 data: updateData,
+                include: {
+                    user_tb: {
+                        select: {
+                            public_id: true,
+                        },
+                    },
+                },
             });
 
             if (data.keywords !== undefined) {
@@ -371,7 +385,7 @@ export class ReviewService {
         return {
             id: result.id,
             clubId: result.club_id,
-            userId: result.user_id,
+            publicId: result.user_tb.public_id,
             rating: result.rating,
             content: result.content,
             createdAt: result.created_at ? result.created_at.toISOString() : null,
