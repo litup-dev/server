@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify';
-import { PORT, HOST } from '@/common/constants.js';
+import { JWT_DEV_ACCESS_TOKEN, NODE_ENV } from '@/common/constants.js';
 import fastifySwagger from '@fastify/swagger';
 import fastifySwaggerUi from '@fastify/swagger-ui';
 
@@ -12,6 +12,20 @@ export async function registerSwagger(fastify: FastifyInstance) {
                 description: 'API documentation',
                 version: '1.0.0',
             },
+            components: {
+                securitySchemes: {
+                    Authorization: {
+                        type: 'http',
+                        scheme: 'bearer',
+                        bearerFormat: 'JWT',
+                        description:
+                            NODE_ENV === 'development'
+                                ? `Access Token:\n${JWT_DEV_ACCESS_TOKEN}`
+                                : 'JWT 토큰을 입력하세요',
+                    },
+                },
+            },
+            security: [{ Authorization: [] }],
         },
     });
 
@@ -20,6 +34,7 @@ export async function registerSwagger(fastify: FastifyInstance) {
         uiConfig: {
             docExpansion: 'list',
             deepLinking: false,
+            persistAuthorization: true,
         },
     });
 }
