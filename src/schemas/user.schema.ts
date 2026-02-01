@@ -95,7 +95,7 @@ export const userProfileEditSchema = z.object({
         description: '사용자 닉네임',
         example: '반려동물타조',
     }),
-    bio: z.string().min(1).max(255).nullable().openapi({
+    bio: z.string().max(255).nullable().openapi({
         type: 'string',
         description: '사용자 소개',
         example: '안녕하세요! 저는 반려동물타조입니다.',
