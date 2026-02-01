@@ -1,4 +1,9 @@
-import { BadRequestError, NotFoundError, ResourceAccessDeniedError } from '@/common/error.js';
+import {
+    BadRequestError,
+    ConflictError,
+    NotFoundError,
+    ResourceAccessDeniedError,
+} from '@/common/error.js';
 import { ClubListSimpleResponseType } from '@/schemas/club.schema.js';
 import { OperationSuccessType } from '@/schemas/common.schema.js';
 import { PerformanceRecordsType } from '@/schemas/performance.schema.js';
@@ -347,7 +352,7 @@ export class UserService {
         });
 
         if (isExistNickname) {
-            throw new BadRequestError('이미 사용 중인 닉네임입니다.');
+            throw new ConflictError('이미 사용 중인 닉네임입니다.');
         }
 
         const updatedUser = await this.prisma.user_tb.update({
