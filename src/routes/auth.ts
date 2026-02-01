@@ -57,10 +57,13 @@ export async function authRoutes(fastify: FastifyInstance) {
                 });
 
                 request.log.info('OAuth callback 처리 완료, 리다이렉트 진행');
-                return reply.redirect(
+                const redirectUrl =
                     NODE_ENV === 'production'
-                        ? `https://litup.kr/login/success?token=${encodeURIComponent(accessToken)}&publicId=${result.publicId}&nickname=${encodeURIComponent(result.nickname || '')}&profilePath=${encodeURIComponent(result.profilePath || '')}`
-                        : `http://211.206.133.190:10000/login/success?token=${encodeURIComponent(accessToken)}&publicId=${result.publicId}&nickname=${encodeURIComponent(result.nickname || '')}&profilePath=${encodeURIComponent(result.profilePath || '')}`
+                        ? 'https://litup.kr/login/success'
+                        : 'http://localhost:10000/login/success';
+
+                return reply.redirect(
+                    `${redirectUrl}?token=${encodeURIComponent(accessToken)}&publicId=${result.publicId}&nickname=${encodeURIComponent(result.nickname || '')}&profilePath=${encodeURIComponent(result.profilePath || '')}`
                 );
             } catch (err: any) {
                 fastify.log.error('Kakao OAuth callback error:', err);
