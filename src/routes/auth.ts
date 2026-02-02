@@ -17,11 +17,11 @@ export async function authRoutes(fastify: FastifyInstance) {
                 tags: ['Auth'],
                 summary: '소셜 회원가입 & 로그인',
                 description: '소셜 회원가입 & 로그인',
-                response: {
-                    200: loginJson,
-                    400: errorResJson,
-                    500: errorResJson,
-                },
+                // response: {
+                //     200: loginJson,
+                //     400: errorResJson,
+                //     500: errorResJson,
+                // },
             },
         },
         async (request, reply) => {
