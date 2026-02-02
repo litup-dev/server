@@ -6,6 +6,9 @@ import { PrismaClient } from '@prisma/client';
 import { NicknameService } from '@/services/nickname.service.js';
 import fastify, { FastifyInstance, FastifyRequest } from 'fastify';
 import { getTsid } from 'tsid-ts';
+import { FileManager } from '@/utils/fileManager';
+import { createStorageAdapter } from '@/adapters/storage';
+import { UploadType } from '@/types/file.types';
 
 export class AuthService {
     constructor(private prisma: PrismaClient) {}
@@ -102,23 +105,122 @@ export class AuthService {
             throw new NotFoundError('사용자를 찾을 수 없습니다.');
         }
 
-        await this.prisma.user_tb.delete({
-            where: { id: userId },
-        });
-        // 관련 파일들도 삭제해야함.
-        // 리뷰 image, profile 등
-        // 삭제 해야하는 데이터
-        // 일반
-        //     이미지 : 클럽 리뷰 이미지, 클럽 이미지, 프로필 이미지, 공연 이미지
-        //     데이터 : 클럽 리뷰, 한줄평, 참석의사, 관심클럽,
-        // 매니저
-        // 한줄평, 클럽 리뷰 이미지, 클럽 이미지, 프로필 이미지, 공연 이미지
+        /**
+         * 관련 파일들도 삭제해야함.
+         * 리뷰 image, profile 등
+         * 삭제 해야하는 데이터
+         * 일반
+         *     이미지 : 클럽 리뷰 이미지, 클럽 이미지, 프로필 이미지, 공연 이미지
+         *     데이터 : 클럽 리뷰, 한줄평, 참석의사, 관심클럽,
+         * 매니저
+         *     한줄평, 클럽 리뷰 이미지, 클럽 이미지, 프로필 이미지, 공연 이미지
+         */
+        await this.deleteUserAndRelatedData(userId);
 
         return {
             success: true,
             operation: 'deleted',
             message: '유저가 삭제되었습니다.',
         };
+    }
+
+    private async deleteUserAndRelatedData(userId: number): Promise<void> {
+        const fileManager = new FileManager(createStorageAdapter());
+
+        await this.prisma.$transaction(async (tx) => {
+            // 1. 유저가 작성한 클럽 리뷰 관련 삭제
+            const userReviews = await tx.club_review_tb.findMany({
+                where: { user_id: userId },
+                select: { id: true },
+            });
+            const reviewIds = userReviews.map((r) => r.id);
+
+            if (reviewIds.length > 0) {
+                // 리뷰 키워드 삭제
+                await tx.club_review_keyword_tb.deleteMany({
+                    where: { review_id: { in: reviewIds } },
+                });
+                // 리뷰 이미지 삭제
+                await tx.review_img_tb.deleteMany({
+                    where: { review_id: { in: reviewIds } },
+                });
+                // 클럽 키워드 요약 삭제
+                await tx.club_keyword_summary.deleteMany({
+                    where: { review_id: { in: reviewIds } },
+                });
+
+                for (const reviewId of reviewIds) {
+                    try {
+                        await fileManager.deleteFolder(UploadType.CLUB_REVIEW, reviewId);
+                    } catch (error) {
+                        console.error(`클럽 리뷰 이미지 삭제 실패 (reviewId: ${reviewId}):`, error);
+                    }
+                }
+            }
+            // 클럽 리뷰 삭제
+            await tx.club_review_tb.deleteMany({
+                where: { user_id: userId },
+            });
+
+            // 2. 유저가 작성한 공연 리뷰 관련 삭제
+            const userPerformReviews = await tx.perform_review_tb.findMany({
+                where: { user_id: userId },
+                select: { id: true },
+            });
+            const performReviewIds = userPerformReviews.map((r) => r.id);
+
+            if (performReviewIds.length > 0) {
+                // 공연 리뷰 좋아요 삭제
+                await tx.perform_review_like_tb.deleteMany({
+                    where: { review_id: { in: performReviewIds } },
+                });
+            }
+            // 공연 리뷰 삭제
+            await tx.perform_review_tb.deleteMany({
+                where: { user_id: userId },
+            });
+
+            // 3. 유저가 누른 공연 리뷰 좋아요 삭제
+            await tx.perform_review_like_tb.deleteMany({
+                where: { user_id: userId },
+            });
+
+            // 4. 참석 의사 삭제
+            await tx.attend_tb.deleteMany({
+                where: { user_id: userId },
+            });
+
+            // 5. 관심 클럽 삭제
+            await tx.favorite_tb.deleteMany({
+                where: { user_id: userId },
+            });
+
+            // 6. 유저가 업로드한 클럽 이미지 삭제
+            await tx.club_img_tb.deleteMany({
+                where: { user_id: userId },
+            });
+
+            // 9. 신고 삭제
+            await tx.report_tb.deleteMany({
+                where: { user_id: userId },
+            });
+
+            // 10. 유저 설정 삭제
+            await tx.user_settings_tb.deleteMany({
+                where: { user_id: userId },
+            });
+
+            // 11. 마지막으로 유저 삭제
+            await tx.user_tb.delete({
+                where: { id: userId },
+            });
+
+            try {
+                await fileManager.deleteFolder(UploadType.AVATAR, userId);
+            } catch (error) {
+                console.error(`아바타 이미지 삭제 실패 (userId: ${userId}):`, error);
+            }
+        });
     }
 
     async registerForKakao(
