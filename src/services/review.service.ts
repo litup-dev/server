@@ -408,6 +408,11 @@ export class ReviewService {
         }
 
         await this.prisma.$transaction(async (tx) => {
+            // 클럽 키워드 요약 삭제 (먼저)
+            await tx.club_keyword_summary.deleteMany({
+                where: { review_id: id },
+            });
+
             await tx.club_review_keyword_tb.deleteMany({
                 where: { review_id: id },
             });
