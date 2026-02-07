@@ -63,13 +63,19 @@ export const performanceDetailSchema = performanceDefaultSchema
         isAttend: z.boolean().nullable(),
     });
 
-export const performCalendarSchema = performanceDefaultSchema.pick({
-    id: true,
-    title: true,
-    performDate: true,
-    artists: true,
-    images: true,
-});
+export const performCalendarSchema = performanceDefaultSchema
+    .pick({
+        id: true,
+        performDate: true,
+        artists: true,
+        images: true,
+    })
+    .extend({
+        club: clubSchema.pick({
+            id: true,
+            name: true,
+        }),
+    });
 
 export const performMonthlyByClubSchema = performanceDefaultSchema
     .pick({
@@ -146,8 +152,6 @@ export const getPerformancesCalendarSchema = z.object({
 });
 
 export const performanceCalendarItemSchema = z.object({
-    id: z.number(),
-    clubName: z.string().nullable(),
     performances: z.array(performCalendarSchema),
 });
 
