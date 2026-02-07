@@ -26,7 +26,7 @@ export class PerformanceReviewService {
                 include: {
                     user_tb: {
                         select: {
-                            id: true,
+                            public_id: true,
                             nickname: true,
                             profile_path: true,
                         },
@@ -63,7 +63,7 @@ export class PerformanceReviewService {
                 createdAt: r.created_at instanceof Date ? r.created_at.toISOString() : r.created_at,
                 updatedAt: r.updated_at instanceof Date ? r.updated_at.toISOString() : r.updated_at,
                 user: {
-                    id: r.user_tb.id,
+                    publicId: r.user_tb.public_id,
                     nickname: r.user_tb.nickname,
                     profile_path: r.user_tb.profile_path ?? null,
                 },
@@ -97,7 +97,7 @@ export class PerformanceReviewService {
                     updated_at: true,
                     user_tb: {
                         select: {
-                            id: true,
+                            public_id: true,
                             nickname: true,
                             profile_path: true,
                         },
@@ -131,7 +131,7 @@ export class PerformanceReviewService {
                 createdAt: r.created_at instanceof Date ? r.created_at.toISOString() : r.created_at,
                 updatedAt: r.updated_at instanceof Date ? r.updated_at.toISOString() : r.updated_at,
                 user: {
-                    id: r.user_tb.id,
+                    publicId: r.user_tb.public_id,
                     nickname: r.user_tb.nickname,
                     profile_path: r.user_tb.profile_path ?? null,
                 },
@@ -162,7 +162,7 @@ export class PerformanceReviewService {
                         include: {
                             user_tb: {
                                 select: {
-                                    id: true,
+                                    public_id: true,
                                     nickname: true,
                                     profile_path: true,
                                 },
@@ -199,7 +199,7 @@ export class PerformanceReviewService {
                     updatedAt:
                         r.updated_at instanceof Date ? r.updated_at.toISOString() : r.updated_at,
                     user: {
-                        id: r.user_tb.id,
+                        publicId: r.user_tb.public_id,
                         nickname: r.user_tb.nickname,
                         profile_path: r.user_tb.profile_path ?? null,
                     },
@@ -241,7 +241,7 @@ export class PerformanceReviewService {
             include: {
                 user_tb: {
                     select: {
-                        id: true,
+                        public_id: true,
                         nickname: true,
                         profile_path: true,
                     },
@@ -262,7 +262,7 @@ export class PerformanceReviewService {
                     ? review.updated_at.toISOString()
                     : review.updated_at,
             user: {
-                id: review.user_tb.id,
+                publicId: review.user_tb.public_id,
                 nickname: review.user_tb.nickname,
                 profile_path: review.user_tb.profile_path ?? null,
             },
@@ -298,7 +298,7 @@ export class PerformanceReviewService {
             include: {
                 user_tb: {
                     select: {
-                        id: true,
+                        public_id: true,
                         nickname: true,
                         profile_path: true,
                     },
@@ -319,7 +319,7 @@ export class PerformanceReviewService {
                     ? review.updated_at.toISOString()
                     : review.updated_at,
             user: {
-                id: review.user_tb.id,
+                publicId: review.user_tb.public_id,
                 nickname: review.user_tb.nickname,
                 profile_path: review.user_tb.profile_path ?? null,
             },
