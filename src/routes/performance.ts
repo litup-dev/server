@@ -85,7 +85,7 @@ export async function performanceRoutes(fastify: FastifyInstance) {
                 summary: '메인 페이지 공연 목록 월별 조회',
                 description: '메인 페이지 공연 목록 월별 조회',
                 response: {
-                    200: performanceCalendarListResponseSchema,
+                    // 200: performanceCalendarListResponseSchema,
                     400: errorResJson,
                     500: errorResJson,
                 },

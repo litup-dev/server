@@ -285,7 +285,6 @@ export class PerformanceService {
             },
             select: {
                 id: true,
-                title: true,
                 perform_date: true,
                 artists: true,
                 club_tb: {
@@ -304,91 +303,56 @@ export class PerformanceService {
                     take: 1,
                 },
             },
-            orderBy: {
-                perform_date: 'asc',
-            },
-        });
-
-        const result: Record<
-            string,
-            Record<
-                number,
+            orderBy: [
                 {
-                    id: number;
-                    clubName: string | null;
-                    performances: Array<{
-                        id: number;
-                        title: string | null;
-                        performDate: string | null;
-                        artists: { name: string }[] | null;
-                        images: Array<{
-                            id: number;
-                            filePath: string | null;
-                            isMain: boolean | null;
-                        }> | null;
-                    }>;
-                }
-            >
-        > = {};
-
-        performances.forEach((p) => {
-            const dateKey = p.perform_date!.toISOString().split('T')[0]!;
-            const clubId = p.club_tb!.id!;
-
-            if (!result[dateKey]) {
-                result[dateKey] = {};
-            }
-
-            if (!result[dateKey][clubId]) {
-                result[dateKey][clubId] = {
-                    id: clubId,
-                    clubName: p.club_tb.name!,
-                    performances: [],
-                };
-            }
-
-            result[dateKey][clubId].performances.push({
-                id: p.id,
-                title: p.title,
-                performDate:
-                    p.perform_date instanceof Date ? p.perform_date.toISOString() : p.perform_date, // ! 제거
-                artists: Array.isArray(p.artists) ? (p.artists as { name: string }[]) : null,
-                images: p.perform_img_tb[0]
-                    ? [
-                          {
-                              id: 0,
-                              filePath: p.perform_img_tb[0].file_path,
-                              isMain: true,
-                          },
-                      ]
-                    : null,
-            });
+                    perform_date: 'asc',
+                },
+                { id: 'desc' },
+            ],
         });
+        const grouped: Record<string, typeof performances> = {};
 
-        const finalResult: Record<
-            string,
-            Array<{
-                id: number;
-                clubName: string | null;
-                performances: Array<{
-                    id: number;
-                    title: string | null;
-                    performDate: string | null;
-                    artists: { name: string }[] | null;
-                    images: Array<{
-                        id: number;
-                        filePath: string | null;
-                        isMain: boolean | null;
-                    }> | null;
-                }>;
-            }>
-        > = {};
+        for (const p of performances) {
+            const performDate = p.perform_date;
+            if (!performDate) continue;
+            const dateKey = performDate.toISOString().split('T')[0]!;
 
-        for (const date in result) {
-            finalResult[date] = Object.values(result[date]!);
+            if (!grouped[dateKey]) {
+                grouped[dateKey] = [];
+            }
+            grouped[dateKey].push(p);
         }
 
-        return finalResult;
+        // Transform to the expected format
+        const result: Record<string, { performances: any[] }[]> = {};
+
+        for (const [date, perfs] of Object.entries(grouped)) {
+            result[date] = [
+                {
+                    performances: perfs.map((p) => ({
+                        id: p.id,
+                        performDate:
+                            p.perform_date instanceof Date
+                                ? p.perform_date.toISOString()
+                                : p.perform_date,
+                        artists: Array.isArray(p.artists)
+                            ? (p.artists as { name: string }[])
+                            : null,
+                        club: {
+                            id: p.club_tb.id,
+                            name: p.club_tb.name,
+                        },
+                        images: p.perform_img_tb.map((img) => ({
+                            id: img.id,
+                            filePath: img.file_path,
+                            isMain: img.is_main,
+                        })),
+                    })),
+                },
+            ];
+        }
+
+        return result;
     }
 
     async getClubMonthlyPerformances(
