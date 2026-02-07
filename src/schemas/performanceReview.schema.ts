@@ -9,7 +9,7 @@ export const performanceReviewSchema = z.object({
     createdAt: z.string().nullable(),
     updatedAt: z.string().nullable(),
     user: z.object({
-        id: z.number(),
+        publicId: z.string(),
         nickname: z.string().nullable(),
         profile_path: z.string().nullable(),
     }),
