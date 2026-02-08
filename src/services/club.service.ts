@@ -419,8 +419,14 @@ export class ClubService {
         clubId: number,
         files: SavedFileInfo[]
     ): Promise<OperationSuccessType> {
+        const user = await this.prisma.user_tb.findUnique({
+            where: { id: userId },
+        });
+        const isAdmin = user?.role === 'admin';
+        const whereClause = isAdmin ? { id: clubId } : { id: clubId, userId: userId };
+
         const club = await this.prisma.club.findUnique({
-            where: { id: clubId, userId: userId },
+            where: whereClause,
         });
 
         if (!club) {
