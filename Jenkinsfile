@@ -31,7 +31,7 @@ pipeline {
                 sh 'yarn install --immutable'
                 // sh 'yarn prisma generate'
                 sh 'yarn build'
-            }
+            } 
         }
 
         stage('Transfer, Backup & Deploy') {
