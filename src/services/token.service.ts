@@ -5,6 +5,7 @@ import {
 } from '@/common/constants';
 import { InvalidTokenError } from '@/common/error';
 import { redis } from '@/configs/redis';
+import getCookieOptions from '@/utils/cookie';
 import { randomUUID } from 'crypto';
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
@@ -49,7 +50,7 @@ export class TokenService {
         await redis.del(`refresh_token:${tokenId}`);
     }
 
-    async getNewAccessToken(request: FastifyRequest, reply: FastifyReply): Promise<string | null> {
+    async getNewAccessToken(request: FastifyRequest, reply: FastifyReply): Promise<void> {
         try {
             const token = request.cookies['refreshToken'];
 
@@ -81,14 +82,18 @@ export class TokenService {
             const newRefreshToken = this.generateRefreshToken(publicId, newRefreshTokenId);
             await this.saveRefreshToken(newRefreshTokenId, publicId);
 
+            const accessToken = this.generateJwtToken(publicId);
+
             reply.setCookie('refreshToken', newRefreshToken, {
-                httpOnly: true,
-                secure: NODE_ENV === 'production' ? true : false,
-                sameSite: 'lax',
+                ...getCookieOptions(),
                 path: NODE_ENV === 'production' ? '/auth/refresh' : '/',
+                maxAge: JWT_REFRESH_TOKEN_EXPIRES_IN,
             });
 
-            return this.generateJwtToken(publicId);
+            reply.setCookie('accessToken', accessToken, {
+                ...getCookieOptions(),
+                maxAge: JWT_ACCESS_TOKEN_EXPIRES_IN,
+            });
         } catch (err) {
             throw new InvalidTokenError('토큰이 유효하지 않습니다.');
         }

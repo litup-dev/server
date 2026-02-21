@@ -1,13 +1,17 @@
-import { NODE_ENV } from '@/common/constants';
-import { accessTokenJson, loginJson } from '@/schemas/auth.schema.js';
+import {
+    JWT_ACCESS_TOKEN_EXPIRES_IN,
+    JWT_REFRESH_TOKEN_EXPIRES_IN,
+    NODE_ENV,
+} from '@/common/constants';
 import { errorResJson, successResJson } from '@/schemas/common.schema.js';
 import { AuthService } from '@/services/auth.service.js';
 import { FastifyInstance } from 'fastify';
 import { TokenService } from '@/services/token.service';
 import { randomUUID } from 'crypto';
-import { InvalidTokenError, NotFoundError } from '@/common/error';
+import { NotFoundError } from '@/common/error';
 import { UserService } from '@/services/user.service';
 import { getTsid } from 'tsid-ts';
+import getCookieOptions from '@/utils/cookie';
 
 export async function authRoutes(fastify: FastifyInstance) {
     fastify.get(
@@ -50,10 +54,13 @@ export async function authRoutes(fastify: FastifyInstance) {
                 await tokenService.saveRefreshToken(refreshTokenId, result!.publicId);
 
                 reply.setCookie('refreshToken', refreshToken, {
-                    httpOnly: true,
-                    secure: NODE_ENV === 'production' ? true : false,
-                    sameSite: 'lax', // CSRF 공격 방지
+                    ...getCookieOptions(),
                     path: NODE_ENV === 'production' ? '/auth/refresh' : '/',
+                    maxAge: JWT_REFRESH_TOKEN_EXPIRES_IN,
+                });
+                reply.setCookie('accessToken', accessToken, {
+                    ...getCookieOptions(),
+                    maxAge: JWT_ACCESS_TOKEN_EXPIRES_IN,
                 });
 
                 request.log.info('OAuth callback 처리 완료, 리다이렉트 진행');
@@ -63,7 +70,7 @@ export async function authRoutes(fastify: FastifyInstance) {
                         : 'http://localhost:10000/login/success';
 
                 return reply.redirect(
-                    `${redirectUrl}?token=${encodeURIComponent(accessToken)}&publicId=${result.publicId}&nickname=${encodeURIComponent(result.nickname || '')}&profilePath=${encodeURIComponent(result.profilePath || '')}`
+                    `${redirectUrl}?publicId=${result.publicId}&nickname=${encodeURIComponent(result.nickname || '')}&profilePath=${encodeURIComponent(result.profilePath || '')}`
                 );
             } catch (err: any) {
                 fastify.log.error('Kakao OAuth callback error:', err);
@@ -80,7 +87,7 @@ export async function authRoutes(fastify: FastifyInstance) {
                 summary: '소셜 회원가입 & 로그인',
                 description: '소셜 회원가입 & 로그인',
                 response: {
-                    200: loginJson,
+                    // 200: loginJson,
                     400: errorResJson,
                     500: errorResJson,
                 },
@@ -117,10 +124,13 @@ export async function authRoutes(fastify: FastifyInstance) {
                 await tokenService.saveRefreshToken(refreshTokenId, user.publicId);
 
                 reply.setCookie('refreshToken', refreshToken, {
-                    httpOnly: true,
-                    secure: NODE_ENV === 'production' ? true : false,
-                    sameSite: 'lax', // CSRF 공격 방지
+                    ...getCookieOptions(),
                     path: NODE_ENV === 'production' ? '/auth/refresh' : '/',
+                    maxAge: JWT_REFRESH_TOKEN_EXPIRES_IN,
+                });
+                reply.setCookie('accessToken', accessToken, {
+                    ...getCookieOptions(),
+                    maxAge: JWT_ACCESS_TOKEN_EXPIRES_IN,
                 });
 
                 reply.send({
@@ -128,7 +138,6 @@ export async function authRoutes(fastify: FastifyInstance) {
                         publicId: user.publicId,
                         nickname: user.nickname,
                         profilePath: user.profilePath,
-                        accessToken: `Bearer ${accessToken}`,
                     },
                 });
             } catch (err: any) {
@@ -174,7 +183,7 @@ export async function authRoutes(fastify: FastifyInstance) {
                 summary: '토큰 재발급',
                 description: '토큰 재발급',
                 response: {
-                    200: accessTokenJson,
+                    // 200: accessTokenJson,
                     400: errorResJson,
                     500: errorResJson,
                 },
@@ -182,11 +191,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         },
         async (request, reply) => {
             const tokenService = new TokenService(fastify);
-            const accessToken = await tokenService.getNewAccessToken(request, reply);
-            if (!accessToken) {
-                throw new InvalidTokenError('토큰이 유효하지 않습니다.');
-            }
-            reply.send({ data: { accessToken } });
+            await tokenService.getNewAccessToken(request, reply);
         }
     );
 }
