@@ -114,7 +114,7 @@ export class ReviewService {
                 },
                 user_tb: {
                     select: {
-                        id: true,
+                        public_id: true,
                         nickname: true,
                         profile_path: true,
                     },
@@ -165,7 +165,7 @@ export class ReviewService {
                 updatedAt: review.updated_at ? review.updated_at.toISOString() : null,
                 user: review.user_tb
                     ? {
-                          id: review.user_tb.id,
+                          publicId: review.user_tb.public_id,
                           nickname: review.user_tb.nickname,
                           profilePath: review.user_tb.profile_path,
                       }
