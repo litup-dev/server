@@ -432,6 +432,7 @@ export class PerformanceService {
                 isCanceled: boolean | null;
                 description: string | null;
                 isAttend: boolean | null;
+                artists: { name: string }[] | null;
             }>
         > = {};
 
@@ -458,6 +459,7 @@ export class PerformanceService {
                 isCanceled: p.is_cancelled ?? null,
                 description: p.description ?? null,
                 isAttend: p.attend_tb && p.attend_tb.length > 0 ? true : false,
+                artists: Array.isArray(p.artists) ? (p.artists as { name: string }[]) : null,
             });
         });
 

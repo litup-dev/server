@@ -80,6 +80,7 @@ export const performMonthlyByClubSchema = performanceDefaultSchema
         onsitePrice: true,
         isCanceled: true,
         description: true,
+        artists: true,
     })
     .extend({
         isAttend: z.boolean().nullable(),
