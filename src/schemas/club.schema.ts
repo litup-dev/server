@@ -70,7 +70,7 @@ export const clubSearchSchema = clubSchema.pick({
     id: true,
     name: true,
     address: true,
-    mainImage: true,
+    images: true,
     latitude: true,
     longitude: true,
     avgRating: true,

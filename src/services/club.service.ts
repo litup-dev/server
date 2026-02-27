@@ -89,13 +89,12 @@ export class ClubService {
                         },
                     },
                     club_img_tb: {
-                        where: { is_main: true },
                         select: {
                             id: true,
                             file_path: true,
                             is_main: true,
                         },
-                        take: 1,
+                        orderBy: { is_main: 'desc' },
                     },
                     club_keyword_summary: {
                         include: {
@@ -223,13 +222,12 @@ export class ClubService {
                     },
                 },
                 club_img_tb: {
-                    where: { is_main: true },
                     select: {
                         id: true,
                         file_path: true,
                         is_main: true,
                     },
-                    take: 1,
+                    orderBy: { is_main: 'desc' },
                 },
                 club_keyword_summary: {
                     include: {
@@ -500,13 +498,11 @@ export class ClubService {
             reviewCnt: club.reviewCnt,
             latitude: club.latitude ?? null,
             longitude: club.longitude ?? null,
-            mainImage: club.club_img_tb[0]
-                ? {
-                      id: club.club_img_tb[0].id,
-                      filePath: club.club_img_tb[0].file_path,
-                      isMain: club.club_img_tb[0].is_main,
-                  }
-                : null,
+            images: club.club_img_tb.map((img: any) => ({
+                id: img.id,
+                filePath: img.file_path,
+                isMain: img.is_main,
+            })),
             favoriteCount: club._count.favorite_tb,
             isFavorite: club.favorite_tb && club.favorite_tb.length > 0 ? true : false,
         };
