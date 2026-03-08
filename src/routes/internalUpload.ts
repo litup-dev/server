@@ -10,7 +10,7 @@ import { FileManager } from '@/utils/fileManager.js';
 import { MultipartFile } from '@fastify/multipart';
 import { FastifyInstance } from 'fastify';
 
-export async function uploadRoutes(fastify: FastifyInstance) {
+export async function internalUploadRoutes(fastify: FastifyInstance) {
     const fileManager = new FileManager(createStorageAdapter());
 
     async function handleFileUpload(
