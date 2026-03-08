@@ -9,7 +9,7 @@ export async function registerCors(fastify: FastifyInstance) {
             return cb(null, true);
         },
         methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
-        allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'x-internal-secret'],
         credentials: true,
         preflight: true,
         maxAge: 86400,
