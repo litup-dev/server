@@ -5,6 +5,7 @@ declare module 'fastify' {
     interface FastifyInstance {
         requireAuth: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
         optionalAuth: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
+        requireInternal: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
         prisma: import('@prisma/client').PrismaClient;
     }
 
