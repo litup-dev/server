@@ -60,7 +60,9 @@ export async function authRoutes(fastify: FastifyInstance) {
                 const redirectUrl =
                     NODE_ENV === 'production'
                         ? 'https://litup.kr/login/success'
-                        : 'http://localhost:10000/login/success';
+                        : NODE_ENV === 'staging'
+                          ? 'http://100.116.32.24:10000/login/success'
+                          : 'http://localhost:10000/login/success';
 
                 return reply.redirect(
                     `${redirectUrl}?token=${encodeURIComponent(accessToken)}&publicId=${result.publicId}&nickname=${encodeURIComponent(result.nickname || '')}&profilePath=${encodeURIComponent(result.profilePath || '')}`
