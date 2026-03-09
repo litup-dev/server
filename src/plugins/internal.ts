@@ -1,7 +1,8 @@
+import { INTERNAL_SECRET_KEY } from '@/common/constants';
 import { FastifyReply, FastifyRequest } from 'fastify';
 import fastifyPlugin from 'fastify-plugin';
 
-const INTERNAL_SECRET = process.env.INTERNAL_SECRET;
+const INTERNAL_SECRET = INTERNAL_SECRET_KEY;
 
 if (!INTERNAL_SECRET) {
     throw new Error('INTERNAL_SECRET 환경변수가 설정되지 않았습니다.');
