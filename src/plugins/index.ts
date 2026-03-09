@@ -8,6 +8,7 @@ import { registerOauth } from './oauth.js';
 import { registerJwt } from './jwt.js';
 import { registerAuthPreHandler } from '@/common/auth/auth.preHandler.js';
 import { registerCookie } from './cookie.js';
+import { registerInternal } from './internal.js';
 
 export async function registerPlugins(fastify: FastifyInstance) {
     await registerPrisma(fastify);
@@ -19,4 +20,5 @@ export async function registerPlugins(fastify: FastifyInstance) {
     await registerCookie(fastify);
     await registerJwt(fastify);
     await registerOauth(fastify);
+    await registerInternal(fastify);
 }
