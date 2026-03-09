@@ -1,5 +1,5 @@
-import { PrismaClient } from '@prisma/client';
-import { NotFoundError } from '@/common/error.js';
+import { Prisma, PrismaClient } from '@prisma/client';
+import { BadRequestError, NotFoundError } from '@/common/error.js';
 import { SavedFileInfo } from '@/types/file.types.js';
 import { OperationSuccessType } from '@/schemas/common.schema.js';
 import {
@@ -7,6 +7,7 @@ import {
     GetClubsType,
     ClubSearchResponseType,
     ClubSearchType,
+    ClubCreateType,
 } from '@/schemas/club.schema.js';
 import { ClubSearchArea } from '@/types/search.types.js';
 
@@ -450,6 +451,51 @@ export class ClubService {
         });
 
         return { success: true, operation: 'saved' };
+    }
+
+    async createClub(userId: number, clubData: ClubCreateType): Promise<number> {
+        const existingClub = await this.prisma.club.findFirst({
+            where: {
+                name: clubData.name,
+                instagram_account: clubData.instagramAccount,
+            },
+        });
+
+        if (existingClub) {
+            throw new BadRequestError('이미 존재하는 클럽입니다.');
+        }
+
+        const club = await this.prisma.club.create({
+            data: {
+                userId,
+                name: clubData.name,
+                latitude: clubData.lat ?? null,
+                longitude: clubData.lng ?? null,
+                phone: clubData.phone ?? null,
+                openTime: clubData.openTime
+                    ? new Date(`1970-01-01T${clubData.openTime}:00Z`)
+                    : null,
+                closeTime: clubData.closeTime
+                    ? new Date(`1970-01-01T${clubData.closeTime}:00Z`)
+                    : null,
+                capacity: clubData.capacity ?? null,
+                address: clubData.address ?? null,
+                detail_address: clubData.addressDetail ?? null,
+                description: clubData.description ?? null,
+                instagram_account: clubData.instagramAccount,
+                sns_links: (clubData.snsLinks as Prisma.InputJsonValue) ?? undefined,
+            },
+        });
+
+        if (clubData.lat != null && clubData.lng != null) {
+            await this.prisma.$executeRaw`
+                UPDATE club_tb
+                SET location = ST_SetSRID(ST_MakePoint(${clubData.lng}, ${clubData.lat}), 4326)::geography
+                WHERE id = ${club.id}
+            `;
+        }
+
+        return club.id;
     }
 
     private buildOrderByForObject(sortBy?: string): any {

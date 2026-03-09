@@ -10,6 +10,7 @@ import { API_PREFIX } from '../common/constants.js';
 import { uploadRoutes } from './upload.js';
 import { commonRoutes } from './common.js';
 import { internalUploadRoutes } from './internalUpload.js';
+import { internalClubRoutes } from './internalClub.js';
 
 export async function registerRoutes(fastify: FastifyInstance) {
     await fastify.register(commonRoutes, { prefix: API_PREFIX + '/common' });
@@ -22,5 +23,6 @@ export async function registerRoutes(fastify: FastifyInstance) {
     await fastify.register(authRoutes, { prefix: API_PREFIX });
     await fastify.register(userRoutes, { prefix: API_PREFIX });
     await fastify.register(reportRoutes, { prefix: API_PREFIX });
+    await fastify.register(internalClubRoutes, { prefix: API_PREFIX });
     fastify.log.info('Routes registered');
 }

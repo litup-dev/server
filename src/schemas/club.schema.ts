@@ -59,6 +59,35 @@ export const clubSchema = z.object({
     snsLinks: z.array(clubSnsLinkSchema).nullable(),
 });
 
+export const createClubSchema = z.object({
+    name: z.string().max(20),
+    lat: z.preprocess((val) => {
+        if (typeof val === 'string') return parseFloat(val);
+        return val;
+    }, z.number().nullable().optional()),
+    lng: z.preprocess((val) => {
+        if (typeof val === 'string') return parseFloat(val);
+        return val;
+    }, z.number().nullable().optional()),
+    phone: z.string().max(15).optional(),
+    openTime: z.string().optional(),
+    closeTime: z.string().optional(),
+    capacity: z.preprocess((val) => {
+        if (typeof val === 'string') return parseInt(val, 10);
+        return val;
+    }, z.number().nullable().optional()),
+    address: z.string().max(50).optional(),
+    addressDetail: z.string().max(100).optional(),
+    description: z.string().optional(),
+    instagramAccount: z.string().max(50),
+    snsLinks: z.preprocess((val) => {
+        if (typeof val === 'string') {
+            return JSON.parse(val);
+        }
+        return val;
+    }, z.array(z.any()).optional()),
+});
+
 // 클럽 정보 간소화 스키마
 export const clubSimpleSchema = clubSchema.pick({
     id: true,
@@ -185,6 +214,7 @@ export const clubListResJson = generateSchema(clubListRes);
 export const clubSearchResJson = generateSchema(clubSearchRes);
 export const clubListSimpleResJson = generateSchema(clubListSimpleRes);
 export const toggleFavoriteResJson = generateSchema(toggleFavoriteRes);
+export const createClubJson = generateSchema(createClubSchema);
 
 // 타입 추출
 export type ClubType = z.infer<typeof clubSchema>;
@@ -194,3 +224,4 @@ export type ClubDetailResponseType = z.infer<typeof clubDetailRes>;
 export type ClubListResponseType = z.infer<typeof clubListResponseSchema>;
 export type ClubListSimpleResponseType = z.infer<typeof clubListSimpleResponseSchema>;
 export type ClubSearchResponseType = z.infer<typeof clubSearchResponseSchema>;
+export type ClubCreateType = z.infer<typeof createClubSchema>;
