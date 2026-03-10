@@ -33,6 +33,33 @@ import { PerformanceReviewService } from '@/services/performanceReview.service';
 
 export async function userRoutes(fastify: FastifyInstance) {
     fastify.get(
+        '/users/me',
+        {
+            preHandler: [fastify.requireAuth],
+            schema: {
+                tags: ['User'],
+                summary: '유저 정보 조회',
+                description: '유저 정보 조회',
+                response: {
+                    200: userInfoResJson,
+                    400: errorResJson,
+                    500: errorResJson,
+                },
+            },
+        },
+        async (request, reply) => {
+            const userId = request.userId;
+            if (!userId) {
+                throw new NotFoundError('사용자를 찾을 수 없습니다.');
+            }
+            const service = new UserService(request.server.prisma);
+            const result = await service.getUserById(userId);
+
+            return reply.send({ data: result });
+        }
+    );
+
+    fastify.get(
         '/users/:publicId',
         {
             schema: {

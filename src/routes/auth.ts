@@ -56,6 +56,19 @@ export async function authRoutes(fastify: FastifyInstance) {
                     path: NODE_ENV === 'production' ? '/auth/refresh' : '/',
                 });
 
+                reply.setCookie('accessToken', accessToken, {
+                    httpOnly: true,
+                    secure: NODE_ENV === 'production' ? true : false,
+                    sameSite: 'lax',
+                    path: '/',
+                });
+
+                reply.setCookie('isLogin', 'true', {
+                    secure: NODE_ENV === 'production' ? true : false,
+                    sameSite: 'lax',
+                    path: '/',
+                });
+
                 request.log.info('OAuth callback 처리 완료, 리다이렉트 진행');
                 const redirectUrl =
                     NODE_ENV === 'production'
@@ -64,9 +77,7 @@ export async function authRoutes(fastify: FastifyInstance) {
                           ? 'http://100.116.32.24:10000/login/success'
                           : 'http://localhost:10000/login/success';
 
-                return reply.redirect(
-                    `${redirectUrl}?token=${encodeURIComponent(accessToken)}&publicId=${result.publicId}&nickname=${encodeURIComponent(result.nickname || '')}&profilePath=${encodeURIComponent(result.profilePath || '')}`
-                );
+                return reply.redirect(`${redirectUrl}`);
             } catch (err: any) {
                 fastify.log.error('Kakao OAuth callback error:', err);
                 reply.status(500).send({ error: String(err) });
@@ -125,6 +136,13 @@ export async function authRoutes(fastify: FastifyInstance) {
                     path: NODE_ENV === 'production' ? '/auth/refresh' : '/',
                 });
 
+                reply.setCookie('accessToken', accessToken, {
+                    httpOnly: true,
+                    secure: NODE_ENV === 'production' ? true : false,
+                    sameSite: 'lax',
+                    path: '/',
+                });
+
                 reply.send({
                     data: {
                         publicId: user.publicId,
@@ -176,7 +194,7 @@ export async function authRoutes(fastify: FastifyInstance) {
                 summary: '토큰 재발급',
                 description: '토큰 재발급',
                 response: {
-                    200: accessTokenJson,
+                    // 200: accessTokenJson,
                     400: errorResJson,
                     500: errorResJson,
                 },
@@ -184,11 +202,7 @@ export async function authRoutes(fastify: FastifyInstance) {
         },
         async (request, reply) => {
             const tokenService = new TokenService(fastify);
-            const accessToken = await tokenService.getNewAccessToken(request, reply);
-            if (!accessToken) {
-                throw new InvalidTokenError('토큰이 유효하지 않습니다.');
-            }
-            reply.send({ data: { accessToken } });
+            await tokenService.getNewAccessToken(request, reply);
         }
     );
 }

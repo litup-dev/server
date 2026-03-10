@@ -49,7 +49,7 @@ export class TokenService {
         await redis.del(`refresh_token:${tokenId}`);
     }
 
-    async getNewAccessToken(request: FastifyRequest, reply: FastifyReply): Promise<string | null> {
+    async getNewAccessToken(request: FastifyRequest, reply: FastifyReply): Promise<void> {
         try {
             const token = request.cookies['refreshToken'];
 
@@ -79,6 +79,7 @@ export class TokenService {
             await this.deleteRefreshToken(jti);
             const newRefreshTokenId = randomUUID();
             const newRefreshToken = this.generateRefreshToken(publicId, newRefreshTokenId);
+            const newAccessToken = this.generateJwtToken(publicId);
             await this.saveRefreshToken(newRefreshTokenId, publicId);
 
             reply.setCookie('refreshToken', newRefreshToken, {
@@ -88,7 +89,12 @@ export class TokenService {
                 path: NODE_ENV === 'production' ? '/auth/refresh' : '/',
             });
 
-            return this.generateJwtToken(publicId);
+            reply.setCookie('accessToken', newAccessToken, {
+                httpOnly: true,
+                secure: NODE_ENV === 'production' ? true : false,
+                sameSite: 'lax',
+                path: '/',
+            });
         } catch (err) {
             throw new InvalidTokenError('토큰이 유효하지 않습니다.');
         }
