@@ -13,7 +13,7 @@ export const ResourceAccessDeniedError = createError('FORBIDDEN', '접근 권한
 export const InvalidTokenError = createError('INVALID_TOKEN', '%s', 401);
 export const NoAuthorizationInCookieError = createError(
     'FST_JWT_NO_AUTHORIZATION_IN_COOKIE',
-    '헤더에 토큰이 없습니다.',
+    '쿠키에 토큰이 없습니다.',
     10401
 );
 export const AuthorizationTokenExpiredError = createError(

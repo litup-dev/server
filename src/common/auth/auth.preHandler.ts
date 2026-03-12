@@ -40,9 +40,6 @@ export const registerAuthPreHandler = fastifyPlugin(async (fastify) => {
             if (code === 'FST_JWT_AUTHORIZATION_TOKEN_EXPIRED') {
                 throw new AuthorizationTokenExpiredError();
             }
-            if (code === 'FST_JWT_NO_AUTHORIZATION_IN_HEADER') {
-                throw new NoAuthorizationInCookieError();
-            }
             if (code === 'FST_JWT_NO_AUTHORIZATION_IN_COOKIE') {
                 throw new NoAuthorizationInCookieError();
             }

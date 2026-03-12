@@ -1,7 +1,13 @@
 import fastifyCors from '@fastify/cors';
 import { FastifyInstance } from 'fastify';
 
-const allowedOrigins = ['http://220.93.50.45:11000', 'http://localhost:11000'];
+const allowedOrigins = [
+    'http://220.93.50.45:11000',
+    'http://localhost:11000',
+    'http://127.0.0.1:11000',
+    'https://litup.kr',
+    'https://www.litup.kr',
+];
 
 export async function registerCors(fastify: FastifyInstance) {
     await fastify.register(fastifyCors, {
