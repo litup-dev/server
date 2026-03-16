@@ -37,7 +37,9 @@ export class TokenService {
     }
 
     async saveRefreshToken(tokenId: string, publicId: string): Promise<void> {
+        this.fastify.log.info(`토큰 저장 :  ${publicId} - ${tokenId}`);
         await redis.set(`refresh_token:${tokenId}`, publicId, 'EX', JWT_REFRESH_TOKEN_EXPIRES_IN);
+        this.fastify.log.info('토큰 저장 완료');
     }
 
     async isExistsRefreshToken(tokenId: string): Promise<boolean> {
@@ -46,7 +48,9 @@ export class TokenService {
     }
 
     async deleteRefreshToken(tokenId: string): Promise<void> {
+        this.fastify.log.info(`토큰 삭제 :  ${tokenId}`);
         await redis.del(`refresh_token:${tokenId}`);
+        this.fastify.log.info('토큰 삭제 성공');
     }
 
     async getNewAccessToken(request: FastifyRequest, reply: FastifyReply): Promise<void> {
@@ -54,6 +58,7 @@ export class TokenService {
             const token = request.cookies['refreshToken'];
 
             if (!token) {
+                this.fastify.log.info('리프레시 토큰이 없습니다.');
                 throw new InvalidTokenError('리프레시 토큰이 없습니다.');
             }
 
@@ -64,6 +69,7 @@ export class TokenService {
             };
 
             if (payload.type !== 'refresh') {
+                this.fastify.log.info('유효하지 않은 토큰 타입입니다.');
                 throw new InvalidTokenError('유효하지 않은 토큰 타입입니다.');
             }
 
@@ -72,6 +78,7 @@ export class TokenService {
 
             const refreshTokenExists = await this.isExistsRefreshToken(jti);
             if (!refreshTokenExists) {
+                this.fastify.log.info('리프레시 토큰이 유효하지 않습니다.');
                 throw new InvalidTokenError('리프레시 토큰이 유효하지 않습니다.');
             }
 
@@ -96,6 +103,7 @@ export class TokenService {
                 path: '/',
             });
         } catch (err) {
+            this.fastify.log.info('토큰 재발급 실패');
             throw new InvalidTokenError('토큰이 유효하지 않습니다.');
         }
     }

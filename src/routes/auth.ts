@@ -205,4 +205,25 @@ export async function authRoutes(fastify: FastifyInstance) {
             await tokenService.getNewAccessToken(request, reply);
         }
     );
+
+    fastify.post(
+        '/auth/logout',
+        {
+            preHandler: [fastify.requireAuth],
+            schema: {
+                tags: ['Auth'],
+                summary: '로그아웃',
+                description: '로그아웃',
+                response: {
+                    400: errorResJson,
+                    500: errorResJson,
+                },
+            },
+        },
+        async (request, reply) => {
+            const service = new AuthService(request.server.prisma);
+            await service.logout(request, reply);
+            return reply.send({ data: { success: true } });
+        }
+    );
 }

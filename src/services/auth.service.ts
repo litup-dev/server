@@ -4,11 +4,13 @@ import { OperationSuccessType } from '@/schemas/common.schema.js';
 import { UserSimpleType } from '@/schemas/user.schema.js';
 import { PrismaClient } from '@prisma/client';
 import { NicknameService } from '@/services/nickname.service.js';
-import fastify, { FastifyInstance, FastifyRequest } from 'fastify';
+import fastify, { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { getTsid } from 'tsid-ts';
 import { FileManager } from '@/utils/fileManager';
 import { createStorageAdapter } from '@/adapters/storage';
 import { UploadType } from '@/types/file.types';
+import { TokenService } from '@/services/token.service';
+import { NODE_ENV } from '@/common/constants';
 
 export class AuthService {
     constructor(private prisma: PrismaClient) {}
@@ -315,5 +317,33 @@ export class AuthService {
             nickname: verifyUser.nickname,
             profilePath: verifyUser.profilePath,
         };
+    }
+
+    async logout(request: FastifyRequest, reply: FastifyReply): Promise<void> {
+        request.server.log.info('로그아웃 시도');
+        const token = request.cookies['refreshToken'];
+
+        if (token) {
+            try {
+                const payload = request.server.jwt.verify(token) as {
+                    publicId: string;
+                    type: string;
+                    jti: string;
+                };
+
+                if (payload.jti) {
+                    const tokenService = new TokenService(request.server);
+                    await tokenService.deleteRefreshToken(payload.jti);
+                }
+            } catch {
+                // 만료된 토큰이어도 쿠키는 제거
+            }
+        }
+
+        const refreshTokenPath = NODE_ENV === 'production' ? '/auth/refresh' : '/';
+
+        reply.clearCookie('refreshToken', { path: refreshTokenPath });
+        reply.clearCookie('accessToken', { path: '/' });
+        reply.clearCookie('isLogin', { path: '/' });
     }
 }
