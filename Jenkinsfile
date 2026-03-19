@@ -6,7 +6,7 @@ pipeline {
         REMOTE_USER  = 'litup'
         REMOTE_SERVER = '220.93.50.45'
         REMOTE_PORT  = '4342'
-        REMOTE_PATH  = '/Users/litup/workspace/litup/dockers/server-staging'
+        REMOTE_PATH  = '/Users/litup/workspace/litup/dockers/server'
         APP_PATH     = "${REMOTE_PATH}/app"
     }
 
@@ -14,13 +14,13 @@ pipeline {
         stage('Checkout') {
             steps {
                 // Git safe directory 설정
-                sh 'git config --global --add safe.directory /var/jenkins_home/workspace/server-staging || true'
+                sh 'git config --global --add safe.directory /var/jenkins_home/workspace/server || true'
                 
                 // 워크스페이스 정리
                 deleteDir()
                 
                 git credentialsId: 'backend_credential', 
-                    branch: 'develop', 
+                    branch: 'main', 
                     url: 'https://github.com/litup-dev/server.git'
             }
         }
@@ -31,7 +31,7 @@ pipeline {
                 sh 'yarn install --immutable'
                 // sh 'yarn prisma generate'
                 sh 'yarn build'
-            } 
+            }
         }
 
         stage('Transfer, Backup & Deploy') {
