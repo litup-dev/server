@@ -93,7 +93,7 @@ export async function authRoutes(fastify: FastifyInstance) {
                 summary: '소셜 회원가입 & 로그인',
                 description: '소셜 회원가입 & 로그인',
                 response: {
-                    200: loginJson,
+                    200: successResJson,
                     400: errorResJson,
                     500: errorResJson,
                 },
@@ -143,14 +143,12 @@ export async function authRoutes(fastify: FastifyInstance) {
                     path: '/',
                 });
 
-                reply.send({
-                    data: {
-                        publicId: user.publicId,
-                        nickname: user.nickname,
-                        profilePath: user.profilePath,
-                        accessToken: `Bearer ${accessToken}`,
-                    },
+                fastify.log.info({
+                    msg: 'Set-Cookie headers',
+                    setCookie: reply.getHeaders()['set-cookie'],
                 });
+
+                reply.status(200).send({ success: true });
             } catch (err: any) {
                 fastify.log.error('Kakao OAuth callback error:', err);
                 reply.status(500).send({ error: String(err) });
