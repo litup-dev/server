@@ -69,6 +69,11 @@ export async function authRoutes(fastify: FastifyInstance) {
                     path: '/',
                 });
 
+                fastify.log.info({
+                    msg: 'Set-Cookie headers',
+                    setCookie: reply.getHeaders()['set-cookie'],
+                });
+
                 request.log.info('OAuth callback 처리 완료, 리다이렉트 진행');
                 const redirectUrl =
                     NODE_ENV === 'production'
@@ -143,12 +148,14 @@ export async function authRoutes(fastify: FastifyInstance) {
                     path: '/',
                 });
 
-                fastify.log.info({
-                    msg: 'Set-Cookie headers',
-                    setCookie: reply.getHeaders()['set-cookie'],
+                reply.send({
+                    data: {
+                        publicId: user.publicId,
+                        nickname: user.nickname,
+                        profilePath: user.profilePath,
+                        accessToken: `Bearer ${accessToken}`,
+                    },
                 });
-
-                reply.status(200).send({ success: true });
             } catch (err: any) {
                 fastify.log.error('Kakao OAuth callback error:', err);
                 reply.status(500).send({ error: String(err) });
