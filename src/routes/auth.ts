@@ -69,7 +69,9 @@ export async function authRoutes(fastify: FastifyInstance) {
                     path: '/',
                 });
 
-                fastify.log.info({
+                request.log.info('쿠키 체크');
+
+                request.log.info({
                     msg: 'Set-Cookie headers',
                     setCookie: reply.getHeaders()['set-cookie'],
                 });
