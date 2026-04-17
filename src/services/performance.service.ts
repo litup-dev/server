@@ -576,4 +576,48 @@ export class PerformanceService {
 
         return { success: true, operation: 'saved' };
     }
+
+    async getTempPerformances(offset: number, limit: number) {
+        const [performs, total] = await Promise.all([
+            this.prisma.perform_tmp.findMany({
+                skip: offset,
+                take: limit,
+                orderBy: { created_at: 'desc' },
+                include: {
+                    perform_img_tmp: {
+                        select: {
+                            id: true,
+                            perform_id: true,
+                            file_path: true,
+                            is_main: true,
+                            original_name: true,
+                        },
+                    },
+                    club_tb: {
+                        select: {
+                            name: true,
+                        },
+                    },
+                },
+            }),
+            this.prisma.perform_tmp.count(),
+        ]);
+
+        return {
+            performs: performs.map((p) => ({
+                ...p,
+                club_name: p.club_tb?.name ?? null,
+                images: p.perform_img_tmp.map((img) => ({
+                    id: img.id,
+                    perform_id: img.perform_id,
+                    file_path: img.file_path,
+                    is_main: img.is_main,
+                    original_name: img.original_name,
+                })),
+                club_tb: undefined,
+                perform_img_tmp: undefined,
+            })),
+            total,
+        };
+    }
 }
