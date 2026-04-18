@@ -577,6 +577,40 @@ export class PerformanceService {
         return { success: true, operation: 'saved' };
     }
 
+    async createPerformance(data: {
+        club_id: number;
+        title: string;
+        description: string;
+        perform_date: string;
+        booking_price: number;
+        onsite_price: number;
+        booking_url?: string | undefined;
+        artists: { name: string }[];
+        sns_links: { instagram?: string | undefined }[];
+    }) {
+        const perform = await this.prisma.perform.create({
+            data: {
+                club_id: data.club_id,
+                user_id: 1,
+                title: data.title,
+                description: data.description,
+                perform_date: new Date(data.perform_date),
+                booking_price: data.booking_price,
+                onsite_price: data.onsite_price,
+                ...(data.booking_url !== undefined && { booking_url: data.booking_url }),
+                artists: data.artists,
+                sns_links: data.sns_links,
+                updated_at: new Date(),
+            },
+        });
+        return {
+            perform_id: perform.id,
+            club_id: perform.club_id,
+            title: perform.title ?? '',
+            perform_date: perform.perform_date?.toISOString() ?? '',
+        };
+    }
+
     async getTempPerformances(offset: number, limit: number) {
         const [performs, total] = await Promise.all([
             this.prisma.perform_tmp.findMany({
