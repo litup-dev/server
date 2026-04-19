@@ -588,6 +588,23 @@ export class PerformanceService {
         artists: { name: string }[];
         sns_links: { instagram?: string | undefined }[];
     }) {
+        const updateResult = await this.prisma.perform_tmp.updateMany({
+            where: {
+                club_id: data.club_id,
+                title: data.title,
+                perform_date: new Date(data.perform_date),
+                status: false,
+            },
+            data: {
+                status: true,
+                updated_at: new Date(),
+            },
+        });
+
+        if (updateResult.count === 0) {
+            throw new NotFoundError('임시 공연 정보를 찾을 수 없습니다.');
+        }
+
         const perform = await this.prisma.perform.create({
             data: {
                 club_id: data.club_id,
@@ -616,6 +633,7 @@ export class PerformanceService {
             this.prisma.perform_tmp.findMany({
                 skip: offset,
                 take: limit,
+                where: { status: true },
                 orderBy: { created_at: 'desc' },
                 include: {
                     perform_img_tmp: {
