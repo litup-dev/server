@@ -633,7 +633,7 @@ export class PerformanceService {
             this.prisma.perform_tmp.findMany({
                 skip: offset,
                 take: limit,
-                where: { status: true },
+                where: { status: false },
                 orderBy: { created_at: 'desc' },
                 include: {
                     perform_img_tmp: {
