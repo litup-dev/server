@@ -145,6 +145,7 @@ export class PerformanceService {
                     id: p.club_id,
                     name: p.club_name,
                     address: p.club_address,
+                    image: null,
                 },
                 images: (imagesByPerformId[p.id] || []).map((img) => ({
                     id: img.id,
@@ -255,6 +256,7 @@ export class PerformanceService {
                     id: p.club_tb.id,
                     name: p.club_tb.name,
                     address: p.club_tb.address,
+                    image: null,
                 },
                 images: p.perform_img_tb.map((img) => ({
                     id: img.id,
@@ -484,6 +486,11 @@ export class PerformanceService {
                         id: true,
                         name: true,
                         address: true,
+                        club_img_tb: {
+                            where: { is_main: true },
+                            select: { file_path: true },
+                            take: 1,
+                        },
                     },
                 },
                 perform_img_tb: {
@@ -531,6 +538,7 @@ export class PerformanceService {
                 id: performance.club_tb?.id ?? 0,
                 name: performance.club_tb?.name ?? null,
                 address: performance.club_tb?.address ?? null,
+                image: performance.club_tb?.club_img_tb?.[0]?.file_path ?? null,
             },
             images: (performance.perform_img_tb ?? []).map((img) => ({
                 id: img.id,
