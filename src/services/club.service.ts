@@ -454,12 +454,15 @@ export class ClubService {
     }
 
     async createClub(userId: number, clubData: ClubCreateType): Promise<number> {
+        console.log('Creating club with data:', clubData);
+        console.log('User ID:', userId);
         const existingClub = await this.prisma.club.findFirst({
             where: {
                 name: clubData.name,
                 instagram_account: clubData.instagramAccount,
             },
         });
+        console.log('existingClub:', existingClub);
 
         if (existingClub) {
             throw new BadRequestError('이미 존재하는 클럽입니다.');
@@ -483,7 +486,11 @@ export class ClubService {
                 detail_address: clubData.addressDetail ?? null,
                 description: clubData.description ?? null,
                 instagram_account: clubData.instagramAccount,
-                sns_links: (clubData.snsLinks as Prisma.InputJsonValue) ?? undefined,
+                sns_links: clubData.snsLinks?.length
+                    ? ([Object.fromEntries(
+                          clubData.snsLinks.map(({ platform, url }) => [platform, url ?? ''])
+                      )] as Prisma.InputJsonValue)
+                    : Prisma.JsonNull,
             },
         });
 
