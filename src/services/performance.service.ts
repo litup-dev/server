@@ -662,6 +662,7 @@ export class PerformanceService {
             }),
             this.prisma.perform_tmp.count(),
         ]);
+        console.log('performs', performs);
 
         return {
             performs: performs.map((p) => ({
