@@ -10,6 +10,7 @@ const tempQuerySchema = z.object({
 
 const createPerformanceSchema = z.object({
     club_id: z.number().int().positive(),
+    instagram_shortcode: z.string().min(1),
     title: z.string().min(1),
     description: z.string(),
     perform_date: z.string(),

@@ -587,6 +587,7 @@ export class PerformanceService {
 
     async createPerformance(data: {
         club_id: number;
+        instagram_shortcode: string;
         title: string;
         description: string;
         perform_date: string;
@@ -599,8 +600,7 @@ export class PerformanceService {
         const updateResult = await this.prisma.perform_tmp.updateMany({
             where: {
                 club_id: data.club_id,
-                title: data.title,
-                perform_date: new Date(data.perform_date),
+                instagram_shortcode: data.instagram_shortcode,
                 status: false,
             },
             data: {
