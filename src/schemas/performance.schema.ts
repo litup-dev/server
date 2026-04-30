@@ -24,6 +24,7 @@ const clubSchema = z.object({
     id: z.number(),
     name: z.string().nullable(),
     address: z.string().nullable(),
+    image: z.string().nullable(),
 });
 
 // 공연 응답 스키마

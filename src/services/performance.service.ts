@@ -145,6 +145,7 @@ export class PerformanceService {
                     id: p.club_id,
                     name: p.club_name,
                     address: p.club_address,
+                    image: null,
                 },
                 images: (imagesByPerformId[p.id] || []).map((img) => ({
                     id: img.id,
@@ -255,6 +256,7 @@ export class PerformanceService {
                     id: p.club_tb.id,
                     name: p.club_tb.name,
                     address: p.club_tb.address,
+                    image: null,
                 },
                 images: p.perform_img_tb.map((img) => ({
                     id: img.id,
@@ -484,6 +486,11 @@ export class PerformanceService {
                         id: true,
                         name: true,
                         address: true,
+                        club_img_tb: {
+                            where: { is_main: true },
+                            select: { file_path: true },
+                            take: 1,
+                        },
                     },
                 },
                 perform_img_tb: {
@@ -531,6 +538,7 @@ export class PerformanceService {
                 id: performance.club_tb?.id ?? 0,
                 name: performance.club_tb?.name ?? null,
                 address: performance.club_tb?.address ?? null,
+                image: performance.club_tb?.club_img_tb?.[0]?.file_path ?? null,
             },
             images: (performance.perform_img_tb ?? []).map((img) => ({
                 id: img.id,
@@ -575,5 +583,102 @@ export class PerformanceService {
         });
 
         return { success: true, operation: 'saved' };
+    }
+
+    async createPerformance(data: {
+        club_id: number;
+        instagram_shortcode: string;
+        title: string;
+        description: string;
+        perform_date: string;
+        booking_price: number;
+        onsite_price: number;
+        booking_url?: string | undefined;
+        artists: { name: string }[];
+        sns_links: { instagram?: string | undefined }[];
+    }) {
+        const updateResult = await this.prisma.perform_tmp.updateMany({
+            where: {
+                club_id: data.club_id,
+                instagram_shortcode: data.instagram_shortcode,
+                status: false,
+            },
+            data: {
+                status: true,
+                updated_at: new Date(),
+            },
+        });
+
+        if (updateResult.count === 0) {
+            throw new NotFoundError('임시 공연 정보를 찾을 수 없습니다.');
+        }
+
+        const perform = await this.prisma.perform.create({
+            data: {
+                club_id: data.club_id,
+                user_id: 1,
+                title: data.title,
+                description: data.description,
+                perform_date: new Date(data.perform_date),
+                booking_price: data.booking_price,
+                onsite_price: data.onsite_price,
+                ...(data.booking_url !== undefined && { booking_url: data.booking_url }),
+                artists: data.artists,
+                sns_links: data.sns_links,
+                updated_at: new Date(),
+            },
+        });
+        return {
+            perform_id: perform.id,
+            club_id: perform.club_id,
+            title: perform.title ?? '',
+            perform_date: perform.perform_date?.toISOString() ?? '',
+        };
+    }
+
+    async getTempPerformances(offset: number, limit: number) {
+        const [performs, total] = await Promise.all([
+            this.prisma.perform_tmp.findMany({
+                skip: offset,
+                take: limit,
+                where: { status: false },
+                orderBy: { created_at: 'desc' },
+                include: {
+                    perform_img_tmp: {
+                        select: {
+                            id: true,
+                            perform_id: true,
+                            file_path: true,
+                            is_main: true,
+                            original_name: true,
+                        },
+                    },
+                    club_tb: {
+                        select: {
+                            name: true,
+                        },
+                    },
+                },
+            }),
+            this.prisma.perform_tmp.count(),
+        ]);
+        console.log('performs', performs);
+
+        return {
+            performs: performs.map((p) => ({
+                ...p,
+                club_name: p.club_tb?.name ?? null,
+                images: p.perform_img_tmp.map((img) => ({
+                    id: img.id,
+                    perform_id: img.perform_id,
+                    file_path: img.file_path,
+                    is_main: img.is_main,
+                    original_name: img.original_name,
+                })),
+                club_tb: undefined,
+                perform_img_tmp: undefined,
+            })),
+            total,
+        };
     }
 }

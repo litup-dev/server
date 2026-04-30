@@ -1,4 +1,5 @@
 import { NODE_ENV } from '@/common/constants';
+import { decodeOAuthState } from '@/plugins/oauth.js';
 import { accessTokenJson, loginJson } from '@/schemas/auth.schema.js';
 import { errorResJson, successResJson } from '@/schemas/common.schema.js';
 import { AuthService } from '@/services/auth.service.js';
@@ -9,7 +10,66 @@ import { InvalidTokenError, NotFoundError } from '@/common/error';
 import { UserService } from '@/services/user.service';
 import { getTsid } from 'tsid-ts';
 
+const ALLOWED_REDIRECT_ORIGINS = [
+    'https://litup.kr',
+    'http://100.116.32.24:10000',
+    'http://localhost:10000',
+];
+
+function isAllowedRedirectUri(uri: string): boolean {
+    try {
+        const { origin } = new URL(uri);
+        return ALLOWED_REDIRECT_ORIGINS.includes(origin);
+    } catch {
+        return false;
+    }
+}
+
 export async function authRoutes(fastify: FastifyInstance) {
+    fastify.get(
+        '/auth/google',
+        {
+            schema: {
+                tags: ['Auth'],
+                summary: 'Google 소셜 로그인 시작',
+                description:
+                    'redirect_uri 쿼리 파라미터로 로그인 완료 후 이동할 URL을 지정할 수 있습니다.',
+                querystring: {
+                    type: 'object',
+                    properties: {
+                        redirect_uri: { type: 'string' },
+                    },
+                },
+            },
+        },
+        async (request, reply) => {
+            const uri = await fastify.googleOAuth2.generateAuthorizationUri(request, reply);
+            return reply.redirect(uri);
+        }
+    );
+
+    fastify.get(
+        '/auth/kakao',
+        {
+            schema: {
+                tags: ['Auth'],
+                summary: 'Kakao 소셜 로그인 시작',
+                description:
+                    'redirect_uri 쿼리 파라미터로 로그인 완료 후 이동할 URL을 지정할 수 있습니다.',
+                querystring: {
+                    type: 'object',
+                    properties: {
+                        redirect_uri: { type: 'string' },
+                    },
+                },
+            },
+        },
+        async (request, reply) => {
+            const uri = await fastify.kakaoOAuth2.generateAuthorizationUri(request, reply);
+            return reply.redirect(uri);
+        }
+    );
+
     fastify.get(
         '/auth/:provider/callback',
         {
@@ -77,14 +137,24 @@ export async function authRoutes(fastify: FastifyInstance) {
                 });
 
                 request.log.info('OAuth callback 처리 완료, 리다이렉트 진행');
-                const redirectUrl =
-                    NODE_ENV === 'production'
-                        ? 'https://litup.kr/login/success'
-                        : NODE_ENV === 'staging'
-                          ? 'http://100.116.32.24:10000/login/success'
-                          : 'http://localhost:10000/login/success';
 
-                return reply.redirect(`${redirectUrl}`);
+                const rawState = (request.query as any).state;
+                const decoded = rawState ? decodeOAuthState(rawState) : null;
+                const redirectUri = decoded?.redirectUri;
+
+                const defaultRedirectBase =
+                    NODE_ENV === 'production'
+                        ? 'https://litup.kr'
+                        : NODE_ENV === 'staging'
+                          ? 'http://100.116.32.24:10000'
+                          : 'http://localhost:10000';
+
+                const redirectBase =
+                    redirectUri && isAllowedRedirectUri(redirectUri)
+                        ? redirectUri
+                        : `${defaultRedirectBase}/login/success`;
+
+                return reply.redirect(redirectBase);
             } catch (err: any) {
                 fastify.log.error('Kakao OAuth callback error:', err);
                 reply.status(500).send({ error: String(err) });

@@ -11,6 +11,26 @@ import {
 import oauth2 from '@fastify/oauth2';
 import { FastifyInstance } from 'fastify';
 
+export function encodeOAuthState(redirectUri: string): string {
+    return Buffer.from(JSON.stringify({ redirectUri })).toString('base64url');
+}
+
+export function decodeOAuthState(state: string): { redirectUri: string } | null {
+    try {
+        return JSON.parse(Buffer.from(state, 'base64url').toString());
+    } catch {
+        return null;
+    }
+}
+
+const stateOptions = {
+    generateStateFunction: (request: any) => {
+        const query = request.query as Record<string, string>;
+        return encodeOAuthState(query.redirect_uri ?? '');
+    },
+    checkStateFunction: async (_request: any) => true,
+};
+
 export async function registerOauth(fastify: FastifyInstance) {
     await fastify.register(oauth2, {
         name: 'kakaoOAuth2',
@@ -27,13 +47,12 @@ export async function registerOauth(fastify: FastifyInstance) {
                 tokenPath: '/oauth/token',
             },
         },
-        startRedirectPath: `${API_PREFIX}/auth/kakao`,
         callbackUri:
             NODE_ENV === 'production'
                 ? `https://api.litup.kr${API_PREFIX}/auth/kakao/callback`
                 : NODE_ENV === 'development'
                   ? `http://${HOST}:${PORT}${API_PREFIX}/auth/kakao/callback`
-                  : `http://220.93.50.45:${PORT}${API_PREFIX}/auth/kakao/callback`,
+                  : `http://100.116.32.24:${PORT}${API_PREFIX}/auth/kakao/callback`,
         callbackUriParams: {
             response_type: 'code',
         },
@@ -41,6 +60,7 @@ export async function registerOauth(fastify: FastifyInstance) {
             client_id: KAKAO_CLIENT_ID,
             client_secret: KAKAO_CLIENT_SECRET,
         },
+        ...stateOptions,
     });
 
     await fastify.register(oauth2, {
@@ -58,15 +78,15 @@ export async function registerOauth(fastify: FastifyInstance) {
                 tokenPath: '/oauth2/v4/token',
             },
         },
-        startRedirectPath: `${API_PREFIX}/auth/google`,
         callbackUri:
             NODE_ENV === 'production'
                 ? `https://api.litup.kr${API_PREFIX}/auth/google/callback`
                 : NODE_ENV === 'development'
                   ? `http://${HOST}:${PORT}${API_PREFIX}/auth/google/callback`
-                  : `http://220.93.50.45:${PORT}${API_PREFIX}/auth/google/callback`,
+                  : `http://100.116.32.24:${PORT}${API_PREFIX}/auth/google/callback`,
         callbackUriParams: {
             response_type: 'code',
         },
+        ...stateOptions,
     });
 }

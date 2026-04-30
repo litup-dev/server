@@ -329,6 +329,7 @@ model perform_tmp {
   onsite_price        Int?              @default(0)
   booking_url         String?           @db.VarChar(255)
   instagram_shortcode String?           @unique @db.VarChar(100)
+  status              Boolean?          @default(false)
   perform_img_tmp     perform_img_tmp[]
   club_tb             Club              @relation(fields: [club_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   user_tb             user_tb           @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)

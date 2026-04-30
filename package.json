@@ -14,7 +14,7 @@
         "format": "prettier --write src/**/*.ts",
         "db:generate": "prisma generate",
         "db:studio": "prisma studio",
-        "db:pull": "prisma db pull && yarn db:generate",
+        "db:pull": "dotenv -e .env.local -- prisma db pull",
         "test": "echo \"Error: no test specified\" && exit 1"
     },
     "author": "",
@@ -26,6 +26,7 @@
         "@typescript-eslint/eslint-plugin": "8.45.0",
         "@typescript-eslint/parser": "8.45.0",
         "cross-env": "10.1.0",
+        "dotenv-cli": "^11.0.0",
         "eslint": "9.38.0",
         "eslint-config-standard": "17.1.0",
         "eslint-plugin-import": "2.32.0",
