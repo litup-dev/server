@@ -487,9 +487,11 @@ export class ClubService {
                 description: clubData.description ?? null,
                 instagram_account: clubData.instagramAccount,
                 sns_links: clubData.snsLinks?.length
-                    ? ([Object.fromEntries(
-                          clubData.snsLinks.map(({ platform, url }) => [platform, url ?? ''])
-                      )] as Prisma.InputJsonValue)
+                    ? ([
+                          Object.fromEntries(
+                              clubData.snsLinks.map(({ platform, url }) => [platform, url ?? ''])
+                          ),
+                      ] as Prisma.InputJsonValue)
                     : Prisma.JsonNull,
             },
         });
@@ -514,11 +516,23 @@ export class ClubService {
 
         switch (field) {
             case 'reviewCount':
-                return [{ reviewCnt: order }, { createdAt: 'desc' as const }];
+                return [
+                    { reviewCnt: order },
+                    { createdAt: 'desc' as const },
+                    { id: 'asc' as const },
+                ];
             case 'rating':
-                return [{ avgRating: order }, { createdAt: 'desc' as const }];
+                return [
+                    { avgRating: order },
+                    { createdAt: 'desc' as const },
+                    { id: 'asc' as const },
+                ];
             case 'reviewCreatedAt':
-                return [{ latestReviewAt: order }, { createdAt: 'desc' as const }];
+                return [
+                    { latestReviewAt: order },
+                    { createdAt: 'desc' as const },
+                    { id: 'asc' as const },
+                ];
             default:
                 return defaultOrder;
         }
@@ -532,11 +546,11 @@ export class ClubService {
 
         switch (field) {
             case 'reviewCount':
-                return `ORDER BY distance ASC, c.review_cnt ${order.toUpperCase()}, created_at DESC`;
+                return `ORDER BY distance ASC, c.review_cnt ${order.toUpperCase()}, created_at DESC, id ASC`;
             case 'rating':
-                return `ORDER BY distance ASC, c.avg_rating ${order.toUpperCase()}, created_at DESC`;
+                return `ORDER BY distance ASC, c.avg_rating ${order.toUpperCase()}, created_at DESC, id ASC`;
             case 'reviewCreatedAt':
-                return `ORDER BY distance ASC, c.latest_review_at ${order.toUpperCase()}, created_at DESC`;
+                return `ORDER BY distance ASC, c.latest_review_at ${order.toUpperCase()}, created_at DESC, id ASC`;
             default:
                 return defaultOrder;
         }
