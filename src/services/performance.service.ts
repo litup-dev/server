@@ -619,7 +619,7 @@ export class PerformanceService {
                 user_id: 1,
                 title: data.title,
                 description: data.description,
-                perform_date: new Date(data.perform_date),
+                perform_date: new Date(new Date(data.perform_date).getTime() - 9 * 60 * 60 * 1000),
                 booking_price: data.booking_price,
                 onsite_price: data.onsite_price,
                 ...(data.booking_url !== undefined && { booking_url: data.booking_url }),
