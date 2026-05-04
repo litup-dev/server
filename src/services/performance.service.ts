@@ -601,7 +601,6 @@ export class PerformanceService {
             where: {
                 club_id: data.club_id,
                 instagram_shortcode: data.instagram_shortcode,
-                status: false,
             },
             data: {
                 status: true,
