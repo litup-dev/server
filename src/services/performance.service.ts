@@ -13,6 +13,7 @@ import {
 import { SavedFileInfo } from '@/types/file.types.js';
 import { PrismaClient } from '@prisma/client';
 import { Prisma } from '@prisma/client';
+import { title } from 'process';
 
 export class PerformanceService {
     constructor(private prisma: PrismaClient) {}
@@ -289,6 +290,7 @@ export class PerformanceService {
                 id: true,
                 perform_date: true,
                 artists: true,
+                title: true,
                 club_tb: {
                     select: {
                         id: true,
@@ -333,6 +335,7 @@ export class PerformanceService {
                 {
                     performances: perfs.map((p) => ({
                         id: p.id,
+                        title: p.title,
                         performDate:
                             p.perform_date instanceof Date
                                 ? p.perform_date.toISOString()

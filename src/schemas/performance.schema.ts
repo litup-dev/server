@@ -67,6 +67,7 @@ export const performanceDetailSchema = performanceDefaultSchema
 export const performCalendarSchema = performanceDefaultSchema
     .pick({
         id: true,
+        title: true,
         performDate: true,
         artists: true,
         images: true,
