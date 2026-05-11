@@ -330,7 +330,7 @@ export class ClubService {
         if (!club) {
             throw new NotFoundError('클럽을 찾을 수 없습니다.');
         }
-
+        console.log('Club found:', club);
         return {
             id: club.id,
             name: club.name,
@@ -366,16 +366,14 @@ export class ClubService {
             snsLinks: (() => {
                 if (
                     !club.sns_links ||
-                    !Array.isArray(club.sns_links) ||
-                    club.sns_links.length === 0
+                    typeof club.sns_links !== 'object' ||
+                    Array.isArray(club.sns_links)
                 ) {
                     return [];
                 }
-                const firstItem = club.sns_links[0] as Record<string, string>;
-                return Object.entries(firstItem).map(([platform, url]) => ({
-                    platform,
-                    url,
-                }));
+                return Object.entries(club.sns_links as Record<string, string>).map(
+                    ([platform, url]) => ({ platform, url })
+                );
             })(),
         };
     }
