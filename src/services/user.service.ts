@@ -313,6 +313,113 @@ export class UserService {
         };
     }
 
+    async getUserWishPerforms(
+        publicId: string,
+        requesterId: number | null,
+        offset: number,
+        limit: number
+    ): Promise<PerformanceRecordsType> {
+        const targetUserId = await this.getUserIdByPublicId(publicId);
+        const isSelf = requesterId !== null && requesterId === targetUserId;
+        if (!isSelf) {
+            const privacyRule = await this.prisma.user_settings_tb.findFirst({
+                where: { user_id: targetUserId },
+                select: { attendance_privacy: true },
+            });
+            const privacy = privacyRule?.attendance_privacy;
+            if (privacy === 'private') {
+                throw new ResourceAccessDeniedError();
+            } else if (privacy === 'friends') {
+                if (requesterId === null) {
+                    throw new ResourceAccessDeniedError();
+                }
+                // 추후 친구 관계 생기면 로직 추가
+            }
+        }
+
+        const attendances = await this.prisma.attend_tb.findMany({
+            where: {
+                user_id: targetUserId,
+            },
+            select: {
+                perform_id: true,
+            },
+        });
+        const performanceIds = attendances.map((a) => a.perform_id);
+        if (performanceIds.length === 0) {
+            return { items: [], total: 0, offset, limit };
+        }
+        const [performances, total] = await this.prisma.$transaction([
+            this.prisma.perform.findMany({
+                where: {
+                    id: { in: performanceIds },
+                    perform_date: { gte: new Date() },
+                },
+                orderBy: {
+                    perform_date: 'asc',
+                },
+                select: {
+                    id: true,
+                    title: true,
+                    perform_date: true,
+                    artists: true,
+                    created_at: true,
+                    club_tb: {
+                        select: {
+                            name: true,
+                        },
+                    },
+                    perform_img_tb: {
+                        where: { is_main: true },
+                        select: {
+                            id: true,
+                            file_path: true,
+                            is_main: true,
+                        },
+                        take: 1,
+                    },
+                },
+                skip: offset,
+                take: limit,
+            }),
+            this.prisma.perform.count({
+                where: {
+                    id: { in: performanceIds },
+                    perform_date: { gte: new Date() },
+                },
+            }),
+        ]);
+
+        if (performances.length === 0) {
+            return { items: [], total: total, offset, limit };
+        }
+
+        return {
+            items: performances.map((performance) => ({
+                id: performance.id,
+                title: performance.title,
+                performDate: performance.perform_date
+                    ? performance.perform_date.toISOString()
+                    : null,
+                artists: Array.isArray(performance.artists)
+                    ? performance.artists
+                          .filter((artist): artist is string => typeof artist === 'string')
+                          .map((artistName: string) => ({ name: artistName }))
+                    : null,
+                createdAt: performance.created_at ? performance.created_at.toISOString() : null,
+                club: { name: performance.club_tb.name ?? null },
+                images: performance.perform_img_tb.map((img) => ({
+                    id: img.id,
+                    filePath: img.file_path ?? null,
+                    isMain: img.is_main ?? false,
+                })),
+            })),
+            total: total,
+            offset: offset,
+            limit: limit,
+        };
+    }
+
     async updateUserAvatar(userId: number, avatarPath: string): Promise<OperationSuccessType> {
         const user = await this.prisma.user_tb.findUnique({
             where: { id: userId },
