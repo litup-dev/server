@@ -1,11 +1,23 @@
 import { BadRequestError } from '@/common/error.js';
+import { errorResJson } from '@/schemas/common.schema';
+import {
+    GetPerformanceByDateRangeType,
+    performanceForMarketingListResJson,
+} from '@/schemas/performance.schema';
+import { getPerformancesByDateRangeJson } from '@/schemas/performance.schema';
 import { PerformanceService } from '@/services/performance.service.js';
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
 const tempQuerySchema = z.object({
-    offset: z.preprocess((v) => (v !== undefined ? Number(v) : 0), z.number().int().min(0).default(0)),
-    limit: z.preprocess((v) => (v !== undefined ? Number(v) : 9), z.number().int().min(1).default(9)),
+    offset: z.preprocess(
+        (v) => (v !== undefined ? Number(v) : 0),
+        z.number().int().min(0).default(0)
+    ),
+    limit: z.preprocess(
+        (v) => (v !== undefined ? Number(v) : 9),
+        z.number().int().min(1).default(9)
+    ),
 });
 
 const createPerformanceSchema = z.object({
@@ -38,6 +50,35 @@ export async function internalPerformanceRoutes(fastify: FastifyInstance) {
             const result = await service.getTempPerformances(parsed.data.offset, parsed.data.limit);
 
             return reply.send(result);
+        }
+    );
+
+    fastify.get(
+        '/internal/performances/marketing',
+        {
+            preHandler: [fastify.requireInternal],
+            schema: {
+                querystring: getPerformancesByDateRangeJson,
+                tags: ['Performances'],
+                summary: '메인 페이지 공연 목록 기간별 조회',
+                description: '메인 페이지 공연 목록 기간별 조회',
+                response: {
+                    200: performanceForMarketingListResJson,
+                    400: errorResJson,
+                    500: errorResJson,
+                },
+            },
+        },
+        async (request, reply) => {
+            const query = request.query as GetPerformanceByDateRangeType;
+
+            const service = new PerformanceService(request.server.prisma);
+
+            const result = await service.getPerformancesByDateRangeForMarketing(query);
+
+            return reply.send({
+                data: result,
+            });
         }
     );
 

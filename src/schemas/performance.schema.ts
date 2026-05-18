@@ -25,6 +25,7 @@ const clubSchema = z.object({
     name: z.string().nullable(),
     address: z.string().nullable(),
     image: z.string().nullable(),
+    instagramAccount: z.string().nullable(),
 });
 
 // 공연 응답 스키마
@@ -40,7 +41,33 @@ export const performanceDefaultSchema = z.object({
     artists: z.array(artistSchema).nullable(),
     snsLinks: z.array(snsLinkSchema).nullable(),
     createdAt: z.string().nullable(),
-    club: clubSchema,
+    club: clubSchema.pick({
+        id: true,
+        name: true,
+        address: true,
+        image: true,
+    }),
+    images: z.array(imageSchema).optional().nullable(),
+});
+
+export const performanceForMarketingSchema = z.object({
+    id: z.number(),
+    title: z.string().nullable(),
+    description: z.string().nullable(),
+    performDate: z.string().nullable(),
+    bookingPrice: z.number().nullable(),
+    onsitePrice: z.number().nullable(),
+    bookingUrl: z.string().nullable(),
+    isCanceled: z.boolean().nullable(),
+    artists: z.array(artistSchema).nullable(),
+    snsLinks: z.array(snsLinkSchema).nullable(),
+    createdAt: z.string().nullable(),
+    club: clubSchema.pick({
+        id: true,
+        name: true,
+        address: true,
+        instagramAccount: true,
+    }),
     images: z.array(imageSchema).optional().nullable(),
 });
 
@@ -101,6 +128,13 @@ export const performMonthlyListByClubSchema = z.record(
 // 공연 페이지 응답 스키마
 export const performanceListResponseSchema = z.object({
     items: z.array(performanceDefaultSchema),
+    total: z.number(),
+    offset: z.number(),
+    limit: z.number(),
+});
+
+export const performanceForMarketingListResponseSchema = z.object({
+    items: z.array(performanceForMarketingSchema),
     total: z.number(),
     offset: z.number(),
     limit: z.number(),
@@ -271,6 +305,7 @@ export const searchPerformancesSchema = z.object({
 export const performDefaultRes = successResponseSchema(performanceDefaultSchema);
 export const performDetailRes = successResponseSchema(performanceDetailSchema);
 export const performListRes = paginatedResponseSchema(performanceDefaultSchema);
+export const performMarketingListRes = paginatedResponseSchema(performanceForMarketingSchema);
 export const performRecordsRes = paginatedResponseSchema(performanceRecordsSchema);
 export const performMonthlyByClubRes = successResponseSchema(performMonthlyListByClubSchema);
 export const attendRes = successResponseSchema(z.boolean());
@@ -280,6 +315,7 @@ export const getPerformancesByDateRangeJson = generateSchema(getPerformancesByDa
 export const getPerformancesByMonthJson = generateSchema(getPerformancesCalendarSchema);
 export const searchPerformancesJson = generateSchema(searchPerformancesSchema);
 export const performanceListResJson = generateSchema(performListRes);
+export const performanceForMarketingListResJson = generateSchema(performMarketingListRes);
 export const performDefaultResJson = generateSchema(performDefaultRes);
 export const performDetailResJson = generateSchema(performDetailRes);
 export const performanceRecordsResJson = generateSchema(performRecordsRes);
@@ -293,6 +329,9 @@ export type GetPerformanceCalendarType = z.infer<typeof getPerformancesCalendarS
 export type getClubPerformancesByMonthType = z.infer<typeof getClubPerformancesByMonthSchema>;
 export type SearchPerformancesType = z.infer<typeof searchPerformancesSchema>;
 export type PerformanceListResponseType = z.infer<typeof performanceListResponseSchema>;
+export type PerformanceForMarketingListResponseType = z.infer<
+    typeof performanceForMarketingListResponseSchema
+>;
 export type PerformanceCalendarListType = z.infer<typeof performanceCalendarListResponseSchema>;
 export type PerformanceRecordsType = z.infer<typeof performanceRecordsListResponseSchema>;
 export type PerformanceMonthlyByClubType = z.infer<typeof performMonthlyListByClubSchema>;
