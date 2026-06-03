@@ -269,6 +269,7 @@ model user_tb {
   club_review_tb         club_review_tb[]
   club_tb                Club[]
   favorite_tb            favorite_tb[]
+  notice_tb              notice_tb[]
   perform_review_like_tb perform_review_like_tb[]
   perform_review_tb      perform_review_tb[]
   perform_tb             Perform[]
@@ -348,4 +349,18 @@ model perform_tmp {
   perform_img_tmp     perform_img_tmp[]
   club_tb             Club              @relation(fields: [club_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   user_tb             user_tb           @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model notice_tb {
+  id         Int       @id @default(autoincrement())
+  user_id    Int
+  title      String    @db.VarChar(200)
+  content    String
+  is_popup   Boolean   @default(false)
+  created_at DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at DateTime? @db.Timestamptz(6)
+  user_tb    user_tb   @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([created_at(sort: Desc), id(sort: Desc)], map: "notice_tb_created_at_id_index_desc")
+  @@index([is_popup, created_at(sort: Desc)], map: "notice_tb_is_popup_created_at_index")
 }
