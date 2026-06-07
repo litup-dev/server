@@ -1,6 +1,6 @@
 import { NODE_ENV } from '@/common/constants';
 import { decodeOAuthState } from '@/plugins/oauth.js';
-import { accessTokenJson, loginJson } from '@/schemas/auth.schema.js';
+import { exchangeCodeJson, loginJson } from '@/schemas/auth.schema.js';
 import { errorResJson, successResJson } from '@/schemas/common.schema.js';
 import { AuthService } from '@/services/auth.service.js';
 import { FastifyInstance } from 'fastify';
@@ -101,40 +101,8 @@ export async function authRoutes(fastify: FastifyInstance) {
                 }
 
                 const tokenService = new TokenService(fastify);
-                const accessToken = tokenService.generateJwtToken(result!.publicId);
-                const refreshTokenId = randomUUID();
-                const refreshToken = tokenService.generateRefreshToken(
-                    result!.publicId,
-                    refreshTokenId
-                );
-                await tokenService.saveRefreshToken(refreshTokenId, result!.publicId);
-
-                reply.setCookie('refreshToken', refreshToken, {
-                    httpOnly: true,
-                    secure: NODE_ENV === 'production' ? true : false,
-                    sameSite: 'lax', // CSRF 공격 방지
-                    path: NODE_ENV === 'production' ? '/auth/refresh' : '/',
-                });
-
-                reply.setCookie('accessToken', accessToken, {
-                    httpOnly: true,
-                    secure: NODE_ENV === 'production' ? true : false,
-                    sameSite: 'lax',
-                    path: '/',
-                });
-
-                reply.setCookie('isLogin', 'true', {
-                    secure: NODE_ENV === 'production' ? true : false,
-                    sameSite: 'lax',
-                    path: '/',
-                });
-
-                request.log.info('쿠키 체크');
-
-                request.log.info({
-                    msg: 'Set-Cookie headers',
-                    setCookie: reply.getHeaders()['set-cookie'],
-                });
+                const loginCode = randomUUID();
+                await tokenService.saveLoginCode(loginCode, result!.publicId);
 
                 request.log.info('OAuth callback 처리 완료, 리다이렉트 진행');
 
@@ -154,11 +122,79 @@ export async function authRoutes(fastify: FastifyInstance) {
                         ? redirectUri
                         : `${defaultRedirectBase}/login/success`;
 
-                return reply.redirect(redirectBase);
+                const redirectUrl = new URL(redirectBase);
+                redirectUrl.searchParams.set('code', loginCode);
+
+                return reply.redirect(redirectUrl.toString());
             } catch (err: any) {
                 fastify.log.error('Kakao OAuth callback error:', err);
                 reply.status(500).send({ error: String(err) });
             }
+        }
+    );
+
+    fastify.post(
+        '/auth/exchange',
+        {
+            schema: {
+                tags: ['Auth'],
+                summary: '로그인 코드 교환',
+                description:
+                    'OAuth 콜백에서 발급된 일회용 코드를 프론트엔드 origin에서 교환하여 로그인 쿠키를 발급받습니다.',
+                body: exchangeCodeJson,
+                response: {
+                    200: loginJson,
+                    400: errorResJson,
+                    401: errorResJson,
+                    500: errorResJson,
+                },
+            },
+        },
+        async (request, reply) => {
+            const { code } = request.body as { code: string };
+
+            const tokenService = new TokenService(fastify);
+            const publicId = await tokenService.consumeLoginCode(code);
+            if (!publicId) {
+                throw new InvalidTokenError('코드가 유효하지 않거나 만료되었습니다.');
+            }
+
+            const userService = new UserService(fastify.prisma);
+            const user = await userService.getUserByPublicId(publicId);
+
+            const accessToken = tokenService.generateJwtToken(publicId);
+            const refreshTokenId = randomUUID();
+            const refreshToken = tokenService.generateRefreshToken(publicId, refreshTokenId);
+            await tokenService.saveRefreshToken(refreshTokenId, publicId);
+
+            reply.setCookie('refreshToken', refreshToken, {
+                httpOnly: true,
+                secure: NODE_ENV === 'production' ? true : false,
+                sameSite: 'lax', // CSRF 공격 방지
+                path: NODE_ENV === 'production' ? '/auth/refresh' : '/',
+            });
+
+            reply.setCookie('accessToken', accessToken, {
+                httpOnly: true,
+                secure: NODE_ENV === 'production' ? true : false,
+                sameSite: 'lax',
+                path: '/',
+            });
+
+            reply.setCookie('isLogin', 'true', {
+                secure: NODE_ENV === 'production' ? true : false,
+                sameSite: 'lax',
+                path: '/',
+            });
+
+            return reply.send({
+                data: {
+                    publicId: user.publicId,
+                    nickname: user.nickname,
+                    profilePath: user.profilePath,
+                    accessToken: `Bearer ${accessToken}`,
+                },
+            });
         }
     );
 

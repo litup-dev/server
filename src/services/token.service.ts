@@ -2,6 +2,7 @@ import {
     JWT_ACCESS_TOKEN_EXPIRES_IN,
     JWT_REFRESH_TOKEN_EXPIRES_IN,
     NODE_ENV,
+    OAUTH_LOGIN_CODE_EXPIRES_IN,
 } from '@/common/constants';
 import { InvalidTokenError } from '@/common/error';
 import { redis } from '@/configs/redis';
@@ -51,6 +52,18 @@ export class TokenService {
         this.fastify.log.info(`토큰 삭제 :  ${tokenId}`);
         await redis.del(`refresh_token:${tokenId}`);
         this.fastify.log.info('토큰 삭제 성공');
+    }
+
+    async saveLoginCode(code: string, publicId: string): Promise<void> {
+        await redis.set(`login_code:${code}`, publicId, 'EX', OAUTH_LOGIN_CODE_EXPIRES_IN);
+    }
+
+    async consumeLoginCode(code: string): Promise<string | null> {
+        const publicId = await redis.get(`login_code:${code}`);
+        if (publicId) {
+            await redis.del(`login_code:${code}`);
+        }
+        return publicId;
     }
 
     async getNewAccessToken(request: FastifyRequest, reply: FastifyReply): Promise<void> {

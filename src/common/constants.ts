@@ -23,6 +23,8 @@ export const REDIS_DATABASE = Number(process.env.REDIS_DATABASE) || 4;
 export const JWT_ACCESS_TOKEN_EXPIRES_IN = Number(process.env.JWT_ACCESS_TOKEN_EXPIRES_IN) || 3600;
 export const JWT_REFRESH_TOKEN_EXPIRES_IN =
     Number(process.env.JWT_REFRESH_TOKEN_EXPIRES_IN) || 604800;
+export const OAUTH_LOGIN_CODE_EXPIRES_IN =
+    Number(process.env.OAUTH_LOGIN_CODE_EXPIRES_IN) || 60;
 export const JWT_TOKEN_SECRET = process.env.JWT_ACCESS_TOKEN_SECRET!;
 export const COOKIE_SECRET = process.env.COOKIE_SECRET!;
 export const KAKAO_CLIENT_ID = process.env.KAKAO_CLIENT_ID!;

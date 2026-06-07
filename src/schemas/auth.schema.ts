@@ -21,6 +21,14 @@ export const createUserSchema = z.object({
     }),
 });
 
+export const exchangeCodeSchema = z.object({
+    code: z.string().openapi({
+        type: 'string',
+        description: 'OAuth 콜백에서 발급된 일회용 로그인 교환 코드',
+        example: 'b3f1c2a4-5d6e-4f7a-8b9c-0d1e2f3a4b5c',
+    }),
+});
+
 export const accessTokenSchema = z.object({
     accessToken: z.string().openapi({
         type: 'string',
@@ -44,6 +52,7 @@ export const accessTokenRes = successResponseSchema(accessTokenSchema);
 export const createUserJson = generateSchema(createUserSchema);
 export const loginJson = generateSchema(loginRes);
 export const accessTokenJson = generateSchema(accessTokenRes);
+export const exchangeCodeJson = generateSchema(exchangeCodeSchema);
 
 // 타입 추출
 export type CreateUserType = z.infer<typeof createUserSchema>;

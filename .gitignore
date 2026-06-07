@@ -24,3 +24,6 @@ build
 # assets folder
 images/*
 uploads/*
+
+# Claude Code worktrees
+.claude/worktrees/
