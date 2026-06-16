@@ -404,4 +404,69 @@ export async function userRoutes(fastify: FastifyInstance) {
             });
         }
     );
+
+    fastify.get(
+        '/users/wish-performs/:publicId',
+        {
+            preHandler: [fastify.optionalAuth],
+            schema: {
+                tags: ['User'],
+                params: publicIdParamJson,
+                querystring: defaultPaginationJson,
+                summary: '유저 보고 싶은 공연 조회',
+                description: '유저 보고 싶은 공연 조회 (오늘 이후 공연만 반환)',
+                response: {
+                    200: performanceRecordsResJson,
+                    400: errorResJson,
+                    500: errorResJson,
+                },
+            },
+        },
+        async (request, reply) => {
+            const { offset, limit } = request.query as DefaultPaginationType;
+            const parsed = publicIdParamSchema.safeParse(request.params);
+            if (!parsed.success) {
+                throw new BadRequestError(`허용되지 않은 파라미터입니다. ${parsed.error.message}`);
+            }
+            const { publicId } = parsed.data;
+            const service = new UserService(request.server.prisma);
+            const result = await service.getUserWishPerforms(
+                publicId,
+                request.userId,
+                offset,
+                limit
+            );
+
+            return reply.send({ data: result });
+        }
+    );
+
+    fastify.delete(
+        '/users/wish-performs',
+        {
+            preHandler: [fastify.requireAuth],
+            schema: {
+                tags: ['User'],
+                summary: '유저 보고 싶은 공연 삭제',
+                description: '유저 보고 싶은 공연 삭제',
+                body: bodyIdsJson,
+                response: {
+                    200: successResJson,
+                    400: errorResJson,
+                    500: errorResJson,
+                },
+            },
+        },
+        async (request, reply) => {
+            const { entityIds } = request.body as { entityIds: number[] };
+            const service = new UserService(request.server.prisma);
+            const userId = request.userId;
+            if (!userId) {
+                throw new NotFoundError('사용자를 찾을 수 없습니다.');
+            }
+            const result = await service.deleteUserAttendanceRecords(userId, entityIds);
+
+            return reply.send({ data: result });
+        }
+    );
 }
