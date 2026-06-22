@@ -6,6 +6,7 @@ import {
 } from '@/common/error.js';
 import { ClubListSimpleResponseType } from '@/schemas/club.schema.js';
 import { OperationSuccessType } from '@/schemas/common.schema.js';
+import { commonCreatedAtSortBy } from '@/types/search.types.js';
 import { PerformanceRecordsType } from '@/schemas/performance.schema.js';
 import {
     UserInfoType,
@@ -317,7 +318,8 @@ export class UserService {
         publicId: string,
         requesterId: number | null,
         offset: number,
-        limit: number
+        limit: number,
+        sort?: commonCreatedAtSortBy
     ): Promise<PerformanceRecordsType> {
         const targetUserId = await this.getUserIdByPublicId(publicId);
         const isSelf = requesterId !== null && requesterId === targetUserId;
@@ -337,58 +339,45 @@ export class UserService {
             }
         }
 
-        const attendances = await this.prisma.attend_tb.findMany({
-            where: {
-                user_id: targetUserId,
-            },
-            select: {
-                perform_id: true,
-            },
-        });
-        const performanceIds = attendances.map((a) => a.perform_id);
-        if (performanceIds.length === 0) {
-            return { items: [], total: 0, offset, limit };
-        }
-        const [performances, total] = await this.prisma.$transaction([
-            this.prisma.perform.findMany({
-                where: {
-                    id: { in: performanceIds },
-                    perform_date: { gte: new Date() },
-                },
-                orderBy: {
-                    perform_date: 'asc',
-                },
+        const orderDirection = sort === commonCreatedAtSortBy.RECENT ? 'desc' : 'asc';
+        const wishFilter = {
+            user_id: targetUserId,
+            perform_tb: { perform_date: { gte: new Date() } },
+        };
+
+        const [attendances, total] = await this.prisma.$transaction([
+            this.prisma.attend_tb.findMany({
+                where: wishFilter,
+                orderBy: { created_at: orderDirection },
                 select: {
-                    id: true,
-                    title: true,
-                    perform_date: true,
-                    artists: true,
-                    created_at: true,
-                    club_tb: {
-                        select: {
-                            name: true,
-                        },
-                    },
-                    perform_img_tb: {
-                        where: { is_main: true },
+                    perform_tb: {
                         select: {
                             id: true,
-                            file_path: true,
-                            is_main: true,
+                            title: true,
+                            perform_date: true,
+                            artists: true,
+                            created_at: true,
+                            club_tb: {
+                                select: { name: true },
+                            },
+                            perform_img_tb: {
+                                where: { is_main: true },
+                                select: {
+                                    id: true,
+                                    file_path: true,
+                                    is_main: true,
+                                },
+                                take: 1,
+                            },
                         },
-                        take: 1,
                     },
                 },
                 skip: offset,
                 take: limit,
             }),
-            this.prisma.perform.count({
-                where: {
-                    id: { in: performanceIds },
-                    perform_date: { gte: new Date() },
-                },
-            }),
+            this.prisma.attend_tb.count({ where: wishFilter }),
         ]);
+        const performances = attendances.map((a) => a.perform_tb);
 
         if (performances.length === 0) {
             return { items: [], total: total, offset, limit };

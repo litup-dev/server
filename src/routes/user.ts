@@ -9,6 +9,8 @@ import {
     publicIdParamJson,
     publicIdParamSchema,
     successResJson,
+    wishPerformPaginationJson,
+    WishPerformPaginationType,
 } from '@/schemas/common.schema.js';
 import { clubListSimpleResJson } from '@/schemas/club.schema.js';
 import { performanceRecordsResJson } from '@/schemas/performance.schema.js';
@@ -412,7 +414,7 @@ export async function userRoutes(fastify: FastifyInstance) {
             schema: {
                 tags: ['User'],
                 params: publicIdParamJson,
-                querystring: defaultPaginationJson,
+                querystring: wishPerformPaginationJson,
                 summary: '유저 보고 싶은 공연 조회',
                 description: '유저 보고 싶은 공연 조회 (오늘 이후 공연만 반환)',
                 response: {
@@ -423,7 +425,7 @@ export async function userRoutes(fastify: FastifyInstance) {
             },
         },
         async (request, reply) => {
-            const { offset, limit } = request.query as DefaultPaginationType;
+            const { offset, limit, sort } = request.query as WishPerformPaginationType;
             const parsed = publicIdParamSchema.safeParse(request.params);
             if (!parsed.success) {
                 throw new BadRequestError(`허용되지 않은 파라미터입니다. ${parsed.error.message}`);
@@ -434,7 +436,8 @@ export async function userRoutes(fastify: FastifyInstance) {
                 publicId,
                 request.userId,
                 offset,
-                limit
+                limit,
+                sort
             );
 
             return reply.send({ data: result });
