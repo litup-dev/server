@@ -1,5 +1,6 @@
 import { Prisma, PrismaClient } from '@prisma/client';
 import { BadRequestError, ForbiddenError, NotFoundError } from '@/common/error.js';
+import { SavedFileInfo } from '@/types/file.types.js';
 import {
     BoardCode,
     CreatePostType,
@@ -274,6 +275,25 @@ export class PostService {
         });
 
         return { removedFilePaths: toRemove.map((img) => img.file_path) };
+    }
+
+    /**
+     * 에디터 선업로드 이미지 등록. post_id는 글 저장 시점에 연결된다.
+     */
+    async createPostImage(
+        userId: number,
+        file: SavedFileInfo
+    ): Promise<{ id: number; filePath: string }> {
+        const created = await this.prisma.post_img_tb.create({
+            data: {
+                user_id: userId,
+                file_path: file.filePath,
+                original_name: file.originalName,
+                file_size: BigInt(file.size),
+            },
+            select: { id: true, file_path: true },
+        });
+        return { id: created.id, filePath: created.file_path };
     }
 
     /**

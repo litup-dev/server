@@ -8,6 +8,7 @@ export enum UploadType {
     POSTER = 'POSTER',
     CLUB_REVIEW = 'CLUB_REVIEW',
     CLUB = 'CLUB',
+    POST = 'POST',
 }
 
 export interface UploadConfig {
@@ -58,5 +59,13 @@ export const UPLOAD_CONFIGS: Record<UploadType, UploadConfig> = {
         minFiles: 1,
         maxFiles: 5,
         folderName: 'club',
+    },
+    // 게시글 이미지는 에디터에서 글 저장 전에 한 장씩 선업로드된다.
+    // 폴더는 유저 단위(post/{userId})이며 글당 최대 개수(10)는 글 저장 시점에 서비스에서 검증한다.
+    [UploadType.POST]: {
+        type: UploadType.POST,
+        minFiles: 1,
+        maxFiles: 10,
+        folderName: 'post',
     },
 };

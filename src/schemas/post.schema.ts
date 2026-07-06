@@ -145,6 +145,7 @@ export const getPostsSchema = z.object({
 export const postDetailRes = successResponseSchema(postDetailSchema);
 export const postCreatedRes = successResponseSchema(z.object({ id: z.number() }));
 export const postListRes = paginatedResponseSchema(postListItemSchema);
+export const postImageUploadRes = successResponseSchema(postImageSchema);
 
 // JSON Schema
 export const createPostJson = generateSchema(createPostSchema);
@@ -153,6 +154,7 @@ export const getPostsJson = generateSchema(getPostsSchema);
 export const postDetailResJson = generateSchema(postDetailRes);
 export const postCreatedResJson = generateSchema(postCreatedRes);
 export const postListResJson = generateSchema(postListRes);
+export const postImageUploadResJson = generateSchema(postImageUploadRes);
 
 // 타입
 export type CreatePostType = z.infer<typeof createPostSchema>;

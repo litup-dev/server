@@ -70,12 +70,13 @@ DDL 실행 + `db:pull` 완료. [prisma/schema.prisma](prisma/schema.prisma)에 �
 - 검색 성능: 초기엔 LIKE로 충분. 느려지면 pg_trgm 인덱스 추가
 - 카테고리는 **GENERAL/BAND_PROMO/PERFORM_REVIEW 3종으로 확정** (중고거래는 스펙에서 제외됨, 2026-07-06)
 
-### ⬜ 4단계 — 이미지 업로드
+### ✅ 4단계 — 이미지 업로드 (완료)
 
-- `UploadType.POST` 추가 + `UPLOAD_CONFIGS` 등록 (maxFiles 10) — [src/types/file.types.ts](src/types/file.types.ts)
-- `POST /upload/post-image` — 위 선업로드 플로우 1번. 5MB 제한 검증(@fastify/multipart 전역 limits 확인 필요)
-- 기존 업로드 라우트 패턴 참고 — [src/routes/upload.ts](src/routes/upload.ts)
-- 고아 이미지 정리 cron — [src/schedule/](src/schedule/) 패턴 참고
+- `UploadType.POST` 추가 (maxFiles 10, 폴더 `post/{userId}`) — [src/types/file.types.ts](src/types/file.types.ts)
+- `FileManager.saveFile()` 추가 — savefiles와 달리 기존 폴더를 안 지우는 단건 저장 (선업로드는 파일이 누적되므로)
+- `POST /upload/post-image` — 한 장씩 업로드, post_id NULL로 등록, `{ id, filePath }` 반환. 5MB는 multipart 전역 limits + FileManager 검증 (이중)
+- 고아 이미지 정리 cron — [src/schedule/post.schedule.ts](src/schedule/post.schedule.ts), 매일 03:30 KST, post_id NULL + 24시간 경과분 R2+DB 삭제 (production만 실행됨 — 기존 스케줄 등록 패턴)
+- 스모크 테스트 완료: JWT 발급 → 업로드(R2) → 글 생성 시 이미지 연결 → 인증 상세(isMine=true, images 포함) → 삭제 시 cascade + R2 파일 삭제까지 전체 플로우 확인
 
 ### ⬜ 5단계 — 댓글
 
