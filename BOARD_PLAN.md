@@ -37,7 +37,7 @@
 DDL 실행 + `db:pull` 완료. [prisma/schema.prisma](prisma/schema.prisma)에 반영됨:
 
 - `board_tb` — FREE(자유 게시판), PERFORM_REVIEW(공연 후기 게시판) 행 삽입됨
-- `post_category_code` — GENERAL(일반글), TRADE(중고거래), BAND_PROMO(밴드 홍보글), PERFORM_REVIEW(공연 후기)
+- `post_category_code` — GENERAL(일반글), BAND_PROMO(밴드 홍보글), PERFORM_REVIEW(공연 후기) — 중고거래는 제외 확정
 - `post_tb` — board_id, user_id, category_id(nullable, 자유 게시판만 사용), title(50), content(마크다운), (board_id, created_at DESC, id DESC) 인덱스
 - `post_img_tb` — post_id **nullable**(선업로드), user_id(도용 방지)
 - `post_comment_tb` — parent_id self-FK(대댓글), cascade
@@ -61,12 +61,14 @@ DDL 실행 + `db:pull` 완료. [prisma/schema.prisma](prisma/schema.prisma)에 �
 - 스모크 테스트 완료: dev 서버 부팅, 글 insert 후 GET 상세 응답 구조 확인, 데이터 정리 완료
 - ⚠️ `yarn lint`가 기존부터 깨져 있음 (eslint.config.mts "Plugin not found" — 이 작업과 무관, 별도 수리 필요)
 
-### ⬜ 3단계 — 리스트 조회
+### ✅ 3단계 — 리스트 조회 (완료)
 
-- `GET /posts` — query: `board`(코드, 기본 FREE), `category`(옵션), `search`(제목+내용 OR contains), `sort`(`commonCreatedAtSortBy` 재사용, `-createdAt` 기본), `offset`/`limit`
-- 응답: `paginatedResponseSchema` 재사용 (items + total)
-- 아이템: id, 제목, 카테고리, 작성자 닉네임/프로필, 작성일, 댓글 수, 좋아요 수
+- `GET /posts` — query: `board`(기본 FREE), `category`(옵션), `keyword`(제목+내용 OR contains, insensitive), `sort`(`commonCreatedAtSortBy`, `-createdAt` 기본), `offset`/`limit`(기본 10, 최대 100)
+- 응답: `paginatedResponseSchema` (items + total + offset + limit)
+- 아이템: id, boardCode, category, title, createdAt/updatedAt, author(닉네임/프로필), likeCount(LIKE만), commentCount
+- 스모크 테스트 완료: 기본 최신순 / 카테고리 필터 / 키워드 검색 / 오래된순 / 페이지네이션 전부 확인
 - 검색 성능: 초기엔 LIKE로 충분. 느려지면 pg_trgm 인덱스 추가
+- 카테고리는 **GENERAL/BAND_PROMO/PERFORM_REVIEW 3종으로 확정** (중고거래는 스펙에서 제외됨, 2026-07-06)
 
 ### ⬜ 4단계 — 이미지 업로드
 

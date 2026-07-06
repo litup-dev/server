@@ -9,9 +9,12 @@ import {
 import {
     createPostJson,
     updatePostJson,
+    getPostsJson,
     postDetailResJson,
     postCreatedResJson,
+    postListResJson,
     CreatePostType,
+    GetPostsType,
     UpdatePostType,
 } from '@/schemas/post.schema.js';
 import { NotFoundError } from '@/common/error.js';
@@ -30,6 +33,30 @@ export async function postRoutes(fastify: FastifyInstance) {
             }
         }
     }
+
+    fastify.get(
+        '/posts',
+        {
+            schema: {
+                querystring: getPostsJson,
+                tags: ['Posts'],
+                summary: '게시글 목록 조회',
+                description:
+                    '게시판별 게시글 목록을 조회합니다. 카테고리 필터, 제목+내용 검색, 정렬, 페이지네이션을 지원합니다.',
+                response: {
+                    200: postListResJson,
+                    400: errorResJson,
+                    500: errorResJson,
+                },
+            },
+        },
+        async (request, reply) => {
+            const params = request.query as GetPostsType;
+            const service = new PostService(request.server.prisma);
+            const result = await service.getPosts(params);
+            return reply.send({ data: result });
+        }
+    );
 
     fastify.post(
         '/posts',

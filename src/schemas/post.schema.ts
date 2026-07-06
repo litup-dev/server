@@ -1,5 +1,6 @@
 import { z, generateSchema } from '@/common/zod.js';
-import { successResponseSchema } from '@/schemas/common.schema.js';
+import { paginatedResponseSchema, successResponseSchema } from '@/schemas/common.schema.js';
+import { commonCreatedAtSortBy } from '@/types/search.types.js';
 
 export const BoardCode = {
     FREE: 'FREE',
@@ -96,18 +97,67 @@ export const updatePostSchema = z.object({
         }),
 });
 
+export const postListItemSchema = z.object({
+    id: z.number(),
+    boardCode: z.string(),
+    category: postCategorySchema.nullable(),
+    title: z.string(),
+    createdAt: z.string().nullable(),
+    updatedAt: z.string().nullable(),
+    author: postAuthorSchema,
+    likeCount: z.number(),
+    commentCount: z.number(),
+});
+
+// 목록 조회 쿼리
+export const getPostsSchema = z.object({
+    board: z.string().default(BoardCode.FREE).openapi({
+        description: '게시판 코드',
+        example: 'FREE',
+    }),
+    category: z.string().optional().openapi({
+        description: '카테고리 코드 필터 (자유 게시판용)',
+        example: 'GENERAL',
+    }),
+    keyword: z.string().optional().openapi({
+        description: '제목/내용 검색어',
+        example: '공연',
+    }),
+    sort: z.nativeEnum(commonCreatedAtSortBy).default(commonCreatedAtSortBy.RECENT).openapi({
+        description: '정렬 기준 (-createdAt: 최신순, +createdAt: 오래된순)',
+        example: '-createdAt',
+    }),
+    offset: z
+        .preprocess((val) => {
+            if (typeof val === 'string') return parseInt(val, 10);
+            return val;
+        }, z.number().min(0).default(0))
+        .openapi({ description: '페이징 오프셋', example: 0 }),
+    limit: z
+        .preprocess((val) => {
+            if (typeof val === 'string') return parseInt(val, 10);
+            return val;
+        }, z.number().min(1).max(100).default(10))
+        .openapi({ description: '페이징 제한', example: 10 }),
+});
+
 // 응답
 export const postDetailRes = successResponseSchema(postDetailSchema);
 export const postCreatedRes = successResponseSchema(z.object({ id: z.number() }));
+export const postListRes = paginatedResponseSchema(postListItemSchema);
 
 // JSON Schema
 export const createPostJson = generateSchema(createPostSchema);
 export const updatePostJson = generateSchema(updatePostSchema);
+export const getPostsJson = generateSchema(getPostsSchema);
 export const postDetailResJson = generateSchema(postDetailRes);
 export const postCreatedResJson = generateSchema(postCreatedRes);
+export const postListResJson = generateSchema(postListRes);
 
 // 타입
 export type CreatePostType = z.infer<typeof createPostSchema>;
 export type UpdatePostType = z.infer<typeof updatePostSchema>;
+export type GetPostsType = z.infer<typeof getPostsSchema>;
 export type PostDetailType = z.infer<typeof postDetailSchema>;
+export type PostListItemType = z.infer<typeof postListItemSchema>;
 export type PostLikeTypeValue = (typeof PostLikeType)[keyof typeof PostLikeType];

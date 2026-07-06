@@ -3,11 +3,24 @@ import { BadRequestError, ForbiddenError, NotFoundError } from '@/common/error.j
 import {
     BoardCode,
     CreatePostType,
+    GetPostsType,
     PostDetailType,
     PostLikeType,
     PostLikeTypeValue,
+    PostListItemType,
     UpdatePostType,
 } from '@/schemas/post.schema.js';
+import { commonCreatedAtSortBy } from '@/types/search.types.js';
+
+const parseSort = (sort: commonCreatedAtSortBy): Prisma.post_tbOrderByWithRelationInput[] => {
+    switch (sort) {
+        case commonCreatedAtSortBy.OLDEST:
+            return [{ created_at: 'asc' }, { id: 'asc' }];
+        case commonCreatedAtSortBy.RECENT:
+        default:
+            return [{ created_at: 'desc' }, { id: 'desc' }];
+    }
+};
 
 export class PostService {
     constructor(private prisma: PrismaClient) {}
@@ -75,6 +88,72 @@ export class PostService {
             throw new ForbiddenError('본인이 작성한 게시글만 수정/삭제할 수 있습니다.');
         }
         return post;
+    }
+
+    async getPosts(params: GetPostsType): Promise<{
+        items: PostListItemType[];
+        total: number;
+        offset: number;
+        limit: number;
+    }> {
+        const { board, category, keyword, sort, offset, limit } = params;
+
+        const where: Prisma.post_tbWhereInput = {
+            board_tb: { code: board },
+        };
+        if (category) {
+            where.post_category_code = { code: category };
+        }
+        if (keyword) {
+            where.OR = [
+                { title: { contains: keyword, mode: 'insensitive' } },
+                { content: { contains: keyword, mode: 'insensitive' } },
+            ];
+        }
+
+        const [rows, total] = await Promise.all([
+            this.prisma.post_tb.findMany({
+                where,
+                orderBy: parseSort(sort),
+                skip: offset,
+                take: limit,
+                include: {
+                    user_tb: { select: { id: true, nickname: true, profile_path: true } },
+                    board_tb: { select: { code: true } },
+                    post_category_code: { select: { code: true, name: true } },
+                    _count: {
+                        select: {
+                            post_comment_tb: true,
+                            post_like_tb: { where: { like_type: PostLikeType.LIKE } },
+                        },
+                    },
+                },
+            }),
+            this.prisma.post_tb.count({ where }),
+        ]);
+
+        return {
+            items: rows.map((row) => ({
+                id: row.id,
+                boardCode: row.board_tb.code,
+                category: row.post_category_code
+                    ? { code: row.post_category_code.code, name: row.post_category_code.name }
+                    : null,
+                title: row.title,
+                createdAt: row.created_at ? row.created_at.toISOString() : null,
+                updatedAt: row.updated_at ? row.updated_at.toISOString() : null,
+                author: {
+                    id: row.user_tb.id,
+                    nickname: row.user_tb.nickname,
+                    profilePath: row.user_tb.profile_path,
+                },
+                likeCount: row._count.post_like_tb,
+                commentCount: row._count.post_comment_tb,
+            })),
+            total,
+            offset,
+            limit,
+        };
     }
 
     async createPost(userId: number, dto: CreatePostType): Promise<number> {
