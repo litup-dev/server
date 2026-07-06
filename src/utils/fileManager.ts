@@ -139,4 +139,8 @@ export class FileManager {
         const folderPath = this.getUploadPath(type, entityId);
         await this.storage.deleteFolder(folderPath);
     }
+
+    async deleteFile(filePath: string): Promise<void> {
+        await this.storage.delete(filePath);
+    }
 }

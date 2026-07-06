@@ -44,20 +44,22 @@ DDL 실행 + `db:pull` 완료. [prisma/schema.prisma](prisma/schema.prisma)에 �
 - `post_like_tb` — like_type('LIKE'|'DISLIKE'), unique(post_id, user_id)
 - `report_type_code`에 POST, COMMENT 행 삽입됨
 
-### ⬜ 2단계 — 게시글 CRUD
+### ✅ 2단계 — 게시글 CRUD (완료)
 
-새 파일: `src/schemas/post.schema.ts`, `src/services/post.service.ts`, `src/routes/post.ts` (+ `src/routes/index.ts` 등록)
+생성: [src/schemas/post.schema.ts](src/schemas/post.schema.ts), [src/services/post.service.ts](src/services/post.service.ts), [src/routes/post.ts](src/routes/post.ts) (+ index.ts 등록, FileManager에 `deleteFile()` 추가)
 
 | 엔드포인트 | 인증 | 내용 |
 |---|---|---|
-| `POST /posts` | requireAuth | body: title, boardCode, categoryCode(자유 게시판만), content, imageIds[] |
-| `GET /posts/:entityId` | optionalAuth | 상세. isMine(userId 비교), 작성자 닉네임/프로필, 수정일자, 이미지 목록, 좋아요/싫어요 수 |
-| `PATCH /posts/:entityId` | requireAuth | 소유자 검증. imageIds diff로 이미지 개별 추가/삭제 |
-| `DELETE /posts/:entityId` | requireAuth | 소유자 검증. S3 이미지 삭제 → DB hard delete(cascade) |
+| `POST /posts` | requireAuth | body: title, boardCode(기본 FREE), categoryCode(자유 게시판만, 기본 GENERAL), content, imageIds[] |
+| `GET /posts/:entityId` | optionalAuth | 상세. isMine, myLikeType, author(닉네임/프로필), images, like/dislike/comment 카운트 |
+| `PATCH /posts/:entityId` | requireAuth | 소유자 검증. **imageIds = 최종 상태 전체 전송** — 빠진 이미지는 row + S3 삭제 |
+| `DELETE /posts/:entityId` | requireAuth | 소유자 검증. DB hard delete(cascade) → S3 파일 best-effort 삭제 |
 
-- DTO는 카멜케이스, DB 컬럼은 스네이크 (기존 컨벤션)
-- 서비스는 class + prisma 생성자 주입 패턴 ([notice.service.ts](src/services/notice.service.ts) 참고)
-- zod 스키마 + `generateSchema()`로 fastify JSON 스키마 변환 ([common.schema.ts](src/schemas/common.schema.ts) 참고)
+구현 메모:
+- 이미지 연결(`linkImages`)은 `user_id = 본인 AND (post_id IS NULL OR post_id = 해당 글)` 조건의 updateMany로 소유권/도용 검증
+- S3 삭제는 라우트에서 best-effort (실패 시 로그만, 응답은 성공) — DB가 source of truth
+- 스모크 테스트 완료: dev 서버 부팅, 글 insert 후 GET 상세 응답 구조 확인, 데이터 정리 완료
+- ⚠️ `yarn lint`가 기존부터 깨져 있음 (eslint.config.mts "Plugin not found" — 이 작업과 무관, 별도 수리 필요)
 
 ### ⬜ 3단계 — 리스트 조회
 
