@@ -107,11 +107,20 @@ DDL 실행 + `db:pull` 완료. [prisma/schema.prisma](prisma/schema.prisma)에 �
 - ⚠️ **report_type_code 중복**: 기존에 소문자 `post`(id 1)/`comment`(id 2)가 이미 있었는데 1단계 DDL이 대문자 `POST`(id 6)/`COMMENT`(id 7)를 중복 삽입함. 서비스는 toLowerCase 비교라 둘 다 동작하지만 정리 필요:
   `DELETE FROM report_type_code WHERE id IN (6, 7);` (report_tb에서 type_id 6/7 참조 없음 확인 후)
 
-### ⬜ 7단계 — 마무리
+### ✅ 7단계 — 마무리 (완료)
 
-- Swagger 문서 확인 (`tags: ['Posts']` 등)
-- `yarn lint` 통과
-- dev 서버(`yarn dev`)로 전체 플로우 수동 검증: 글 작성 → 이미지 → 리스트/검색/정렬 → 댓글/대댓글 → 좋아요 → 신고 → 수정 → 삭제
+- Swagger 문서 확인: `/api/v1/posts`, `/posts/{id}`, `/posts/{id}/comments`, `/posts/{id}/like`, `/comments/{id}`, `/upload/post-image` 전부 등록 확인
+- 통합 검증 완료 (2026-07-07): 이미지 2장 업로드 → 글 작성 → **수정 시 이미지 diff(제거+추가 동시) + 카테고리/제목/본문 변경** → 잘못된 imageId 400 + **트랜잭션 롤백 무결성** → 댓글+좋아요+신고 복합 → 글 삭제(R2 파일 삭제 에러 0건)
+- `yarn lint`는 기존 설정 파일 고장으로 제외 (별도 작업으로 분리됨)
+
+---
+
+## 자유 게시판 백엔드 완료 (2026-07-07)
+
+이후 남은 커뮤니티 범위 (별도 작업):
+- 공연 후기 게시판: board_tb에 이미 PERFORM_REVIEW 행 있음. API는 `?board=PERFORM_REVIEW`로 이미 동작 — 프론트 연동만 하면 됨
+- 팬 게시판: 동적 생성(요청/승인) 기능 필요 — board_tb 구조는 준비됨
+- 공연/클럽 태그(`post_tag_tb`), 싫어요 N개 자동 필터: 정책 확정 후
 
 ## 참고: 기존 코드 컨벤션
 
