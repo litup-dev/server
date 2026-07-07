@@ -78,14 +78,21 @@ DDL 실행 + `db:pull` 완료. [prisma/schema.prisma](prisma/schema.prisma)에 �
 - 고아 이미지 정리 cron — [src/schedule/post.schedule.ts](src/schedule/post.schedule.ts), 매일 03:30 KST, post_id NULL + 24시간 경과분 R2+DB 삭제 (production만 실행됨 — 기존 스케줄 등록 패턴)
 - 스모크 테스트 완료: JWT 발급 → 업로드(R2) → 글 생성 시 이미지 연결 → 인증 상세(isMine=true, images 포함) → 삭제 시 cascade + R2 파일 삭제까지 전체 플로우 확인
 
-### ⬜ 5단계 — 댓글
+### ✅ 5단계 — 댓글 (완료)
+
+생성: [src/schemas/postComment.schema.ts](src/schemas/postComment.schema.ts), [src/services/postComment.service.ts](src/services/postComment.service.ts), [src/routes/postComment.ts](src/routes/postComment.ts) (+ index.ts 등록)
 
 | 엔드포인트 | 인증 | 내용 |
 |---|---|---|
-| `POST /posts/:entityId/comments` | requireAuth | content, parentId(옵션). 대댓글 1 depth 검증 |
-| `GET /posts/:entityId/comments` | optionalAuth | 페이지네이션. 프로필+닉네임, isMine, 대댓글 배열 |
+| `POST /posts/:entityId/comments` | requireAuth | content(최대 1000자), parentId(옵션). 대댓글 1 depth 검증 |
+| `GET /posts/:entityId/comments` | optionalAuth | 등록순 고정, 페이지네이션은 최상위 댓글 기준(total도 최상위만). isMine 포함 |
 | `PATCH /comments/:entityId` | requireAuth | 소유자 검증 |
-| `DELETE /comments/:entityId` | requireAuth | 소유자 검증, hard delete |
+| `DELETE /comments/:entityId` | requireAuth | 소유자 검증, hard delete (대댓글 cascade) |
+
+구현 메모:
+- **n-depth 확장 대비 설계**: 대댓글은 중첩이 아닌 **flat 배열 + parentId**로 응답 (`items[].replies[]`). n-depth 허용 시 API 구조 변경 없음. depth 제한은 postComment.service.ts `createComment`의 검사 한 줄 — 그것만 제거하면 n-depth
+- 부모 댓글 검증: 존재 + 같은 게시글 소속 + 부모가 최상위인지(1 depth) 확인
+- 스모크 테스트 완료: 댓글/대댓글 작성, 2뎁스 400 거부, 수정(updatedAt 반영), 목록 구조, 삭제 cascade 전부 확인
 
 ### ⬜ 6단계 — 좋아요/싫어요 + 신고 연결
 
