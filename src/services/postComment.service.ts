@@ -18,21 +18,26 @@ type CommentRow = {
     content: string;
     created_at: Date | null;
     updated_at: Date | null;
+    is_deleted: boolean;
     user_tb: { id: number; nickname: string | null; profile_path: string | null };
 };
 
+// 삭제된 댓글(묘비)은 내용/작성자를 마스킹해서 내려준다.
 const toBaseItem = (row: CommentRow, userId: number | null | undefined): CommentBaseType => ({
     id: row.id,
     parentId: row.parent_id,
-    content: row.content,
+    content: row.is_deleted ? '' : row.content,
     createdAt: row.created_at ? row.created_at.toISOString() : null,
     updatedAt: row.updated_at ? row.updated_at.toISOString() : null,
-    author: {
-        id: row.user_tb.id,
-        nickname: row.user_tb.nickname,
-        profilePath: row.user_tb.profile_path,
-    },
-    isMine: userId === row.user_tb.id,
+    author: row.is_deleted
+        ? null
+        : {
+              id: row.user_tb.id,
+              nickname: row.user_tb.nickname,
+              profilePath: row.user_tb.profile_path,
+          },
+    isMine: !row.is_deleted && userId === row.user_tb.id,
+    isDeleted: row.is_deleted,
 });
 
 export class PostCommentService {
@@ -41,9 +46,9 @@ export class PostCommentService {
     private async getOwnedComment(commentId: number, userId: number) {
         const comment = await this.prisma.post_comment_tb.findUnique({
             where: { id: commentId },
-            select: { id: true, user_id: true },
+            select: { id: true, user_id: true, parent_id: true, is_deleted: true },
         });
-        if (!comment) {
+        if (!comment || comment.is_deleted) {
             throw new NotFoundError('댓글을 찾을 수 없습니다.');
         }
         if (comment.user_id !== userId) {
@@ -64,10 +69,13 @@ export class PostCommentService {
         if (dto.parentId) {
             const parent = await this.prisma.post_comment_tb.findUnique({
                 where: { id: dto.parentId },
-                select: { post_id: true, parent_id: true },
+                select: { post_id: true, parent_id: true, is_deleted: true },
             });
             if (!parent || parent.post_id !== postId) {
                 throw new BadRequestError('대상 댓글을 찾을 수 없습니다.');
+            }
+            if (parent.is_deleted) {
+                throw new BadRequestError('삭제된 댓글에는 답글을 달 수 없습니다.');
             }
             // 대댓글 1 depth 제한. n-depth 허용 시 이 검사만 제거하면 된다.
             if (parent.parent_id !== null) {
@@ -161,10 +169,41 @@ export class PostCommentService {
     }
 
     /**
-     * Hard delete. 대댓글은 FK cascade로 함께 삭제된다.
+     * 대댓글이 있으면 묘비(is_deleted)로 남기고, 없으면 hard delete.
+     * 대댓글 삭제로 묘비 부모의 마지막 자식이 사라지면 부모 묘비도 함께 정리한다.
      */
     async deleteComment(userId: number, commentId: number): Promise<void> {
-        await this.getOwnedComment(commentId, userId);
-        await this.prisma.post_comment_tb.delete({ where: { id: commentId } });
+        const comment = await this.getOwnedComment(commentId, userId);
+
+        await this.prisma.$transaction(async (tx) => {
+            const childCount = await tx.post_comment_tb.count({
+                where: { parent_id: commentId },
+            });
+
+            if (childCount > 0) {
+                await tx.post_comment_tb.update({
+                    where: { id: commentId },
+                    data: { is_deleted: true },
+                });
+                return;
+            }
+
+            await tx.post_comment_tb.delete({ where: { id: commentId } });
+
+            if (comment.parent_id !== null) {
+                const parent = await tx.post_comment_tb.findUnique({
+                    where: { id: comment.parent_id },
+                    select: { is_deleted: true },
+                });
+                if (parent?.is_deleted) {
+                    const remaining = await tx.post_comment_tb.count({
+                        where: { parent_id: comment.parent_id },
+                    });
+                    if (remaining === 0) {
+                        await tx.post_comment_tb.delete({ where: { id: comment.parent_id } });
+                    }
+                }
+            }
+        });
     }
 }

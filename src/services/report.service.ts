@@ -13,11 +13,15 @@ export class ReportService {
         let isExist = null;
         switch (type.toLowerCase()) {
             case 'post':
-                // 게시글 -> 커뮤 기능 추가 시
-                return false;
+                isExist = await this.prisma.post_tb.findUnique({
+                    where: { id: entityId },
+                });
+                return isExist !== null;
             case 'comment':
-                // 댓글 -> 커뮤 기능 추가 시
-                return false;
+                isExist = await this.prisma.post_comment_tb.findUnique({
+                    where: { id: entityId },
+                });
+                return isExist !== null;
             case 'review':
                 isExist = await this.prisma.club_review_tb.findUnique({
                     where: { id: entityId },

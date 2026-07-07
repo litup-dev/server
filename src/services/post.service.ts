@@ -6,6 +6,7 @@ import {
     CreatePostType,
     GetPostsType,
     PostDetailType,
+    PostLikeStateType,
     PostLikeType,
     PostLikeTypeValue,
     PostListItemType,
@@ -124,7 +125,7 @@ export class PostService {
                     post_category_code: { select: { code: true, name: true } },
                     _count: {
                         select: {
-                            post_comment_tb: true,
+                            post_comment_tb: { where: { is_deleted: false } },
                             post_like_tb: { where: { like_type: PostLikeType.LIKE } },
                         },
                     },
@@ -191,7 +192,9 @@ export class PostService {
                 board_tb: { select: { code: true } },
                 post_category_code: { select: { code: true, name: true } },
                 post_img_tb: { select: { id: true, file_path: true }, orderBy: { id: 'asc' } },
-                _count: { select: { post_comment_tb: true } },
+                _count: {
+                    select: { post_comment_tb: { where: { is_deleted: false } } },
+                },
             },
         });
         if (!row) {
@@ -275,6 +278,57 @@ export class PostService {
         });
 
         return { removedFilePaths: toRemove.map((img) => img.file_path) };
+    }
+
+    /**
+     * 좋아요/싫어요 토글. 같은 타입 재요청 = 취소, 다른 타입 = 변경.
+     */
+    async togglePostLike(
+        userId: number,
+        postId: number,
+        likeType: PostLikeTypeValue
+    ): Promise<PostLikeStateType> {
+        const post = await this.prisma.post_tb.findUnique({
+            where: { id: postId },
+            select: { id: true },
+        });
+        if (!post) {
+            throw new NotFoundError('게시글을 찾을 수 없습니다.');
+        }
+
+        const uniqueWhere = { post_id_user_id: { post_id: postId, user_id: userId } };
+        const existing = await this.prisma.post_like_tb.findUnique({
+            where: uniqueWhere,
+            select: { like_type: true },
+        });
+
+        let myLikeType: PostLikeTypeValue | null;
+        if (!existing) {
+            await this.prisma.post_like_tb.create({
+                data: { post_id: postId, user_id: userId, like_type: likeType },
+            });
+            myLikeType = likeType;
+        } else if (existing.like_type === likeType) {
+            await this.prisma.post_like_tb.delete({ where: uniqueWhere });
+            myLikeType = null;
+        } else {
+            await this.prisma.post_like_tb.update({
+                where: uniqueWhere,
+                data: { like_type: likeType },
+            });
+            myLikeType = likeType;
+        }
+
+        const [likeCount, dislikeCount] = await Promise.all([
+            this.prisma.post_like_tb.count({
+                where: { post_id: postId, like_type: PostLikeType.LIKE },
+            }),
+            this.prisma.post_like_tb.count({
+                where: { post_id: postId, like_type: PostLikeType.DISLIKE },
+            }),
+        ]);
+
+        return { myLikeType, likeCount, dislikeCount };
     }
 
     /**

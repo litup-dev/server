@@ -13,8 +13,11 @@ import {
     postDetailResJson,
     postCreatedResJson,
     postListResJson,
+    postLikeBodyJson,
+    postLikeResJson,
     CreatePostType,
     GetPostsType,
+    PostLikeBodyType,
     UpdatePostType,
 } from '@/schemas/post.schema.js';
 import { NotFoundError } from '@/common/error.js';
@@ -142,6 +145,38 @@ export async function postRoutes(fastify: FastifyInstance) {
             const { removedFilePaths } = await service.updatePost(userId, entityId, dto);
             await deleteFilesBestEffort(removedFilePaths);
             return reply.send({ data: { success: true, operation: 'updated' } });
+        }
+    );
+
+    fastify.post(
+        '/posts/:entityId/like',
+        {
+            preHandler: [fastify.requireAuth],
+            schema: {
+                params: idParamJson,
+                body: postLikeBodyJson,
+                tags: ['Posts'],
+                summary: '게시글 좋아요/싫어요 토글',
+                description:
+                    '좋아요/싫어요를 등록합니다. 같은 타입 재요청 시 취소, 다른 타입이면 변경됩니다.',
+                response: {
+                    200: postLikeResJson,
+                    400: errorResJson,
+                    404: errorResJson,
+                    500: errorResJson,
+                },
+            },
+        },
+        async (request, reply) => {
+            const userId = request.userId;
+            if (!userId) {
+                throw new NotFoundError('사용자를 찾을 수 없습니다.');
+            }
+            const { entityId } = request.params as IdParamType;
+            const { likeType } = request.body as PostLikeBodyType;
+            const service = new PostService(request.server.prisma);
+            const result = await service.togglePostLike(userId, entityId, likeType);
+            return reply.send({ data: result });
         }
     );
 

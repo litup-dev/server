@@ -141,11 +141,26 @@ export const getPostsSchema = z.object({
         .openapi({ description: '페이징 제한', example: 10 }),
 });
 
+// 좋아요/싫어요 토글 요청
+export const postLikeBodySchema = z.object({
+    likeType: z.enum([PostLikeType.LIKE, PostLikeType.DISLIKE]).openapi({
+        description: '좋아요/싫어요 타입. 같은 타입 재요청 시 취소, 다른 타입이면 변경',
+        example: 'LIKE',
+    }),
+});
+
+export const postLikeStateSchema = z.object({
+    myLikeType: z.enum([PostLikeType.LIKE, PostLikeType.DISLIKE]).nullable(),
+    likeCount: z.number(),
+    dislikeCount: z.number(),
+});
+
 // 응답
 export const postDetailRes = successResponseSchema(postDetailSchema);
 export const postCreatedRes = successResponseSchema(z.object({ id: z.number() }));
 export const postListRes = paginatedResponseSchema(postListItemSchema);
 export const postImageUploadRes = successResponseSchema(postImageSchema);
+export const postLikeRes = successResponseSchema(postLikeStateSchema);
 
 // JSON Schema
 export const createPostJson = generateSchema(createPostSchema);
@@ -155,11 +170,15 @@ export const postDetailResJson = generateSchema(postDetailRes);
 export const postCreatedResJson = generateSchema(postCreatedRes);
 export const postListResJson = generateSchema(postListRes);
 export const postImageUploadResJson = generateSchema(postImageUploadRes);
+export const postLikeBodyJson = generateSchema(postLikeBodySchema);
+export const postLikeResJson = generateSchema(postLikeRes);
 
 // 타입
 export type CreatePostType = z.infer<typeof createPostSchema>;
 export type UpdatePostType = z.infer<typeof updatePostSchema>;
 export type GetPostsType = z.infer<typeof getPostsSchema>;
+export type PostLikeBodyType = z.infer<typeof postLikeBodySchema>;
+export type PostLikeStateType = z.infer<typeof postLikeStateSchema>;
 export type PostDetailType = z.infer<typeof postDetailSchema>;
 export type PostListItemType = z.infer<typeof postListItemSchema>;
 export type PostLikeTypeValue = (typeof PostLikeType)[keyof typeof PostLikeType];

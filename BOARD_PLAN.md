@@ -9,7 +9,7 @@
 |---|---|
 | 스키마 반영 | Prisma migrate 사용 안 함. **DDL 직접 실행 → `yarn db:pull` → `yarn db:generate`** (담당: hyuk) |
 | 게시판 구조 | `board_tb` + `post_tb.board_id`로 여러 게시판 공용. 분리/파티셔닝 시 board_id가 기준 키 |
-| 삭제 정책 | **Hard delete**. FK는 전부 ON DELETE CASCADE, S3 이미지는 앱 레벨에서 삭제 |
+| 삭제 정책 | **Hard delete**. FK는 전부 ON DELETE CASCADE, S3 이미지는 앱 레벨에서 삭제. **예외: 대댓글 있는 댓글은 묘비(is_deleted) 소프트 삭제** — 아래 5단계 참고 |
 | 게시글 제목 | **50자** (varchar(50)) |
 | 댓글 | 제목 없음(content만). 대댓글 1 depth 제한. 부모 삭제 시 대댓글도 cascade 삭제 |
 | 이미지 | **글당 10장, 개당 5MB**. TOAST UI Editor 선업로드 방식 (아래 플로우 참고) |
@@ -87,17 +87,25 @@ DDL 실행 + `db:pull` 완료. [prisma/schema.prisma](prisma/schema.prisma)에 �
 | `POST /posts/:entityId/comments` | requireAuth | content(최대 1000자), parentId(옵션). 대댓글 1 depth 검증 |
 | `GET /posts/:entityId/comments` | optionalAuth | 등록순 고정, 페이지네이션은 최상위 댓글 기준(total도 최상위만). isMine 포함 |
 | `PATCH /comments/:entityId` | requireAuth | 소유자 검증 |
-| `DELETE /comments/:entityId` | requireAuth | 소유자 검증, hard delete (대댓글 cascade) |
+| `DELETE /comments/:entityId` | requireAuth | 소유자 검증. **자식 없으면 hard delete, 자식 있으면 묘비(is_deleted=true)** |
 
 구현 메모:
 - **n-depth 확장 대비 설계**: 대댓글은 중첩이 아닌 **flat 배열 + parentId**로 응답 (`items[].replies[]`). n-depth 허용 시 API 구조 변경 없음. depth 제한은 postComment.service.ts `createComment`의 검사 한 줄 — 그것만 제거하면 n-depth
-- 부모 댓글 검증: 존재 + 같은 게시글 소속 + 부모가 최상위인지(1 depth) 확인
-- 스모크 테스트 완료: 댓글/대댓글 작성, 2뎁스 400 거부, 수정(updatedAt 반영), 목록 구조, 삭제 cascade 전부 확인
+- 부모 댓글 검증: 존재 + 같은 게시글 소속 + 삭제 안 됨 + 부모가 최상위인지(1 depth) 확인
+- **묘비(tombstone) 삭제 정책** (2026-07-07 추가, `is_deleted` 컬럼 DDL 반영됨):
+  - 자식 없는 댓글 → hard delete / 자식 있는 댓글 → is_deleted=true로 묘비화
+  - 묘비 응답: `isDeleted: true`, content는 빈 문자열, author는 null 마스킹 → 프론트가 "삭제된 댓글입니다" 렌더
+  - 묘비에는 답글(400)/수정(404)/재삭제(404) 불가, commentCount에서 제외(상세+리스트)
+  - 마지막 대댓글이 삭제되면 묘비 부모도 자동 정리 (묘비가 DB에 안 쌓임)
+- 스모크 테스트 완료: 댓글/대댓글 작성, 2뎁스 400 거부, 수정(updatedAt 반영), 목록 구조, 묘비 삭제/마스킹/차단/자동청소 전부 확인
 
-### ⬜ 6단계 — 좋아요/싫어요 + 신고 연결
+### ✅ 6단계 — 좋아요/싫어요 + 신고 연결 (완료)
 
-- `POST /posts/:entityId/like` — body: likeType(LIKE/DISLIKE). 토글/변경 로직. [perform_review_like 패턴](src/routes/performanceReview.ts) 참고
-- 신고: 기존 `POST /report` 그대로 사용 가능한지 [report.service.ts](src/services/report.service.ts) 검증 로직 확인
+- `POST /posts/:entityId/like` — body: likeType(LIKE/DISLIKE). 없으면 등록, 같은 타입이면 취소, 다른 타입이면 변경. 응답: `{ myLikeType, likeCount, dislikeCount }`
+- 신고: [report.service.ts](src/services/report.service.ts)의 `isEntityExist`에서 'post'/'comment' 케이스가 placeholder(false)였던 것을 post_tb/post_comment_tb 존재 확인으로 연결 — 기존 `POST /report` API로 게시글/댓글 신고 동작
+- 스모크 테스트 완료: LIKE 등록→취소→DISLIKE→변경, 잘못된 타입 400, 게시글/댓글 신고 성공, 없는 엔티티 신고 404 전부 확인
+- ⚠️ **report_type_code 중복**: 기존에 소문자 `post`(id 1)/`comment`(id 2)가 이미 있었는데 1단계 DDL이 대문자 `POST`(id 6)/`COMMENT`(id 7)를 중복 삽입함. 서비스는 toLowerCase 비교라 둘 다 동작하지만 정리 필요:
+  `DELETE FROM report_type_code WHERE id IN (6, 7);` (report_tb에서 type_id 6/7 참조 없음 확인 후)
 
 ### ⬜ 7단계 — 마무리
 

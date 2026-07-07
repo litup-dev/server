@@ -7,14 +7,17 @@ const commentAuthorSchema = z.object({
     profilePath: z.string().nullable(),
 });
 
+// 삭제된 댓글(묘비): isDeleted=true, content는 빈 문자열, author는 null로 마스킹된다.
+// 프론트는 isDeleted=true면 "삭제된 댓글입니다"로 렌더링.
 const commentBaseSchema = z.object({
     id: z.number(),
     parentId: z.number().nullable(),
     content: z.string(),
     createdAt: z.string().nullable(),
     updatedAt: z.string().nullable(),
-    author: commentAuthorSchema,
+    author: commentAuthorSchema.nullable(),
     isMine: z.boolean(),
+    isDeleted: z.boolean(),
 });
 
 // 대댓글은 중첩 대신 flat 배열(parentId 포함)로 내려준다.
