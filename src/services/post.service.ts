@@ -123,16 +123,41 @@ export class PostService {
                     user_tb: { select: { id: true, nickname: true, profile_path: true } },
                     board_tb: { select: { code: true } },
                     post_category_code: { select: { code: true, name: true } },
+                    post_img_tb: {
+                        select: { id: true, file_path: true },
+                        orderBy: { id: 'asc' },
+                        take: 1,
+                    },
                     _count: {
                         select: {
                             post_comment_tb: { where: { is_deleted: false } },
-                            post_like_tb: { where: { like_type: PostLikeType.LIKE } },
+                            post_img_tb: true,
                         },
                     },
                 },
             }),
             this.prisma.post_tb.count({ where }),
         ]);
+
+        const postIds = rows.map((row) => row.id);
+        const likeGroups =
+            postIds.length > 0
+                ? await this.prisma.post_like_tb.groupBy({
+                      by: ['post_id', 'like_type'],
+                      where: { post_id: { in: postIds } },
+                      _count: { _all: true },
+                  })
+                : [];
+        const likeCountMap = new Map<number, { like: number; dislike: number }>();
+        for (const group of likeGroups) {
+            const entry = likeCountMap.get(group.post_id) ?? { like: 0, dislike: 0 };
+            if (group.like_type === PostLikeType.LIKE) {
+                entry.like = group._count._all;
+            } else {
+                entry.dislike = group._count._all;
+            }
+            likeCountMap.set(group.post_id, entry);
+        }
 
         return {
             items: rows.map((row) => ({
@@ -149,8 +174,13 @@ export class PostService {
                     nickname: row.user_tb.nickname,
                     profilePath: row.user_tb.profile_path,
                 },
-                likeCount: row._count.post_like_tb,
+                likeCount: likeCountMap.get(row.id)?.like ?? 0,
+                dislikeCount: likeCountMap.get(row.id)?.dislike ?? 0,
                 commentCount: row._count.post_comment_tb,
+                thumbnail: row.post_img_tb[0]
+                    ? { id: row.post_img_tb[0].id, filePath: row.post_img_tb[0].file_path }
+                    : null,
+                imageCount: row._count.post_img_tb,
             })),
             total,
             offset,

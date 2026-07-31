@@ -106,7 +106,15 @@ export const postListItemSchema = z.object({
     updatedAt: z.string().nullable(),
     author: postAuthorSchema,
     likeCount: z.number(),
+    dislikeCount: z.number(),
     commentCount: z.number(),
+    thumbnail: postImageSchema.nullable().openapi({
+        description: '목록 썸네일로 쓸 첫 번째 이미지 (없으면 null)',
+    }),
+    imageCount: z.number().openapi({
+        description: '게시글에 첨부된 전체 이미지 개수',
+        example: 4,
+    }),
 });
 
 // 목록 조회 쿼리
