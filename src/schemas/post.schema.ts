@@ -13,6 +13,7 @@ export const PostLikeType = {
 } as const;
 
 export const MAX_POST_IMAGES = 10;
+export const MAX_LIST_THUMBNAILS = 4;
 
 const postAuthorSchema = z.object({
     id: z.number(),
@@ -108,12 +109,15 @@ export const postListItemSchema = z.object({
     likeCount: z.number(),
     dislikeCount: z.number(),
     commentCount: z.number(),
-    thumbnail: postImageSchema.nullable().openapi({
-        description: '목록 썸네일로 쓸 첫 번째 이미지 (없으면 null)',
-    }),
+    thumbnails: z
+        .array(postImageSchema)
+        .max(MAX_LIST_THUMBNAILS)
+        .openapi({
+            description: `목록에 노출할 이미지 (최대 ${MAX_LIST_THUMBNAILS}장, 등록순)`,
+        }),
     imageCount: z.number().openapi({
         description: '게시글에 첨부된 전체 이미지 개수',
-        example: 4,
+        example: 10,
     }),
 });
 

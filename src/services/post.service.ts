@@ -5,6 +5,7 @@ import {
     BoardCode,
     CreatePostType,
     GetPostsType,
+    MAX_LIST_THUMBNAILS,
     PostDetailType,
     PostLikeStateType,
     PostLikeType,
@@ -126,7 +127,7 @@ export class PostService {
                     post_img_tb: {
                         select: { id: true, file_path: true },
                         orderBy: { id: 'asc' },
-                        take: 1,
+                        take: MAX_LIST_THUMBNAILS,
                     },
                     _count: {
                         select: {
@@ -177,9 +178,7 @@ export class PostService {
                 likeCount: likeCountMap.get(row.id)?.like ?? 0,
                 dislikeCount: likeCountMap.get(row.id)?.dislike ?? 0,
                 commentCount: row._count.post_comment_tb,
-                thumbnail: row.post_img_tb[0]
-                    ? { id: row.post_img_tb[0].id, filePath: row.post_img_tb[0].file_path }
-                    : null,
+                thumbnails: row.post_img_tb.map((img) => ({ id: img.id, filePath: img.file_path })),
                 imageCount: row._count.post_img_tb,
             })),
             total,
