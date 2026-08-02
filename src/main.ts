@@ -18,6 +18,24 @@ const app = Fastify({
 // 전역 에러 핸들러 설정
 setupErrorHandler(app);
 
+// 바디가 필요 없는 POST(좋아요 토글 등)에서 프론트가 Content-Type: application/json을 붙이고
+// 바디는 비워서 보내는 경우 fastify 기본 파서가 FST_ERR_CTP_EMPTY_JSON_BODY로 막는 것을 허용 처리
+app.addContentTypeParser(
+    'application/json',
+    { parseAs: 'string' },
+    (request, body, done) => {
+        if (body === '') {
+            done(null, undefined);
+            return;
+        }
+        try {
+            done(null, JSON.parse(body as string));
+        } catch (err) {
+            done(err as Error, undefined);
+        }
+    }
+);
+
 // 플러그인 등록
 await registerPlugins(app);
 await registerRoutes(app);
