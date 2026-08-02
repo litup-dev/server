@@ -84,6 +84,15 @@ export class PostCommentService {
             }
         }
 
+        if (dto.mentionedUserIds.length > 0) {
+            const mentionable = await this.getMentionableUsers(postId);
+            const mentionableIds = new Set(mentionable.map((u) => u.id));
+            const invalidIds = dto.mentionedUserIds.filter((id) => !mentionableIds.has(id));
+            if (invalidIds.length > 0) {
+                throw new BadRequestError('게시글과 관련 없는 사용자는 태그할 수 없습니다.');
+            }
+        }
+
         const created = await this.prisma.post_comment_tb.create({
             data: {
                 post_id: postId,

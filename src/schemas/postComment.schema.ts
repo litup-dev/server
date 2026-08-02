@@ -26,15 +26,27 @@ export const commentItemSchema = commentBaseSchema.extend({
     replies: z.array(commentBaseSchema),
 });
 
+export const MAX_COMMENT_MENTIONS = 20;
+
 export const createCommentSchema = z.object({
     content: z.string().min(1).max(1000).openapi({
-        description: '댓글 내용 (최대 1000자)',
-        example: '공연 정말 좋았어요!',
+        description:
+            '댓글 내용 (최대 1000자). 태그는 본문에 `@[닉네임](사용자ID)` 형식으로 그 자리에 그대로 삽입한다.',
+        example: '저기 @[영희](42) 이거 어떻게 생각해요?',
     }),
     parentId: z.number().int().positive().optional().openapi({
         description: '대댓글인 경우 부모 댓글 ID',
         example: 1,
     }),
+    mentionedUserIds: z
+        .array(z.number().int().positive())
+        .max(MAX_COMMENT_MENTIONS)
+        .default([])
+        .openapi({
+            description:
+                '본문에 태그로 삽입한 사용자 ID 목록. 게시글 작성자/댓글 작성자가 아니면 거부된다.',
+            example: [42],
+        }),
 });
 
 export const updateCommentSchema = z.object({
