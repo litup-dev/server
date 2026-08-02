@@ -5,6 +5,7 @@ import {
     CommentItemType,
     CreateCommentType,
     GetCommentsType,
+    MentionableUserType,
     UpdateCommentType,
 } from '@/schemas/postComment.schema.js';
 
@@ -155,6 +156,45 @@ export class PostCommentService {
             offset,
             limit,
         };
+    }
+
+    // 대댓글 태그 후보: 게시글 작성자 + 댓글/대댓글 작성자(묘비 제외), 작성자 우선 + 최초 댓글순, 중복 제거
+    async getMentionableUsers(postId: number): Promise<MentionableUserType[]> {
+        const post = await this.prisma.post_tb.findUnique({
+            where: { id: postId },
+            select: { id: true, user_tb: authorSelect },
+        });
+        if (!post) {
+            throw new NotFoundError('게시글을 찾을 수 없습니다.');
+        }
+
+        const commenters = await this.prisma.post_comment_tb.findMany({
+            where: { post_id: postId, is_deleted: false },
+            distinct: ['user_id'],
+            orderBy: [{ created_at: 'asc' }, { id: 'asc' }],
+            select: { user_id: true, user_tb: authorSelect },
+        });
+
+        const result: MentionableUserType[] = [
+            {
+                id: post.user_tb.id,
+                nickname: post.user_tb.nickname,
+                profilePath: post.user_tb.profile_path,
+                isAuthor: true,
+            },
+        ];
+        const seen = new Set([post.user_tb.id]);
+        for (const commenter of commenters) {
+            if (seen.has(commenter.user_id)) continue;
+            seen.add(commenter.user_id);
+            result.push({
+                id: commenter.user_tb.id,
+                nickname: commenter.user_tb.nickname,
+                profilePath: commenter.user_tb.profile_path,
+                isAuthor: false,
+            });
+        }
+        return result;
     }
 
     async updateComment(userId: number, commentId: number, dto: UpdateCommentType): Promise<void> {

@@ -60,9 +60,18 @@ export const getCommentsSchema = z.object({
         .openapi({ description: '페이징 제한', example: 20 }),
 });
 
+// 대댓글 작성 시 태그할 수 있는 사용자 (작성자 + 댓글/대댓글 작성자, 중복 제거)
+export const mentionableUserSchema = z.object({
+    id: z.number(),
+    nickname: z.string().nullable(),
+    profilePath: z.string().nullable(),
+    isAuthor: z.boolean().openapi({ description: '게시글 작성자 여부' }),
+});
+
 // 응답
 export const commentListRes = paginatedResponseSchema(commentItemSchema);
 export const commentCreatedRes = successResponseSchema(z.object({ id: z.number() }));
+export const mentionableUsersRes = successResponseSchema(z.array(mentionableUserSchema));
 
 // JSON Schema
 export const createCommentJson = generateSchema(createCommentSchema);
@@ -70,6 +79,7 @@ export const updateCommentJson = generateSchema(updateCommentSchema);
 export const getCommentsJson = generateSchema(getCommentsSchema);
 export const commentListResJson = generateSchema(commentListRes);
 export const commentCreatedResJson = generateSchema(commentCreatedRes);
+export const mentionableUsersResJson = generateSchema(mentionableUsersRes);
 
 // 타입
 export type CreateCommentType = z.infer<typeof createCommentSchema>;
@@ -77,3 +87,4 @@ export type UpdateCommentType = z.infer<typeof updateCommentSchema>;
 export type GetCommentsType = z.infer<typeof getCommentsSchema>;
 export type CommentBaseType = z.infer<typeof commentBaseSchema>;
 export type CommentItemType = z.infer<typeof commentItemSchema>;
+export type MentionableUserType = z.infer<typeof mentionableUserSchema>;

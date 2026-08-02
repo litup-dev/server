@@ -12,6 +12,7 @@ import {
     getCommentsJson,
     commentListResJson,
     commentCreatedResJson,
+    mentionableUsersResJson,
     CreateCommentType,
     GetCommentsType,
     UpdateCommentType,
@@ -74,6 +75,31 @@ export async function postCommentRoutes(fastify: FastifyInstance) {
             const service = new PostCommentService(request.server.prisma);
             const result = await service.getComments(request.userId, entityId, params);
             return reply.send({ data: result });
+        }
+    );
+
+    fastify.get(
+        '/posts/:entityId/mentionable-users',
+        {
+            preHandler: [fastify.optionalAuth],
+            schema: {
+                params: idParamJson,
+                tags: ['Post Comments'],
+                summary: '대댓글 태그 가능 사용자 목록 조회',
+                description:
+                    '게시글 작성자와 댓글/대댓글 작성자(삭제된 댓글 제외)를 중복 없이 반환합니다. 작성자가 배열 첫 번째로 오고, 이후 최초 댓글 등록순입니다.',
+                response: {
+                    200: mentionableUsersResJson,
+                    404: errorResJson,
+                    500: errorResJson,
+                },
+            },
+        },
+        async (request, reply) => {
+            const { entityId } = request.params as IdParamType;
+            const service = new PostCommentService(request.server.prisma);
+            const data = await service.getMentionableUsers(entityId);
+            return reply.send({ data });
         }
     );
 
