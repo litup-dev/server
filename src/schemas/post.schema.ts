@@ -4,7 +4,6 @@ import { commonCreatedAtSortBy } from '@/types/search.types.js';
 
 export const BoardCode = {
     FREE: 'FREE',
-    PERFORM_REVIEW: 'PERFORM_REVIEW',
 } as const;
 
 export const PostLikeType = {
