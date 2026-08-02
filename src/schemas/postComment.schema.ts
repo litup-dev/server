@@ -18,6 +18,8 @@ const commentBaseSchema = z.object({
     author: commentAuthorSchema.nullable(),
     isMine: z.boolean(),
     isDeleted: z.boolean(),
+    likeCount: z.number(),
+    isLiked: z.boolean(),
 });
 
 // 대댓글은 중첩 대신 flat 배열(parentId 포함)로 내려준다.
@@ -80,10 +82,17 @@ export const mentionableUserSchema = z.object({
     isAuthor: z.boolean().openapi({ description: '게시글 작성자 여부' }),
 });
 
+// 댓글 좋아요 토글 상태
+export const commentLikeStateSchema = z.object({
+    isLiked: z.boolean(),
+    likeCount: z.number(),
+});
+
 // 응답
 export const commentListRes = paginatedResponseSchema(commentItemSchema);
 export const commentCreatedRes = successResponseSchema(z.object({ id: z.number() }));
 export const mentionableUsersRes = successResponseSchema(z.array(mentionableUserSchema));
+export const commentLikeRes = successResponseSchema(commentLikeStateSchema);
 
 // JSON Schema
 export const createCommentJson = generateSchema(createCommentSchema);
@@ -92,6 +101,7 @@ export const getCommentsJson = generateSchema(getCommentsSchema);
 export const commentListResJson = generateSchema(commentListRes);
 export const commentCreatedResJson = generateSchema(commentCreatedRes);
 export const mentionableUsersResJson = generateSchema(mentionableUsersRes);
+export const commentLikeResJson = generateSchema(commentLikeRes);
 
 // 타입
 export type CreateCommentType = z.infer<typeof createCommentSchema>;
@@ -100,3 +110,4 @@ export type GetCommentsType = z.infer<typeof getCommentsSchema>;
 export type CommentBaseType = z.infer<typeof commentBaseSchema>;
 export type CommentItemType = z.infer<typeof commentItemSchema>;
 export type MentionableUserType = z.infer<typeof mentionableUserSchema>;
+export type CommentLikeStateType = z.infer<typeof commentLikeStateSchema>;

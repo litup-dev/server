@@ -275,6 +275,7 @@ model user_tb {
   perform_review_tb      perform_review_tb[]
   perform_tb             Perform[]
   perform_tmp            perform_tmp[]
+  post_comment_like_tb   post_comment_like_tb[]
   post_comment_tb        post_comment_tb[]
   post_img_tb            post_img_tb[]
   post_like_tb           post_like_tb[]
@@ -386,20 +387,32 @@ model post_category_code {
 }
 
 model post_comment_tb {
-  id                    Int               @id @default(autoincrement())
+  id                    Int                    @id @default(autoincrement())
   post_id               Int
   user_id               Int
   parent_id             Int?
   content               String
-  created_at            DateTime?         @default(now()) @db.Timestamptz(6)
-  updated_at            DateTime?         @db.Timestamptz(6)
-  is_deleted            Boolean           @default(false)
-  post_comment_tb       post_comment_tb?  @relation("post_comment_tbTopost_comment_tb", fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  other_post_comment_tb post_comment_tb[] @relation("post_comment_tbTopost_comment_tb")
-  post_tb               post_tb           @relation(fields: [post_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  user_tb               user_tb           @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  created_at            DateTime?              @default(now()) @db.Timestamptz(6)
+  updated_at            DateTime?              @db.Timestamptz(6)
+  is_deleted            Boolean                @default(false)
+  post_comment_tb       post_comment_tb?       @relation("post_comment_tbTopost_comment_tb", fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  other_post_comment_tb post_comment_tb[]      @relation("post_comment_tbTopost_comment_tb")
+  post_tb               post_tb                @relation(fields: [post_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user_tb               user_tb                @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  post_comment_like_tb  post_comment_like_tb[]
 
   @@index([post_id, created_at], map: "post_comment_tb_post_idx")
+}
+
+model post_comment_like_tb {
+  id              Int             @id @default(autoincrement())
+  comment_id      Int
+  user_id         Int
+  created_at      DateTime?       @default(now()) @db.Timestamptz(6)
+  post_comment_tb post_comment_tb @relation(fields: [comment_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user_tb         user_tb         @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([comment_id, user_id], map: "uq_post_comment_like_tb_comment_user")
 }
 
 model post_img_tb {

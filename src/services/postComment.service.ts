@@ -3,6 +3,7 @@ import { BadRequestError, ForbiddenError, NotFoundError } from '@/common/error.j
 import {
     CommentBaseType,
     CommentItemType,
+    CommentLikeStateType,
     CreateCommentType,
     GetCommentsType,
     MentionableUserType,
@@ -21,10 +22,15 @@ type CommentRow = {
     updated_at: Date | null;
     is_deleted: boolean;
     user_tb: { id: number; nickname: string | null; profile_path: string | null };
+    _count: { post_comment_like_tb: number };
 };
 
 // 삭제된 댓글(묘비)은 내용/작성자를 마스킹해서 내려준다.
-const toBaseItem = (row: CommentRow, userId: number | null | undefined): CommentBaseType => ({
+const toBaseItem = (
+    row: CommentRow,
+    userId: number | null | undefined,
+    likedIds: Set<number>
+): CommentBaseType => ({
     id: row.id,
     parentId: row.parent_id,
     content: row.is_deleted ? '' : row.content,
@@ -39,6 +45,8 @@ const toBaseItem = (row: CommentRow, userId: number | null | undefined): Comment
           },
     isMine: !row.is_deleted && userId === row.user_tb.id,
     isDeleted: row.is_deleted,
+    likeCount: row._count.post_comment_like_tb,
+    isLiked: likedIds.has(row.id),
 });
 
 export class PostCommentService {
@@ -132,7 +140,10 @@ export class PostCommentService {
                 orderBy: [{ created_at: 'asc' }, { id: 'asc' }],
                 skip: offset,
                 take: limit,
-                include: { user_tb: authorSelect },
+                include: {
+                    user_tb: authorSelect,
+                    _count: { select: { post_comment_like_tb: true } },
+                },
             }),
             this.prisma.post_comment_tb.count({ where: rootWhere }),
         ]);
@@ -145,26 +156,75 @@ export class PostCommentService {
                           parent_id: { in: roots.map((r) => r.id) },
                       },
                       orderBy: [{ created_at: 'asc' }, { id: 'asc' }],
-                      include: { user_tb: authorSelect },
+                      include: {
+                          user_tb: authorSelect,
+                          _count: { select: { post_comment_like_tb: true } },
+                      },
                   })
                 : [];
+
+        const allIds = [...roots.map((r) => r.id), ...replies.map((r) => r.id)];
+        const likedIds =
+            userId && allIds.length > 0
+                ? new Set(
+                      (
+                          await this.prisma.post_comment_like_tb.findMany({
+                              where: { user_id: userId, comment_id: { in: allIds } },
+                              select: { comment_id: true },
+                          })
+                      ).map((l) => l.comment_id)
+                  )
+                : new Set<number>();
 
         const repliesByParent = new Map<number, CommentBaseType[]>();
         for (const reply of replies) {
             const list = repliesByParent.get(reply.parent_id!) ?? [];
-            list.push(toBaseItem(reply, userId));
+            list.push(toBaseItem(reply, userId, likedIds));
             repliesByParent.set(reply.parent_id!, list);
         }
 
         return {
             items: roots.map((root) => ({
-                ...toBaseItem(root, userId),
+                ...toBaseItem(root, userId, likedIds),
                 replies: repliesByParent.get(root.id) ?? [],
             })),
             total,
             offset,
             limit,
         };
+    }
+
+    async toggleCommentLike(userId: number, commentId: number): Promise<CommentLikeStateType> {
+        const comment = await this.prisma.post_comment_tb.findUnique({
+            where: { id: commentId },
+            select: { id: true, is_deleted: true },
+        });
+        if (!comment || comment.is_deleted) {
+            throw new NotFoundError('댓글을 찾을 수 없습니다.');
+        }
+
+        const uniqueWhere = { comment_id_user_id: { comment_id: commentId, user_id: userId } };
+        const existing = await this.prisma.post_comment_like_tb.findUnique({
+            where: uniqueWhere,
+            select: { id: true },
+        });
+
+        let isLiked: boolean;
+        if (existing) {
+            await this.prisma.post_comment_like_tb.delete({ where: uniqueWhere });
+            isLiked = false;
+        } else {
+            await this.prisma.post_comment_like_tb.create({
+                data: { comment_id: commentId, user_id: userId },
+            });
+            isLiked = true;
+        }
+
+        const likeCount = await this.prisma.post_comment_like_tb.count({
+            where: { comment_id: commentId },
+        });
+
+        return { isLiked, likeCount };
     }
 
     // 대댓글 태그 후보: 게시글 작성자 + 댓글/대댓글 작성자(묘비 제외), 작성자 우선 + 최초 댓글순, 중복 제거

@@ -13,6 +13,7 @@ import {
     commentListResJson,
     commentCreatedResJson,
     mentionableUsersResJson,
+    commentLikeResJson,
     CreateCommentType,
     GetCommentsType,
     UpdateCommentType,
@@ -100,6 +101,34 @@ export async function postCommentRoutes(fastify: FastifyInstance) {
             const service = new PostCommentService(request.server.prisma);
             const data = await service.getMentionableUsers(entityId);
             return reply.send({ data });
+        }
+    );
+
+    fastify.post(
+        '/comments/:entityId/like',
+        {
+            preHandler: [fastify.requireAuth],
+            schema: {
+                params: idParamJson,
+                tags: ['Post Comments'],
+                summary: '댓글 좋아요 토글',
+                description: '댓글에 좋아요를 등록/취소합니다. 이미 눌렀으면 취소됩니다.',
+                response: {
+                    200: commentLikeResJson,
+                    404: errorResJson,
+                    500: errorResJson,
+                },
+            },
+        },
+        async (request, reply) => {
+            const userId = request.userId;
+            if (!userId) {
+                throw new NotFoundError('사용자를 찾을 수 없습니다.');
+            }
+            const { entityId } = request.params as IdParamType;
+            const service = new PostCommentService(request.server.prisma);
+            const result = await service.toggleCommentLike(userId, entityId);
+            return reply.send({ data: result });
         }
     );
 
