@@ -15,9 +15,18 @@ import {
     postListResJson,
     postLikeBodyJson,
     postLikeResJson,
+    createDraftJson,
+    updateDraftJson,
+    getDraftsJson,
+    draftCreatedResJson,
+    draftPublishedResJson,
+    draftListResJson,
     CreatePostType,
+    CreateDraftType,
+    GetDraftsType,
     GetPostsType,
     PostLikeBodyType,
+    UpdateDraftType,
     UpdatePostType,
 } from '@/schemas/post.schema.js';
 import { NotFoundError } from '@/common/error.js';
@@ -145,6 +154,127 @@ export async function postRoutes(fastify: FastifyInstance) {
             const { removedFilePaths } = await service.updatePost(userId, entityId, dto);
             await deleteFilesBestEffort(removedFilePaths);
             return reply.send({ data: { success: true, operation: 'updated' } });
+        }
+    );
+
+    fastify.post(
+        '/posts/draft',
+        {
+            preHandler: [fastify.requireAuth],
+            schema: {
+                body: createDraftJson,
+                tags: ['Posts'],
+                summary: '임시저장 생성',
+                description:
+                    '작성 중인 글을 임시저장합니다. title/content는 완결성 검사 없이 부분 상태 그대로 저장됩니다.',
+                response: {
+                    200: draftCreatedResJson,
+                    400: errorResJson,
+                    500: errorResJson,
+                },
+            },
+        },
+        async (request, reply) => {
+            const userId = request.userId;
+            if (!userId) {
+                throw new NotFoundError('사용자를 찾을 수 없습니다.');
+            }
+            const dto = request.body as CreateDraftType;
+            const service = new PostService(request.server.prisma);
+            const id = await service.createDraft(userId, dto);
+            return reply.send({ data: { id } });
+        }
+    );
+
+    fastify.get(
+        '/posts/drafts',
+        {
+            preHandler: [fastify.requireAuth],
+            schema: {
+                querystring: getDraftsJson,
+                tags: ['Posts'],
+                summary: '내 임시저장 목록 조회',
+                description: '본인이 작성 중인 임시저장 글 목록을 최근 저장순으로 조회합니다.',
+                response: {
+                    200: draftListResJson,
+                    500: errorResJson,
+                },
+            },
+        },
+        async (request, reply) => {
+            const userId = request.userId;
+            if (!userId) {
+                throw new NotFoundError('사용자를 찾을 수 없습니다.');
+            }
+            const params = request.query as GetDraftsType;
+            const service = new PostService(request.server.prisma);
+            const result = await service.getDrafts(userId, params);
+            return reply.send({ data: result });
+        }
+    );
+
+    fastify.patch(
+        '/posts/draft/:entityId',
+        {
+            preHandler: [fastify.requireAuth],
+            schema: {
+                params: idParamJson,
+                body: updateDraftJson,
+                tags: ['Posts'],
+                summary: '임시저장 수정 (자동저장)',
+                description:
+                    '임시저장 글을 수정합니다. imageIds는 수정 후 남는 이미지 전체 목록이며, 빠진 이미지는 삭제됩니다.',
+                response: {
+                    200: successResJson,
+                    400: errorResJson,
+                    403: errorResJson,
+                    404: errorResJson,
+                    500: errorResJson,
+                },
+            },
+        },
+        async (request, reply) => {
+            const userId = request.userId;
+            if (!userId) {
+                throw new NotFoundError('사용자를 찾을 수 없습니다.');
+            }
+            const { entityId } = request.params as IdParamType;
+            const dto = request.body as UpdateDraftType;
+            const service = new PostService(request.server.prisma);
+            const { removedFilePaths } = await service.updateDraft(userId, entityId, dto);
+            await deleteFilesBestEffort(removedFilePaths);
+            return reply.send({ data: { success: true, operation: 'updated' } });
+        }
+    );
+
+    fastify.post(
+        '/posts/draft/:entityId/publish',
+        {
+            preHandler: [fastify.requireAuth],
+            schema: {
+                params: idParamJson,
+                tags: ['Posts'],
+                summary: '임시저장 게시',
+                description:
+                    '임시저장 글을 실제 게시글로 전환합니다. title/content가 비어있으면 400. 게시 시각이 createdAt으로 갱신됩니다.',
+                response: {
+                    200: draftPublishedResJson,
+                    400: errorResJson,
+                    403: errorResJson,
+                    404: errorResJson,
+                    500: errorResJson,
+                },
+            },
+        },
+        async (request, reply) => {
+            const userId = request.userId;
+            if (!userId) {
+                throw new NotFoundError('사용자를 찾을 수 없습니다.');
+            }
+            const { entityId } = request.params as IdParamType;
+            const service = new PostService(request.server.prisma);
+            const id = await service.publishDraft(userId, entityId);
+            return reply.send({ data: { id } });
         }
     );
 

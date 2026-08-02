@@ -448,6 +448,7 @@ model post_tb {
   category_id        Int?
   title              String              @db.VarChar(50)
   content            String
+  is_draft           Boolean             @default(false)
   created_at         DateTime?           @default(now()) @db.Timestamptz(6)
   updated_at         DateTime?           @db.Timestamptz(6)
   post_comment_tb    post_comment_tb[]

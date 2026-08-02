@@ -3,7 +3,10 @@ import { BadRequestError, ForbiddenError, NotFoundError } from '@/common/error.j
 import { SavedFileInfo } from '@/types/file.types.js';
 import {
     BoardCode,
+    CreateDraftType,
     CreatePostType,
+    DraftListItemType,
+    GetDraftsType,
     GetPostsType,
     MAX_LIST_THUMBNAILS,
     PostDetailType,
@@ -11,6 +14,7 @@ import {
     PostLikeType,
     PostLikeTypeValue,
     PostListItemType,
+    UpdateDraftType,
     UpdatePostType,
 } from '@/schemas/post.schema.js';
 import { commonCreatedAtSortBy } from '@/types/search.types.js';
@@ -103,6 +107,7 @@ export class PostService {
 
         const where: Prisma.post_tbWhereInput = {
             board_tb: { code: board },
+            is_draft: false,
         };
         if (category) {
             where.post_category_code = { code: category };
@@ -226,7 +231,7 @@ export class PostService {
                 },
             },
         });
-        if (!row) {
+        if (!row || (row.is_draft && row.user_id !== userId)) {
             throw new NotFoundError('게시글을 찾을 수 없습니다.');
         }
 
@@ -266,6 +271,7 @@ export class PostService {
             commentCount: row._count.post_comment_tb,
             isMine: userId === row.user_tb.id,
             myLikeType: myLike ? (myLike.like_type as PostLikeTypeValue) : null,
+            isDraft: row.is_draft,
         };
     }
 
@@ -377,6 +383,164 @@ export class PostService {
             select: { id: true, file_path: true },
         });
         return { id: created.id, filePath: created.file_path };
+    }
+
+    private async getOwnedDraft(postId: number, userId: number) {
+        const post = await this.prisma.post_tb.findUnique({
+            where: { id: postId },
+            select: {
+                id: true,
+                user_id: true,
+                is_draft: true,
+                title: true,
+                content: true,
+                board_tb: { select: { code: true } },
+            },
+        });
+        if (!post || !post.is_draft) {
+            throw new NotFoundError('임시저장 글을 찾을 수 없습니다.');
+        }
+        if (post.user_id !== userId) {
+            throw new ForbiddenError('본인의 임시저장 글만 수정할 수 있습니다.');
+        }
+        return post;
+    }
+
+    /**
+     * 임시저장 생성. 완결성 검사 없이 부분 상태 그대로 저장한다.
+     */
+    async createDraft(userId: number, dto: CreateDraftType): Promise<number> {
+        const board = await this.prisma.board_tb.findUnique({
+            where: { code: dto.boardCode },
+            select: { id: true, code: true },
+        });
+        if (!board) {
+            throw new BadRequestError(`존재하지 않는 게시판입니다: ${dto.boardCode}`);
+        }
+        const categoryId = await this.resolveCategoryId(board.code, dto.categoryCode);
+
+        return await this.prisma.$transaction(async (tx) => {
+            const created = await tx.post_tb.create({
+                data: {
+                    board_id: board.id,
+                    user_id: userId,
+                    category_id: categoryId,
+                    title: dto.title,
+                    content: dto.content,
+                    is_draft: true,
+                },
+                select: { id: true },
+            });
+            await this.linkImages(tx, userId, created.id, dto.imageIds);
+            return created.id;
+        });
+    }
+
+    /**
+     * 임시저장 수정(자동저장). imageIds는 updatePost와 동일하게 최종 상태 전체 전송.
+     */
+    async updateDraft(
+        userId: number,
+        postId: number,
+        dto: UpdateDraftType
+    ): Promise<{ removedFilePaths: string[] }> {
+        const draft = await this.getOwnedDraft(postId, userId);
+        const categoryId = await this.resolveCategoryId(draft.board_tb.code, dto.categoryCode);
+
+        const currentImages = await this.prisma.post_img_tb.findMany({
+            where: { post_id: postId },
+            select: { id: true, file_path: true },
+        });
+        const nextIds = new Set(dto.imageIds);
+        const toRemove = currentImages.filter((img) => !nextIds.has(img.id));
+
+        await this.prisma.$transaction(async (tx) => {
+            await tx.post_tb.update({
+                where: { id: postId },
+                data: {
+                    category_id: categoryId,
+                    title: dto.title,
+                    content: dto.content,
+                    updated_at: new Date(),
+                },
+            });
+            if (toRemove.length > 0) {
+                await tx.post_img_tb.deleteMany({
+                    where: { id: { in: toRemove.map((img) => img.id) } },
+                });
+            }
+            await this.linkImages(tx, userId, postId, dto.imageIds);
+        });
+
+        return { removedFilePaths: toRemove.map((img) => img.file_path) };
+    }
+
+    /**
+     * 임시저장을 실제 게시글로 전환한다. title/content가 비어있으면 게시 불가.
+     * 게시 시점을 createdAt으로 보이게 하기 위해 created_at을 현재 시각으로 갱신한다.
+     */
+    async publishDraft(userId: number, postId: number): Promise<number> {
+        const draft = await this.getOwnedDraft(postId, userId);
+        if (draft.title.trim().length === 0 || draft.content.trim().length === 0) {
+            throw new BadRequestError('제목과 내용을 모두 입력해야 게시할 수 있습니다.');
+        }
+
+        await this.prisma.post_tb.update({
+            where: { id: postId },
+            data: { is_draft: false, created_at: new Date() },
+        });
+        return draft.id;
+    }
+
+    async getDrafts(
+        userId: number,
+        params: GetDraftsType
+    ): Promise<{
+        items: DraftListItemType[];
+        total: number;
+        offset: number;
+        limit: number;
+    }> {
+        const { offset, limit } = params;
+        const where: Prisma.post_tbWhereInput = { user_id: userId, is_draft: true };
+
+        const [rows, total] = await Promise.all([
+            this.prisma.post_tb.findMany({
+                where,
+                orderBy: [{ updated_at: { sort: 'desc', nulls: 'last' } }, { created_at: 'desc' }],
+                skip: offset,
+                take: limit,
+                include: {
+                    board_tb: { select: { code: true } },
+                    post_category_code: { select: { code: true, name: true } },
+                    post_img_tb: {
+                        select: { id: true, file_path: true },
+                        orderBy: { id: 'asc' },
+                        take: MAX_LIST_THUMBNAILS,
+                    },
+                    _count: { select: { post_img_tb: true } },
+                },
+            }),
+            this.prisma.post_tb.count({ where }),
+        ]);
+
+        return {
+            items: rows.map((row) => ({
+                id: row.id,
+                boardCode: row.board_tb.code,
+                category: row.post_category_code
+                    ? { code: row.post_category_code.code, name: row.post_category_code.name }
+                    : null,
+                title: row.title,
+                createdAt: row.created_at ? row.created_at.toISOString() : null,
+                updatedAt: row.updated_at ? row.updated_at.toISOString() : null,
+                thumbnails: row.post_img_tb.map((img) => ({ id: img.id, filePath: img.file_path })),
+                imageCount: row._count.post_img_tb,
+            })),
+            total,
+            offset,
+            limit,
+        };
     }
 
     /**
