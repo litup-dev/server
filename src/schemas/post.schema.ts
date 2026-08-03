@@ -256,7 +256,8 @@ export const draftCreatedRes = successResponseSchema(
     z.object({
         id: z.number(),
         isNew: z.boolean().openapi({
-            description: '이미 작성 중인 draft가 있어 기존 것을 반환한 경우 false',
+            description:
+                '새 draft를 생성했으면 true. 이미 draft가 있어 그 슬롯을 이번 요청 내용으로 덮어썼으면 false',
         }),
     })
 );

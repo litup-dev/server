@@ -407,22 +407,15 @@ export class PostService {
     }
 
     /**
-     * 임시저장 생성. 유저당 draft는 1개만 허용되므로, 이미 있으면 새로 만들지 않고 기존 것의
-     * id를 그대로 반환한다(내용 덮어쓰지 않음). DB에도 partial unique index(uq_post_tb_user_draft)로
-     * 동시 요청에 대한 안전장치가 걸려 있다.
+     * 임시저장 생성. 유저당 draft는 1개만 허용된다. 이미 draft가 있으면 그 내용을 그대로
+     * 반환하는 게 아니라, 이번에 보낸 새 내용으로 덮어쓴다 — "이어쓰기"는 배너 클릭 시
+     * GET /posts/:entityId로 불러오는 쪽에서 처리하고, 이 API는 항상 "새로 쓰기 시작" 의미다.
+     * DB에도 partial unique index(uq_post_tb_user_draft)로 동시 요청 안전장치가 걸려 있다.
      */
     async createDraft(
         userId: number,
         dto: CreateDraftType
-    ): Promise<{ id: number; isNew: boolean }> {
-        const existing = await this.prisma.post_tb.findFirst({
-            where: { user_id: userId, is_draft: true },
-            select: { id: true },
-        });
-        if (existing) {
-            return { id: existing.id, isNew: false };
-        }
-
+    ): Promise<{ id: number; isNew: boolean; removedFilePaths: string[] }> {
         const board = await this.prisma.board_tb.findUnique({
             where: { code: dto.boardCode },
             select: { id: true, code: true },
@@ -431,6 +424,45 @@ export class PostService {
             throw new BadRequestError(`존재하지 않는 게시판입니다: ${dto.boardCode}`);
         }
         const categoryId = await this.resolveCategoryId(board.code, dto.categoryCode);
+
+        const existing = await this.prisma.post_tb.findFirst({
+            where: { user_id: userId, is_draft: true },
+            select: { id: true },
+        });
+
+        if (existing) {
+            const currentImages = await this.prisma.post_img_tb.findMany({
+                where: { post_id: existing.id },
+                select: { id: true, file_path: true },
+            });
+            const nextIds = new Set(dto.imageIds);
+            const toRemove = currentImages.filter((img) => !nextIds.has(img.id));
+
+            await this.prisma.$transaction(async (tx) => {
+                await tx.post_tb.update({
+                    where: { id: existing.id },
+                    data: {
+                        board_id: board.id,
+                        category_id: categoryId,
+                        title: dto.title,
+                        content: dto.content,
+                        updated_at: new Date(),
+                    },
+                });
+                if (toRemove.length > 0) {
+                    await tx.post_img_tb.deleteMany({
+                        where: { id: { in: toRemove.map((img) => img.id) } },
+                    });
+                }
+                await this.linkImages(tx, userId, existing.id, dto.imageIds);
+            });
+
+            return {
+                id: existing.id,
+                isNew: false,
+                removedFilePaths: toRemove.map((img) => img.file_path),
+            };
+        }
 
         const id = await this.prisma.$transaction(async (tx) => {
             const created = await tx.post_tb.create({
@@ -447,7 +479,7 @@ export class PostService {
             await this.linkImages(tx, userId, created.id, dto.imageIds);
             return created.id;
         });
-        return { id, isNew: true };
+        return { id, isNew: true, removedFilePaths: [] };
     }
 
     /**

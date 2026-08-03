@@ -166,7 +166,7 @@ export async function postRoutes(fastify: FastifyInstance) {
                 tags: ['Posts'],
                 summary: '임시저장 생성',
                 description:
-                    '작성 중인 글을 임시저장합니다. title/content는 완결성 검사 없이 부분 상태 그대로 저장됩니다. 유저당 draft는 1개만 허용되며, 이미 있으면 새로 만들지 않고 기존 draft를 그대로 반환합니다(isNew: false).',
+                    '작성 중인 글을 임시저장합니다. title/content는 완결성 검사 없이 부분 상태 그대로 저장됩니다. 유저당 draft는 1개만 허용되며, 이미 draft가 있으면 그 내용을 반환하는 게 아니라 이번에 보낸 새 내용으로 덮어씁니다(isNew: false). 기존 draft를 이어서 작성하려면 이 API 대신 GET /posts/:entityId로 불러온 뒤 PATCH /posts/draft/:entityId로 저장하세요.',
                 response: {
                     200: draftCreatedResJson,
                     400: errorResJson,
@@ -181,7 +181,8 @@ export async function postRoutes(fastify: FastifyInstance) {
             }
             const dto = request.body as CreateDraftType;
             const service = new PostService(request.server.prisma);
-            const result = await service.createDraft(userId, dto);
+            const { removedFilePaths, ...result } = await service.createDraft(userId, dto);
+            await deleteFilesBestEffort(removedFilePaths);
             return reply.send({ data: result });
         }
     );
