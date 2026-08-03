@@ -407,9 +407,22 @@ export class PostService {
     }
 
     /**
-     * 임시저장 생성. 완결성 검사 없이 부분 상태 그대로 저장한다.
+     * 임시저장 생성. 유저당 draft는 1개만 허용되므로, 이미 있으면 새로 만들지 않고 기존 것의
+     * id를 그대로 반환한다(내용 덮어쓰지 않음). DB에도 partial unique index(uq_post_tb_user_draft)로
+     * 동시 요청에 대한 안전장치가 걸려 있다.
      */
-    async createDraft(userId: number, dto: CreateDraftType): Promise<number> {
+    async createDraft(
+        userId: number,
+        dto: CreateDraftType
+    ): Promise<{ id: number; isNew: boolean }> {
+        const existing = await this.prisma.post_tb.findFirst({
+            where: { user_id: userId, is_draft: true },
+            select: { id: true },
+        });
+        if (existing) {
+            return { id: existing.id, isNew: false };
+        }
+
         const board = await this.prisma.board_tb.findUnique({
             where: { code: dto.boardCode },
             select: { id: true, code: true },
@@ -419,7 +432,7 @@ export class PostService {
         }
         const categoryId = await this.resolveCategoryId(board.code, dto.categoryCode);
 
-        return await this.prisma.$transaction(async (tx) => {
+        const id = await this.prisma.$transaction(async (tx) => {
             const created = await tx.post_tb.create({
                 data: {
                     board_id: board.id,
@@ -434,6 +447,7 @@ export class PostService {
             await this.linkImages(tx, userId, created.id, dto.imageIds);
             return created.id;
         });
+        return { id, isNew: true };
     }
 
     /**

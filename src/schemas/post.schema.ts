@@ -252,7 +252,14 @@ export const postCreatedRes = successResponseSchema(z.object({ id: z.number() })
 export const postListRes = paginatedResponseSchema(postListItemSchema);
 export const postImageUploadRes = successResponseSchema(postImageSchema);
 export const postLikeRes = successResponseSchema(postLikeStateSchema);
-export const draftCreatedRes = successResponseSchema(z.object({ id: z.number() }));
+export const draftCreatedRes = successResponseSchema(
+    z.object({
+        id: z.number(),
+        isNew: z.boolean().openapi({
+            description: '이미 작성 중인 draft가 있어 기존 것을 반환한 경우 false',
+        }),
+    })
+);
 export const draftPublishedRes = successResponseSchema(z.object({ id: z.number() }));
 export const draftListRes = paginatedResponseSchema(draftListItemSchema);
 
