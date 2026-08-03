@@ -13,6 +13,9 @@ export const PostLikeType = {
 
 export const MAX_POST_IMAGES = 10;
 export const MAX_LIST_THUMBNAILS = 4;
+// 마크다운/HTML/JSON 등 본문 포맷과 무관한 원본 문자열 길이 상한(악용 방지 안전장치).
+// 에디터 포맷(JSON 등)에 따라 실제 체감 입력 가능 글자 수보다 훨씬 커야 한다.
+export const MAX_POST_CONTENT_LENGTH = 500000;
 
 const postAuthorSchema = z.object({
     id: z.number(),
@@ -61,8 +64,8 @@ export const createPostSchema = z.object({
         description: '제목 (최대 50자)',
         example: '같이 공연 보러 가실 분 구합니다',
     }),
-    content: z.string().min(1).max(50000).openapi({
-        description: '본문 (마크다운)',
+    content: z.string().min(1).max(MAX_POST_CONTENT_LENGTH).openapi({
+        description: `본문 (최대 ${MAX_POST_CONTENT_LENGTH}자 — 원본 문자열 길이 기준 안전장치, 실제 체감 글자 수 제한 아님)`,
         example: '## 소개\n같이 가실 분...',
     }),
     imageIds: z
@@ -85,8 +88,8 @@ export const updatePostSchema = z.object({
         description: '제목 (최대 50자)',
         example: '같이 공연 보러 가실 분 구합니다',
     }),
-    content: z.string().min(1).max(50000).openapi({
-        description: '본문 (마크다운)',
+    content: z.string().min(1).max(MAX_POST_CONTENT_LENGTH).openapi({
+        description: `본문 (최대 ${MAX_POST_CONTENT_LENGTH}자 — 원본 문자열 길이 기준 안전장치, 실제 체감 글자 수 제한 아님)`,
         example: '## 소개\n같이 가실 분...',
     }),
     imageIds: z
@@ -135,8 +138,8 @@ export const createDraftSchema = z.object({
         description: '제목 (최대 50자, 미입력 가능)',
         example: '작성 중인 글',
     }),
-    content: z.string().max(50000).default('').openapi({
-        description: '본문 (최대 50000자, 미입력 가능)',
+    content: z.string().max(MAX_POST_CONTENT_LENGTH).default('').openapi({
+        description: `본문 (최대 ${MAX_POST_CONTENT_LENGTH}자 — 원본 문자열 길이 기준 안전장치, 미입력 가능)`,
         example: '## 소개\n작성 중...',
     }),
     imageIds: z
@@ -159,8 +162,8 @@ export const updateDraftSchema = z.object({
         description: '제목 (최대 50자, 미입력 가능)',
         example: '작성 중인 글',
     }),
-    content: z.string().max(50000).default('').openapi({
-        description: '본문 (최대 50000자, 미입력 가능)',
+    content: z.string().max(MAX_POST_CONTENT_LENGTH).default('').openapi({
+        description: `본문 (최대 ${MAX_POST_CONTENT_LENGTH}자 — 원본 문자열 길이 기준 안전장치, 미입력 가능)`,
         example: '## 소개\n작성 중...',
     }),
     imageIds: z
