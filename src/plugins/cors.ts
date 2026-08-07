@@ -2,14 +2,7 @@ import fastifyCors from '@fastify/cors';
 import { FastifyInstance } from 'fastify';
 
 const allowedOrigins = [
-    'http://100.116.32.24:11000',
-    'http://localhost:11000',
-    'http://127.0.0.1:11000',
-    'http://100.94.94.123',
-    'http://100.91.160.64',
-    'http://100.125.51.55', 
-    'http://100.109.228.88',
-    'http://100.81.143.94',
+    'http://100.116.32.24:10005',
     'https://litup.kr',
     'https://www.litup.kr',
 ];
