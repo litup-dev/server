@@ -19,7 +19,7 @@ export async function registerCors(fastify: FastifyInstance) {
         //    return cb(null, true);
         //},
         origin: (origin, cb) => {
-            if (allowedOrigins.includes(origin)) {
+            if (!origin || allowedOrigins.includes(origin)) {
                 return cb(null, true);
             }
             return cb(new Error('Not allowed by CORS'), false);
