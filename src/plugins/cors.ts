@@ -8,7 +8,8 @@ const allowedOrigins = [
     'http://100.94.94.123',
     'http://100.91.160.64',
     'http://100.125.51.55', 
-    'http://100.109.228.88', 
+    'http://100.109.228.88',
+    'http://100.81.143.94',
     'https://litup.kr',
     'https://www.litup.kr',
 ];
