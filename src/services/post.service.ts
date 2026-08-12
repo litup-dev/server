@@ -17,7 +17,7 @@ import {
     UpdateDraftType,
     UpdatePostType,
 } from '@/schemas/post.schema.js';
-import { commonCreatedAtSortBy } from '@/types/search.types.js';
+import { commonCreatedAtSortBy, PostSearchType } from '@/types/search.types.js';
 
 const parseSort = (sort: commonCreatedAtSortBy): Prisma.post_tbOrderByWithRelationInput[] => {
     switch (sort) {
@@ -103,7 +103,7 @@ export class PostService {
         offset: number;
         limit: number;
     }> {
-        const { board, category, keyword, sort, offset, limit } = params;
+        const { board, category, keyword, searchType, sort, offset, limit } = params;
 
         const where: Prisma.post_tbWhereInput = {
             board_tb: { code: board },
@@ -113,10 +113,24 @@ export class PostService {
             where.post_category_code = { code: category };
         }
         if (keyword) {
-            where.OR = [
-                { title: { contains: keyword, mode: 'insensitive' } },
-                { content: { contains: keyword, mode: 'insensitive' } },
-            ];
+            switch (searchType) {
+                case PostSearchType.TITLE:
+                    where.title = { contains: keyword, mode: 'insensitive' };
+                    break;
+                case PostSearchType.CONTENT:
+                    where.content = { contains: keyword, mode: 'insensitive' };
+                    break;
+                case PostSearchType.AUTHOR:
+                    where.user_tb = { nickname: { contains: keyword, mode: 'insensitive' } };
+                    break;
+                case PostSearchType.TITLE_CONTENT:
+                default:
+                    where.OR = [
+                        { title: { contains: keyword, mode: 'insensitive' } },
+                        { content: { contains: keyword, mode: 'insensitive' } },
+                    ];
+                    break;
+            }
         }
 
         const [rows, total] = await Promise.all([

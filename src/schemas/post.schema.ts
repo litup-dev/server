@@ -1,6 +1,6 @@
 import { z, generateSchema } from '@/common/zod.js';
 import { paginatedResponseSchema, successResponseSchema } from '@/schemas/common.schema.js';
-import { commonCreatedAtSortBy } from '@/types/search.types.js';
+import { commonCreatedAtSortBy, PostSearchType } from '@/types/search.types.js';
 
 export const BoardCode = {
     FREE: 'FREE',
@@ -198,8 +198,13 @@ export const getPostsSchema = z.object({
         example: 'GENERAL',
     }),
     keyword: z.string().optional().openapi({
-        description: '제목/내용 검색어',
+        description: '검색어',
         example: '공연',
+    }),
+    searchType: z.nativeEnum(PostSearchType).default(PostSearchType.TITLE_CONTENT).openapi({
+        description:
+            '검색 대상 (TITLE_CONTENT: 제목+내용, TITLE: 제목, CONTENT: 내용, AUTHOR: 작성자)',
+        example: 'TITLE_CONTENT',
     }),
     sort: z.nativeEnum(commonCreatedAtSortBy).default(commonCreatedAtSortBy.RECENT).openapi({
         description: '정렬 기준 (-createdAt: 최신순, +createdAt: 오래된순)',

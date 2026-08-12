@@ -28,3 +28,10 @@ export enum PerformanceReviewSortBy {
     RECENT = '-createdAt',
     OLDEST = '+createdAt',
 }
+
+export enum PostSearchType {
+    TITLE_CONTENT = 'TITLE_CONTENT',
+    TITLE = 'TITLE',
+    CONTENT = 'CONTENT',
+    AUTHOR = 'AUTHOR',
+}

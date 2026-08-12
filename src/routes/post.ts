@@ -54,7 +54,7 @@ export async function postRoutes(fastify: FastifyInstance) {
                 tags: ['Posts'],
                 summary: '게시글 목록 조회',
                 description:
-                    '게시판별 게시글 목록을 조회합니다. 카테고리 필터, 제목+내용 검색, 정렬, 페이지네이션을 지원합니다.',
+                    '게시판별 게시글 목록을 조회합니다. 카테고리 필터, 검색(제목+내용/제목/내용/작성자), 정렬, 페이지네이션을 지원합니다.',
                 response: {
                     200: postListResJson,
                     400: errorResJson,
