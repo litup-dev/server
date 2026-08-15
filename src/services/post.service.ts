@@ -538,18 +538,37 @@ export class PostService {
     /**
      * 임시저장을 실제 게시글로 전환한다. title/content가 비어있으면 게시 불가.
      * 게시 시점을 createdAt으로 보이게 하기 위해 created_at을 현재 시각으로 갱신한다.
+     *
+     * 자동저장 이후 에디터에서 이미지를 추가/삭제만 하고(자동저장이 다시 붙기 전) 바로
+     * 게시하면 본문에서 빠진 이미지가 post_img_tb에는 그대로 연결된 채 남을 수 있다.
+     * 업로드된 이미지의 file_path가 곧 마크다운 본문에 삽입되는 URL이므로, 본문에 더는
+     * 등장하지 않는 연결 이미지는 여기서 함께 정리한다.
      */
-    async publishDraft(userId: number, postId: number): Promise<number> {
+    async publishDraft(userId: number, postId: number): Promise<{ id: number; removedFilePaths: string[] }> {
         const draft = await this.getOwnedDraft(postId, userId);
         if (draft.title.trim().length === 0 || draft.content.trim().length === 0) {
             throw new BadRequestError('제목과 내용을 모두 입력해야 게시할 수 있습니다.');
         }
 
-        await this.prisma.post_tb.update({
-            where: { id: postId },
-            data: { is_draft: false, created_at: new Date() },
+        const currentImages = await this.prisma.post_img_tb.findMany({
+            where: { post_id: postId },
+            select: { id: true, file_path: true },
         });
-        return draft.id;
+        const toRemove = currentImages.filter((img) => !draft.content.includes(img.file_path));
+
+        await this.prisma.$transaction(async (tx) => {
+            if (toRemove.length > 0) {
+                await tx.post_img_tb.deleteMany({
+                    where: { id: { in: toRemove.map((img) => img.id) } },
+                });
+            }
+            await tx.post_tb.update({
+                where: { id: postId },
+                data: { is_draft: false, created_at: new Date() },
+            });
+        });
+
+        return { id: draft.id, removedFilePaths: toRemove.map((img) => img.file_path) };
     }
 
     async getDrafts(

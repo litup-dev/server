@@ -274,7 +274,8 @@ export async function postRoutes(fastify: FastifyInstance) {
             }
             const { entityId } = request.params as IdParamType;
             const service = new PostService(request.server.prisma);
-            const id = await service.publishDraft(userId, entityId);
+            const { id, removedFilePaths } = await service.publishDraft(userId, entityId);
+            await deleteFilesBestEffort(removedFilePaths);
             return reply.send({ data: { id } });
         }
     );
