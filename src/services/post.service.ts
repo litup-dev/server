@@ -80,18 +80,31 @@ export class PostService {
     }
 
     /**
-     * imageIds 기준 diff에 더해, 본문에 더는 등장하지 않는 연결 이미지도 제거 대상에 포함한다.
-     * 프론트가 imageIds를 갱신하지 못한 채(예: 기존 이미지 추적 누락) 저장을 호출해도
-     * 실제 본문 기준으로는 정합성이 맞도록 하는 안전장치.
+     * imageIds 중 실제로 본문에 남아있는(참조되는) 이미지만 최종 연결 대상으로 골라낸다.
+     * 프론트가 에디터에서 삭제된 이미지의 id를 imageIds에서 못 지우고 그대로 보내는 경우가
+     * 있어(자체 트래킹 누락), 소유권 검증과 별개로 본문 기준으로 한 번 더 걸러낸다.
+     * 여기서 걸러진(=본문에 없는) id는 연결도, 삭제 대상 판단도 항상 같은 기준을 쓰게 되어
+     * "삭제했는데 다시 연결을 시도"하는 불일치가 생기지 않는다.
      */
-    private filterImagesToRemove(
-        currentImages: { id: number; file_path: string }[],
-        nextIds: Set<number>,
+    private async resolveReferencedImageIds(
+        tx: Prisma.TransactionClient,
+        userId: number,
+        postId: number,
+        imageIds: number[],
         content: string
-    ): { id: number; file_path: string }[] {
-        return currentImages.filter(
-            (img) => !nextIds.has(img.id) || !content.includes(img.file_path)
-        );
+    ): Promise<number[]> {
+        if (imageIds.length === 0) {
+            return [];
+        }
+        const candidates = await tx.post_img_tb.findMany({
+            where: {
+                id: { in: imageIds },
+                user_id: userId,
+                OR: [{ post_id: null }, { post_id: postId }],
+            },
+            select: { id: true, file_path: true },
+        });
+        return candidates.filter((img) => content.includes(img.file_path)).map((img) => img.id);
     }
 
     private async getOwnedPost(postId: number, userId: number) {
@@ -242,7 +255,14 @@ export class PostService {
                 },
                 select: { id: true },
             });
-            await this.linkImages(tx, userId, created.id, dto.imageIds);
+            const referencedIds = await this.resolveReferencedImageIds(
+                tx,
+                userId,
+                created.id,
+                dto.imageIds,
+                dto.content
+            );
+            await this.linkImages(tx, userId, created.id, referencedIds);
             return created.id;
         });
     }
@@ -316,13 +336,7 @@ export class PostService {
         const post = await this.getOwnedPost(postId, userId);
         const categoryId = await this.resolveCategoryId(post.board_tb.code, dto.categoryCode);
 
-        const currentImages = await this.prisma.post_img_tb.findMany({
-            where: { post_id: postId },
-            select: { id: true, file_path: true },
-        });
-        const nextIds = new Set(dto.imageIds);
-        const toRemove = this.filterImagesToRemove(currentImages, nextIds, dto.content);
-
+        let removedFilePaths: string[] = [];
         await this.prisma.$transaction(async (tx) => {
             await tx.post_tb.update({
                 where: { id: postId },
@@ -333,15 +347,32 @@ export class PostService {
                     updated_at: new Date(),
                 },
             });
+
+            const currentImages = await tx.post_img_tb.findMany({
+                where: { post_id: postId },
+                select: { id: true, file_path: true },
+            });
+            const referencedIds = await this.resolveReferencedImageIds(
+                tx,
+                userId,
+                postId,
+                dto.imageIds,
+                dto.content
+            );
+            const referencedSet = new Set(referencedIds);
+            const toRemove = currentImages.filter((img) => !referencedSet.has(img.id));
+
             if (toRemove.length > 0) {
                 await tx.post_img_tb.deleteMany({
                     where: { id: { in: toRemove.map((img) => img.id) } },
                 });
             }
-            await this.linkImages(tx, userId, postId, dto.imageIds);
+            await this.linkImages(tx, userId, postId, referencedIds);
+
+            removedFilePaths = toRemove.map((img) => img.file_path);
         });
 
-        return { removedFilePaths: toRemove.map((img) => img.file_path) };
+        return { removedFilePaths };
     }
 
     /**
@@ -460,13 +491,7 @@ export class PostService {
         });
 
         if (existing) {
-            const currentImages = await this.prisma.post_img_tb.findMany({
-                where: { post_id: existing.id },
-                select: { id: true, file_path: true },
-            });
-            const nextIds = new Set(dto.imageIds);
-            const toRemove = this.filterImagesToRemove(currentImages, nextIds, dto.content);
-
+            let removedFilePaths: string[] = [];
             await this.prisma.$transaction(async (tx) => {
                 await tx.post_tb.update({
                     where: { id: existing.id },
@@ -478,19 +503,32 @@ export class PostService {
                         updated_at: new Date(),
                     },
                 });
+
+                const currentImages = await tx.post_img_tb.findMany({
+                    where: { post_id: existing.id },
+                    select: { id: true, file_path: true },
+                });
+                const referencedIds = await this.resolveReferencedImageIds(
+                    tx,
+                    userId,
+                    existing.id,
+                    dto.imageIds,
+                    dto.content
+                );
+                const referencedSet = new Set(referencedIds);
+                const toRemove = currentImages.filter((img) => !referencedSet.has(img.id));
+
                 if (toRemove.length > 0) {
                     await tx.post_img_tb.deleteMany({
                         where: { id: { in: toRemove.map((img) => img.id) } },
                     });
                 }
-                await this.linkImages(tx, userId, existing.id, dto.imageIds);
+                await this.linkImages(tx, userId, existing.id, referencedIds);
+
+                removedFilePaths = toRemove.map((img) => img.file_path);
             });
 
-            return {
-                id: existing.id,
-                isNew: false,
-                removedFilePaths: toRemove.map((img) => img.file_path),
-            };
+            return { id: existing.id, isNew: false, removedFilePaths };
         }
 
         const id = await this.prisma.$transaction(async (tx) => {
@@ -505,7 +543,14 @@ export class PostService {
                 },
                 select: { id: true },
             });
-            await this.linkImages(tx, userId, created.id, dto.imageIds);
+            const referencedIds = await this.resolveReferencedImageIds(
+                tx,
+                userId,
+                created.id,
+                dto.imageIds,
+                dto.content
+            );
+            await this.linkImages(tx, userId, created.id, referencedIds);
             return created.id;
         });
         return { id, isNew: true, removedFilePaths: [] };
@@ -522,13 +567,7 @@ export class PostService {
         const draft = await this.getOwnedDraft(postId, userId);
         const categoryId = await this.resolveCategoryId(draft.board_tb.code, dto.categoryCode);
 
-        const currentImages = await this.prisma.post_img_tb.findMany({
-            where: { post_id: postId },
-            select: { id: true, file_path: true },
-        });
-        const nextIds = new Set(dto.imageIds);
-        const toRemove = this.filterImagesToRemove(currentImages, nextIds, dto.content);
-
+        let removedFilePaths: string[] = [];
         await this.prisma.$transaction(async (tx) => {
             await tx.post_tb.update({
                 where: { id: postId },
@@ -539,15 +578,32 @@ export class PostService {
                     updated_at: new Date(),
                 },
             });
+
+            const currentImages = await tx.post_img_tb.findMany({
+                where: { post_id: postId },
+                select: { id: true, file_path: true },
+            });
+            const referencedIds = await this.resolveReferencedImageIds(
+                tx,
+                userId,
+                postId,
+                dto.imageIds,
+                dto.content
+            );
+            const referencedSet = new Set(referencedIds);
+            const toRemove = currentImages.filter((img) => !referencedSet.has(img.id));
+
             if (toRemove.length > 0) {
                 await tx.post_img_tb.deleteMany({
                     where: { id: { in: toRemove.map((img) => img.id) } },
                 });
             }
-            await this.linkImages(tx, userId, postId, dto.imageIds);
+            await this.linkImages(tx, userId, postId, referencedIds);
+
+            removedFilePaths = toRemove.map((img) => img.file_path);
         });
 
-        return { removedFilePaths: toRemove.map((img) => img.file_path) };
+        return { removedFilePaths };
     }
 
     /**
@@ -569,11 +625,7 @@ export class PostService {
             where: { post_id: postId },
             select: { id: true, file_path: true },
         });
-        const toRemove = this.filterImagesToRemove(
-            currentImages,
-            new Set(currentImages.map((img) => img.id)),
-            draft.content
-        );
+        const toRemove = currentImages.filter((img) => !draft.content.includes(img.file_path));
 
         await this.prisma.$transaction(async (tx) => {
             if (toRemove.length > 0) {
