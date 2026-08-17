@@ -79,6 +79,21 @@ export class PostService {
         }
     }
 
+    /**
+     * imageIds 기준 diff에 더해, 본문에 더는 등장하지 않는 연결 이미지도 제거 대상에 포함한다.
+     * 프론트가 imageIds를 갱신하지 못한 채(예: 기존 이미지 추적 누락) 저장을 호출해도
+     * 실제 본문 기준으로는 정합성이 맞도록 하는 안전장치.
+     */
+    private filterImagesToRemove(
+        currentImages: { id: number; file_path: string }[],
+        nextIds: Set<number>,
+        content: string
+    ): { id: number; file_path: string }[] {
+        return currentImages.filter(
+            (img) => !nextIds.has(img.id) || !content.includes(img.file_path)
+        );
+    }
+
     private async getOwnedPost(postId: number, userId: number) {
         const post = await this.prisma.post_tb.findUnique({
             where: { id: postId },
@@ -306,7 +321,7 @@ export class PostService {
             select: { id: true, file_path: true },
         });
         const nextIds = new Set(dto.imageIds);
-        const toRemove = currentImages.filter((img) => !nextIds.has(img.id));
+        const toRemove = this.filterImagesToRemove(currentImages, nextIds, dto.content);
 
         await this.prisma.$transaction(async (tx) => {
             await tx.post_tb.update({
@@ -450,7 +465,7 @@ export class PostService {
                 select: { id: true, file_path: true },
             });
             const nextIds = new Set(dto.imageIds);
-            const toRemove = currentImages.filter((img) => !nextIds.has(img.id));
+            const toRemove = this.filterImagesToRemove(currentImages, nextIds, dto.content);
 
             await this.prisma.$transaction(async (tx) => {
                 await tx.post_tb.update({
@@ -512,7 +527,7 @@ export class PostService {
             select: { id: true, file_path: true },
         });
         const nextIds = new Set(dto.imageIds);
-        const toRemove = currentImages.filter((img) => !nextIds.has(img.id));
+        const toRemove = this.filterImagesToRemove(currentImages, nextIds, dto.content);
 
         await this.prisma.$transaction(async (tx) => {
             await tx.post_tb.update({
@@ -554,7 +569,11 @@ export class PostService {
             where: { post_id: postId },
             select: { id: true, file_path: true },
         });
-        const toRemove = currentImages.filter((img) => !draft.content.includes(img.file_path));
+        const toRemove = this.filterImagesToRemove(
+            currentImages,
+            new Set(currentImages.map((img) => img.id)),
+            draft.content
+        );
 
         await this.prisma.$transaction(async (tx) => {
             if (toRemove.length > 0) {
