@@ -27,7 +27,7 @@ export class PerformanceService {
         const offset = query.offset ?? 0;
         const limit = query.limit ?? 1000;
 
-        const conditions: string[] = [];
+        const conditions: string[] = ['p.is_cancelled = false'];
         const params: any[] = [];
         let paramIndex = 1;
 
@@ -178,6 +178,7 @@ export class PerformanceService {
                 gte: start,
                 lte: end,
             },
+            is_cancelled: false,
         };
         if (isFree) {
             where.OR = [{ booking_price: { equals: 0 } }, { onsite_price: { equals: 0 } }];
@@ -289,6 +290,7 @@ export class PerformanceService {
                 gte: start,
                 lte: end,
             },
+            is_cancelled: false,
         };
         if (isFree) {
             where.OR = [{ booking_price: { equals: 0 } }, { onsite_price: { equals: 0 } }];
@@ -398,6 +400,7 @@ export class PerformanceService {
                     gte: startDate,
                     lt: endDate,
                 },
+                is_cancelled: false,
             },
             select: {
                 id: true,
@@ -488,6 +491,7 @@ export class PerformanceService {
                     lt: endDate,
                 },
                 club_id: entityId,
+                is_cancelled: false,
             },
             include: {
                 attend_tb: userId
@@ -595,7 +599,7 @@ export class PerformanceService {
         userId: number | null
     ): Promise<PerformanceDetailType | null> {
         const performance = await this.prisma.perform.findUnique({
-            where: { id: performId },
+            where: { id: performId, is_cancelled: false },
             include: {
                 club_tb: {
                     select: {
@@ -728,6 +732,40 @@ export class PerformanceService {
             throw new NotFoundError('임시 공연 정보를 찾을 수 없습니다.');
         }
 
+        const perform = await this.prisma.perform.create({
+            data: {
+                club_id: data.club_id,
+                user_id: 1,
+                title: data.title,
+                description: data.description,
+                perform_date: new Date(new Date(data.perform_date).getTime() - 9 * 60 * 60 * 1000),
+                booking_price: data.booking_price,
+                onsite_price: data.onsite_price,
+                ...(data.booking_url !== undefined && { booking_url: data.booking_url }),
+                artists: data.artists,
+                sns_links: data.sns_links,
+                updated_at: new Date(),
+            },
+        });
+        return {
+            perform_id: perform.id,
+            club_id: perform.club_id,
+            title: perform.title ?? '',
+            perform_date: perform.perform_date?.toISOString() ?? '',
+        };
+    }
+
+    async createPerformanceManual(data: {
+        club_id: number;
+        title: string;
+        description: string;
+        perform_date: string;
+        booking_price: number;
+        onsite_price: number;
+        booking_url?: string | undefined;
+        artists: { name: string }[];
+        sns_links: { instagram?: string | undefined }[];
+    }) {
         const perform = await this.prisma.perform.create({
             data: {
                 club_id: data.club_id,
