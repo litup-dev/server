@@ -113,6 +113,61 @@ export async function internalUploadRoutes(fastify: FastifyInstance) {
     );
 
     fastify.post(
+        '/internal/upload/poster/direct/:entityId',
+        {
+            preHandler: [fastify.requireInternal],
+            schema: { hide: true, params: idParamJson },
+        },
+        async (request, reply) => {
+            const { entityId } = request.params as IdParamType;
+
+            const parts = request.parts();
+            const fileArray: MultiFileWithBuffer[] = [];
+            for await (const part of parts) {
+                if (part.type === 'file') {
+                    const file = part as MultipartFile;
+                    const buffer = await part.toBuffer();
+                    fileArray.push({
+                        ...file,
+                        buffer,
+                    } as MultiFileWithBuffer);
+                }
+            }
+
+            if (fileArray.length === 0) {
+                throw new BadRequestError('업로드할 파일이 없습니다.');
+            }
+
+            try {
+                const savedFiles = await handleFileUpload(fileArray, UploadType.POSTER, entityId);
+                const service = new PerformanceService(request.server.prisma);
+                await service.savePerformancePosters(1, entityId, savedFiles);
+
+                return reply.code(201).send({
+                    images: savedFiles.map((f) => ({
+                        perform_id: entityId,
+                        url: f.filePath,
+                        is_main: f.order === 0,
+                        order: f.order,
+                    })),
+                });
+            } catch (error: any) {
+                try {
+                    await fileManager.deleteFolder(UploadType.POSTER, entityId);
+                } catch (rollbackError) {
+                    console.error('업로드 실패로 인한 폴더 삭제 중 오류 발생:', rollbackError);
+                }
+
+                if (error instanceof BadRequestError || error instanceof NotFoundError) {
+                    throw error;
+                }
+
+                throw new Error(`파일 업로드에 실패하였습니다: ${error.message}`);
+            }
+        }
+    );
+
+    fastify.post(
         '/internal/upload/club/:entityId',
         {
             schema: {

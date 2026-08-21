@@ -33,6 +33,18 @@ const createPerformanceSchema = z.object({
     sns_links: z.array(z.object({ instagram: z.string().optional() })),
 });
 
+const createPerformanceManualSchema = z.object({
+    club_id: z.number().int().positive(),
+    title: z.string().min(1),
+    description: z.string(),
+    perform_date: z.string(),
+    booking_price: z.number().int().min(0),
+    onsite_price: z.number().int().min(0),
+    booking_url: z.string().url().optional(),
+    artists: z.array(z.object({ name: z.string() })),
+    sns_links: z.array(z.object({ instagram: z.string().optional() })),
+});
+
 export async function internalPerformanceRoutes(fastify: FastifyInstance) {
     fastify.get(
         '/internal/performances/temp',
@@ -96,6 +108,25 @@ export async function internalPerformanceRoutes(fastify: FastifyInstance) {
 
             const service = new PerformanceService(request.server.prisma);
             const result = await service.createPerformance(parsed.data);
+
+            return reply.code(201).send(result);
+        }
+    );
+
+    fastify.post(
+        '/internal/performances/manual',
+        {
+            preHandler: [fastify.requireInternal],
+            schema: { hide: true },
+        },
+        async (request, reply) => {
+            const parsed = createPerformanceManualSchema.safeParse(request.body);
+            if (!parsed.success) {
+                throw new BadRequestError(parsed.error.errors.map((e) => e.message).join(', '));
+            }
+
+            const service = new PerformanceService(request.server.prisma);
+            const result = await service.createPerformanceManual(parsed.data);
 
             return reply.code(201).send(result);
         }

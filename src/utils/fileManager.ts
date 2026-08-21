@@ -139,4 +139,33 @@ export class FileManager {
         const folderPath = this.getUploadPath(type, entityId);
         await this.storage.deleteFolder(folderPath);
     }
+
+    /**
+     * 단건 파일 저장. savefiles와 달리 기존 폴더를 삭제하지 않는다.
+     * (게시글 이미지처럼 같은 폴더에 파일이 누적되는 경우 사용)
+     */
+    async saveFile(
+        file: UploadedFileInfo,
+        type: UploadType,
+        entityId: string | number
+    ): Promise<SavedFileInfo> {
+        this.validateFile(file);
+
+        const folderPath = this.getUploadPath(type, entityId);
+        const storedName = this.generateFileName(file.fileName);
+        const filePath = `${folderPath}/${storedName}`;
+
+        await this.storage.save(file.buffer, filePath);
+        return {
+            originalName: file.fileName,
+            storedName,
+            filePath,
+            size: file.size,
+            mimeType: file.mimeType,
+        };
+    }
+
+    async deleteFile(filePath: string): Promise<void> {
+        await this.storage.delete(filePath);
+    }
 }

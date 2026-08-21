@@ -3,8 +3,10 @@ import { BadRequestError, NotFoundError } from '@/common/error.js';
 import { errorResJson, idParamJson, IdParamType, successResJson } from '@/schemas/common.schema.js';
 import { ClubService } from '@/services/club.service.js';
 import { PerformanceService } from '@/services/performance.service.js';
+import { PostService } from '@/services/post.service.js';
 import { ReviewService } from '@/services/review.service.js';
 import { UserService } from '@/services/user.service.js';
+import { postImageUploadResJson } from '@/schemas/post.schema.js';
 import { MultiFileWithBuffer, UploadedFileInfo, UploadType } from '@/types/file.types.js';
 import { FileManager } from '@/utils/fileManager.js';
 import { MultipartFile } from '@fastify/multipart';
@@ -80,6 +82,73 @@ export async function uploadRoutes(fastify: FastifyInstance) {
             } catch (error: any) {
                 if (error instanceof BadRequestError || error instanceof NotFoundError) {
                     throw error;
+                }
+                throw new Error(`파일 업로드에 실패하였습니다: ${error.message}`);
+            }
+        }
+    );
+
+    fastify.post(
+        '/upload/post-image',
+        {
+            preHandler: [fastify.requireAuth],
+            schema: {
+                tags: ['Upload'],
+                summary: '게시글 이미지 선업로드',
+                description:
+                    '에디터에서 게시글 저장 전에 이미지를 한 장 업로드합니다. 반환된 id를 게시글 저장 시 imageIds에 포함해야 글에 연결됩니다.',
+                response: {
+                    200: postImageUploadResJson,
+                    400: errorResJson,
+                    500: errorResJson,
+                },
+            },
+        },
+        async (request, reply) => {
+            const userId = request.userId;
+            if (!userId) {
+                throw new NotFoundError('사용자를 찾을 수 없습니다.');
+            }
+
+            const parts = request.parts();
+            const fileArray: MultiFileWithBuffer[] = [];
+            for await (const part of parts) {
+                if (part.type === 'file') {
+                    const file = part as MultipartFile;
+                    const buffer = await part.toBuffer();
+                    fileArray.push({
+                        ...file,
+                        buffer,
+                    } as MultiFileWithBuffer);
+                }
+            }
+
+            if (fileArray.length !== 1) {
+                throw new BadRequestError('이미지는 한 번에 한 장씩 업로드해야 합니다.');
+            }
+
+            const file = fileArray[0]!;
+            const savedFile = await fileManager.saveFile(
+                {
+                    buffer: file.buffer,
+                    fileName: file.filename,
+                    mimeType: file.mimetype,
+                    encoding: file.encoding,
+                    size: file.buffer.length,
+                },
+                UploadType.POST,
+                userId
+            );
+
+            try {
+                const service = new PostService(request.server.prisma);
+                const result = await service.createPostImage(userId, savedFile);
+                return reply.send({ data: result });
+            } catch (error: any) {
+                try {
+                    await fileManager.deleteFile(savedFile.filePath);
+                } catch (rollbackError) {
+                    console.error('업로드 실패로 인한 파일 삭제 중 오류 발생:', rollbackError);
                 }
                 throw new Error(`파일 업로드에 실패하였습니다: ${error.message}`);
             }

@@ -28,6 +28,7 @@ model Club {
   latitude             Float?
   detail_address       String?                   @db.VarChar(100)
   instagram_account    String?                   @db.VarChar(50)
+  use_yn               Boolean?                  @default(true)
   club_img_tb          club_img_tb[]
   club_keyword_summary club_keyword_summary[]
   club_review_tb       club_review_tb[]
@@ -274,6 +275,11 @@ model user_tb {
   perform_review_tb      perform_review_tb[]
   perform_tb             Perform[]
   perform_tmp            perform_tmp[]
+  post_comment_like_tb   post_comment_like_tb[]
+  post_comment_tb        post_comment_tb[]
+  post_img_tb            post_img_tb[]
+  post_like_tb           post_like_tb[]
+  post_tb                post_tb[]
   report_tb              report_tb[]
   user_settings_tb       user_settings_tb?
   social_code            social_code              @relation(fields: [social_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -363,4 +369,95 @@ model notice_tb {
 
   @@index([created_at(sort: Desc), id(sort: Desc)], map: "notice_tb_created_at_id_index_desc")
   @@index([is_popup, created_at(sort: Desc)], map: "notice_tb_is_popup_created_at_index")
+}
+
+model board_tb {
+  id         Int       @id @default(autoincrement())
+  code       String    @unique @db.VarChar(30)
+  name       String    @db.VarChar(50)
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
+  post_tb    post_tb[]
+}
+
+model post_category_code {
+  id      Int       @id @default(autoincrement())
+  code    String    @unique @db.VarChar(30)
+  name    String    @db.VarChar(50)
+  post_tb post_tb[]
+}
+
+model post_comment_tb {
+  id                    Int                    @id @default(autoincrement())
+  post_id               Int
+  user_id               Int
+  parent_id             Int?
+  content               String
+  created_at            DateTime?              @default(now()) @db.Timestamptz(6)
+  updated_at            DateTime?              @db.Timestamptz(6)
+  is_deleted            Boolean                @default(false)
+  post_comment_tb       post_comment_tb?       @relation("post_comment_tbTopost_comment_tb", fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  other_post_comment_tb post_comment_tb[]      @relation("post_comment_tbTopost_comment_tb")
+  post_tb               post_tb                @relation(fields: [post_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user_tb               user_tb                @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  post_comment_like_tb  post_comment_like_tb[]
+
+  @@index([post_id, created_at], map: "post_comment_tb_post_idx")
+}
+
+model post_comment_like_tb {
+  id              Int             @id @default(autoincrement())
+  comment_id      Int
+  user_id         Int
+  created_at      DateTime?       @default(now()) @db.Timestamptz(6)
+  post_comment_tb post_comment_tb @relation(fields: [comment_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user_tb         user_tb         @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([comment_id, user_id], map: "uq_post_comment_like_tb_comment_user")
+}
+
+model post_img_tb {
+  id            Int       @id @default(autoincrement())
+  post_id       Int?
+  user_id       Int
+  file_path     String    @db.VarChar(255)
+  original_name String?   @db.VarChar(255)
+  file_size     BigInt?
+  created_at    DateTime? @default(now()) @db.Timestamptz(6)
+  post_tb       post_tb?  @relation(fields: [post_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user_tb       user_tb   @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([post_id], map: "post_img_tb_post_idx")
+}
+
+model post_like_tb {
+  id         Int       @id @default(autoincrement())
+  post_id    Int
+  user_id    Int
+  like_type  String    @db.VarChar(10)
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
+  post_tb    post_tb   @relation(fields: [post_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user_tb    user_tb   @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([post_id, user_id], map: "uq_post_like_tb_post_user")
+}
+
+model post_tb {
+  id                 Int                 @id @default(autoincrement())
+  board_id           Int
+  user_id            Int
+  category_id        Int?
+  title              String              @db.VarChar(50)
+  content            String
+  is_draft           Boolean             @default(false)
+  created_at         DateTime?           @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime?           @db.Timestamptz(6)
+  post_comment_tb    post_comment_tb[]
+  post_img_tb        post_img_tb[]
+  post_like_tb       post_like_tb[]
+  board_tb           board_tb            @relation(fields: [board_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  post_category_code post_category_code? @relation(fields: [category_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user_tb            user_tb             @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([board_id, created_at(sort: Desc), id(sort: Desc)], map: "post_tb_board_created_idx")
+  @@index([user_id], map: "post_tb_user_idx")
 }
