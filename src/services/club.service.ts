@@ -297,21 +297,6 @@ export class ClubService {
                         },
                     },
                 },
-                perform_tb: {
-                    where: {
-                        perform_date: {
-                            gte: new Date(),
-                        },
-                        is_cancelled: false,
-                    },
-                    select: {
-                        id: true,
-                        title: true,
-                        perform_date: true,
-                    },
-                    orderBy: { perform_date: 'asc' },
-                    take: 5,
-                },
                 favorite_tb: userId
                     ? {
                           where: {
