@@ -133,9 +133,10 @@ export class AuthService {
             // 1. 유저가 작성한 클럽 리뷰 관련 삭제
             const userReviews = await tx.club_review_tb.findMany({
                 where: { user_id: userId },
-                select: { id: true },
+                select: { id: true, club_id: true },
             });
             const reviewIds = userReviews.map((r) => r.id);
+            const affectedClubIds = [...new Set(userReviews.map((r) => r.club_id))];
 
             if (reviewIds.length > 0) {
                 // 리뷰 키워드 삭제
@@ -163,6 +164,23 @@ export class AuthService {
             await tx.club_review_tb.deleteMany({
                 where: { user_id: userId },
             });
+
+            // 클럽 리뷰 삭제로 영향받은 클럽들의 reviewCnt/avgRating 재계산
+            for (const clubId of affectedClubIds) {
+                const stats = await tx.club_review_tb.aggregate({
+                    where: { club_id: clubId },
+                    _avg: { rating: true },
+                    _count: true,
+                });
+
+                await tx.club.update({
+                    where: { id: clubId },
+                    data: {
+                        avgRating: stats._avg.rating ? Math.round(stats._avg.rating * 10) / 10 : 0,
+                        reviewCnt: stats._count,
+                    },
+                });
+            }
 
             // 2. 유저가 작성한 공연 리뷰 관련 삭제
             const userPerformReviews = await tx.perform_review_tb.findMany({
