@@ -45,7 +45,7 @@ export const UPLOAD_CONFIGS: Record<UploadType, UploadConfig> = {
     [UploadType.POSTER]: {
         type: UploadType.POSTER,
         minFiles: 1,
-        maxFiles: 10,
+        maxFiles: 20,
         folderName: 'poster',
     },
     [UploadType.CLUB_REVIEW]: {
