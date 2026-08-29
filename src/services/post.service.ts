@@ -215,6 +215,7 @@ export class PostService {
                     ? { code: row.post_category_code.code, name: row.post_category_code.name }
                     : null,
                 title: row.title,
+                content: row.content,
                 createdAt: row.created_at ? row.created_at.toISOString() : null,
                 updatedAt: row.updated_at ? row.updated_at.toISOString() : null,
                 author: {

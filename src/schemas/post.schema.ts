@@ -106,6 +106,7 @@ export const postListItemSchema = z.object({
     boardCode: z.string(),
     category: postCategorySchema.nullable(),
     title: z.string(),
+    content: z.string(),
     createdAt: z.string().nullable(),
     updatedAt: z.string().nullable(),
     author: postAuthorSchema,
