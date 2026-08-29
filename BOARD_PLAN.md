@@ -120,7 +120,18 @@ DDL 실행 + `db:pull` 완료. [prisma/schema.prisma](prisma/schema.prisma)에 �
 이후 남은 커뮤니티 범위 (별도 작업):
 - 공연 후기 게시판: board_tb에 이미 PERFORM_REVIEW 행 있음. API는 `?board=PERFORM_REVIEW`로 이미 동작 — 프론트 연동만 하면 됨
 - 팬 게시판: 동적 생성(요청/승인) 기능 필요 — board_tb 구조는 준비됨
-- 공연/클럽 태그(`post_tag_tb`), 싫어요 N개 자동 필터: 정책 확정 후
+- 싫어요 N개 자동 필터: 정책 미정, 범위 제외
+
+### ✅ 8단계 — 공연/클럽 태그 (완료, 2026-08-29)
+
+DDL 직접 실행 → `db:pull` → `db:generate`로 `post_tag_tb(post_id, club_id, perform_id)` 추가 (club_id/perform_id 중 정확히 하나만 NOT NULL이도록 CHECK 제약).
+
+- `POST /posts`, `PATCH /posts/:entityId`, `POST /posts/draft`, `PATCH /posts/draft/:entityId` body에 `clubIds[]`, `performIds[]` 추가. **클럽+공연 합쳐서 최대 5개**, imageIds와 동일하게 최종 상태 전체 전송(수정 시 빠진 태그는 삭제)
+- `GET /posts/:entityId` 응답에 `clubTags[]`(name/address/mainImage), `performTags[]`(title/artists/performDate/mainImage) 추가. 대표이미지는 `club_img_tb`/`perform_img_tb`의 `is_main: true` 필터로 조회
+- 목록 조회(`GET /posts`)에는 태그 미노출 (의도적 결정)
+- `publishDraft`는 post row를 그대로 전환하므로 draft에 붙인 태그가 게시 후에도 그대로 유지됨 — 별도 처리 불필요
+- 검증: `src/services/post.service.ts`의 `syncPostTags`에서 합계 5개 초과/존재하지 않는 club·perform ID를 400으로 거부
+- 스모크 테스트 완료: 클럽 2개+공연 1개 태그 생성 → 상세 조회 구조 확인, 6개 초과/존재하지 않는 ID 400 확인, 수정으로 태그 축소 반영 확인, draft 생성→게시 전환 후 태그 유지 확인, 목록에 태그 미노출 확인, 삭제 시 `post_tag_tb` cascade 삭제 확인
 
 ## 참고: 기존 코드 컨벤션
 

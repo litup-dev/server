@@ -36,6 +36,7 @@ model Club {
   favorite_tb          favorite_tb[]
   perform_tb           Perform[]
   perform_tmp          perform_tmp[]
+  post_tag_tb          post_tag_tb[]
 
   @@index([avgRating(sort: Desc), createdAt(sort: Desc), id(sort: Desc)], map: "club_tb_avg_rating_created_at_id_index")
   @@index([avgRating, createdAt, id], map: "club_tb_avg_rating_created_at_id_index_desc")
@@ -183,6 +184,7 @@ model Perform {
   perform_review_tb perform_review_tb[]
   club_tb           Club                @relation(fields: [club_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   user_tb           user_tb             @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  post_tag_tb       post_tag_tb[]
 
   @@index([perform_date, id], map: "perform_date_id_index")
   @@index([perform_date(sort: Desc), id(sort: Desc)], map: "perform_date_id_index_desc")
@@ -345,7 +347,7 @@ model perform_tmp {
   booking_price       Int?              @default(0)
   created_at          DateTime?         @default(now()) @db.Timestamptz(6)
   updated_at          DateTime?         @db.Timestamptz(6)
-  is_cancelled        Boolean?          @default(false)
+  is_cancelled        Boolean?
   artists             Json?
   sns_links           Json?
   onsite_price        Int?              @default(0)
@@ -395,11 +397,11 @@ model post_comment_tb {
   created_at            DateTime?              @default(now()) @db.Timestamptz(6)
   updated_at            DateTime?              @db.Timestamptz(6)
   is_deleted            Boolean                @default(false)
+  post_comment_like_tb  post_comment_like_tb[]
   post_comment_tb       post_comment_tb?       @relation("post_comment_tbTopost_comment_tb", fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   other_post_comment_tb post_comment_tb[]      @relation("post_comment_tbTopost_comment_tb")
   post_tb               post_tb                @relation(fields: [post_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   user_tb               user_tb                @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  post_comment_like_tb  post_comment_like_tb[]
 
   @@index([post_id, created_at], map: "post_comment_tb_post_idx")
 }
@@ -448,16 +450,33 @@ model post_tb {
   category_id        Int?
   title              String              @db.VarChar(50)
   content            String
-  is_draft           Boolean             @default(false)
   created_at         DateTime?           @default(now()) @db.Timestamptz(6)
   updated_at         DateTime?           @db.Timestamptz(6)
+  is_draft           Boolean             @default(false)
   post_comment_tb    post_comment_tb[]
   post_img_tb        post_img_tb[]
   post_like_tb       post_like_tb[]
+  post_tag_tb        post_tag_tb[]
   board_tb           board_tb            @relation(fields: [board_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   post_category_code post_category_code? @relation(fields: [category_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   user_tb            user_tb             @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([board_id, created_at(sort: Desc), id(sort: Desc)], map: "post_tb_board_created_idx")
   @@index([user_id], map: "post_tb_user_idx")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model post_tag_tb {
+  id         Int       @id @default(autoincrement())
+  post_id    Int
+  club_id    Int?
+  perform_id Int?
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
+  club_tb    Club?     @relation(fields: [club_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  perform_tb Perform?  @relation(fields: [perform_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  post_tb    post_tb   @relation(fields: [post_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([club_id], map: "post_tag_tb_club_idx")
+  @@index([perform_id], map: "post_tag_tb_perform_idx")
+  @@index([post_id], map: "post_tag_tb_post_idx")
 }

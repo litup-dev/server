@@ -13,6 +13,7 @@ export const PostLikeType = {
 
 export const MAX_POST_IMAGES = 10;
 export const MAX_LIST_THUMBNAILS = 4;
+export const MAX_POST_TAGS = 5;
 // 마크다운/HTML/JSON 등 본문 포맷과 무관한 원본 문자열 길이 상한(악용 방지 안전장치).
 // 에디터 포맷(JSON 등)에 따라 실제 체감 입력 가능 글자 수보다 훨씬 커야 한다.
 export const MAX_POST_CONTENT_LENGTH = 500000;
@@ -33,6 +34,26 @@ const postCategorySchema = z.object({
     name: z.string(),
 });
 
+const postTagImageSchema = z.object({
+    id: z.number(),
+    filePath: z.string().nullable(),
+});
+
+const postTagClubSchema = z.object({
+    id: z.number(),
+    name: z.string().nullable(),
+    address: z.string().nullable(),
+    mainImage: postTagImageSchema.nullable(),
+});
+
+const postTagPerformSchema = z.object({
+    id: z.number(),
+    title: z.string().nullable(),
+    artists: z.array(z.object({ name: z.string() })).nullable(),
+    performDate: z.string().nullable(),
+    mainImage: postTagImageSchema.nullable(),
+});
+
 export const postDetailSchema = z.object({
     id: z.number(),
     boardCode: z.string(),
@@ -43,6 +64,8 @@ export const postDetailSchema = z.object({
     updatedAt: z.string().nullable(),
     author: postAuthorSchema,
     images: z.array(postImageSchema),
+    clubTags: z.array(postTagClubSchema),
+    performTags: z.array(postTagPerformSchema),
     likeCount: z.number(),
     dislikeCount: z.number(),
     commentCount: z.number(),
@@ -76,6 +99,22 @@ export const createPostSchema = z.object({
             description: `본문에 사용된 이미지 ID 목록 (최대 ${MAX_POST_IMAGES}개)`,
             example: [1, 2],
         }),
+    clubIds: z
+        .array(z.number().int().positive())
+        .max(MAX_POST_TAGS)
+        .default([])
+        .openapi({
+            description: `태그할 클럽 ID 목록 (공연 태그 포함 합쳐서 최대 ${MAX_POST_TAGS}개)`,
+            example: [1],
+        }),
+    performIds: z
+        .array(z.number().int().positive())
+        .max(MAX_POST_TAGS)
+        .default([])
+        .openapi({
+            description: `태그할 공연 ID 목록 (클럽 태그 포함 합쳐서 최대 ${MAX_POST_TAGS}개)`,
+            example: [1],
+        }),
 });
 
 // 수정은 최종 상태 전체 전송. imageIds에서 빠진 기존 이미지는 스토리지에서도 삭제된다.
@@ -98,6 +137,22 @@ export const updatePostSchema = z.object({
         .openapi({
             description: `수정 후 본문에 남는 이미지 ID 전체 목록 (최대 ${MAX_POST_IMAGES}개)`,
             example: [1, 2],
+        }),
+    clubIds: z
+        .array(z.number().int().positive())
+        .max(MAX_POST_TAGS)
+        .default([])
+        .openapi({
+            description: `수정 후 남는 클럽 태그 ID 전체 목록 (공연 태그 포함 합쳐서 최대 ${MAX_POST_TAGS}개)`,
+            example: [1],
+        }),
+    performIds: z
+        .array(z.number().int().positive())
+        .max(MAX_POST_TAGS)
+        .default([])
+        .openapi({
+            description: `수정 후 남는 공연 태그 ID 전체 목록 (클럽 태그 포함 합쳐서 최대 ${MAX_POST_TAGS}개)`,
+            example: [1],
         }),
 });
 
@@ -151,6 +206,22 @@ export const createDraftSchema = z.object({
             description: `본문에 사용된 이미지 ID 목록 (최대 ${MAX_POST_IMAGES}개)`,
             example: [1, 2],
         }),
+    clubIds: z
+        .array(z.number().int().positive())
+        .max(MAX_POST_TAGS)
+        .default([])
+        .openapi({
+            description: `태그할 클럽 ID 목록 (공연 태그 포함 합쳐서 최대 ${MAX_POST_TAGS}개)`,
+            example: [1],
+        }),
+    performIds: z
+        .array(z.number().int().positive())
+        .max(MAX_POST_TAGS)
+        .default([])
+        .openapi({
+            description: `태그할 공연 ID 목록 (클럽 태그 포함 합쳐서 최대 ${MAX_POST_TAGS}개)`,
+            example: [1],
+        }),
 });
 
 // 임시저장 수정(자동저장). 최종 상태 전체 전송 방식은 updatePostSchema와 동일.
@@ -174,6 +245,22 @@ export const updateDraftSchema = z.object({
         .openapi({
             description: `수정 후 본문에 남는 이미지 ID 전체 목록 (최대 ${MAX_POST_IMAGES}개)`,
             example: [1, 2],
+        }),
+    clubIds: z
+        .array(z.number().int().positive())
+        .max(MAX_POST_TAGS)
+        .default([])
+        .openapi({
+            description: `수정 후 남는 클럽 태그 ID 전체 목록 (공연 태그 포함 합쳐서 최대 ${MAX_POST_TAGS}개)`,
+            example: [1],
+        }),
+    performIds: z
+        .array(z.number().int().positive())
+        .max(MAX_POST_TAGS)
+        .default([])
+        .openapi({
+            description: `수정 후 남는 공연 태그 ID 전체 목록 (클럽 태그 포함 합쳐서 최대 ${MAX_POST_TAGS}개)`,
+            example: [1],
         }),
 });
 
