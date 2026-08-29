@@ -9,6 +9,7 @@ import {
     GetDraftsType,
     GetPostsType,
     MAX_LIST_THUMBNAILS,
+    MAX_POST_TAGS,
     PostDetailType,
     PostLikeStateType,
     PostLikeType,
@@ -105,6 +106,40 @@ export class PostService {
             select: { id: true, file_path: true },
         });
         return candidates.filter((img) => content.includes(img.file_path)).map((img) => img.id);
+    }
+
+    /**
+     * 클럽/공연 태그 최종 상태 전체 전송 방식. 기존 태그를 지우고 새로 전달된 목록으로 교체한다.
+     * 합계 개수 제한과 존재 여부는 여기서 함께 검증한다.
+     */
+    private async syncPostTags(
+        tx: Prisma.TransactionClient,
+        postId: number,
+        clubIds: number[],
+        performIds: number[]
+    ): Promise<void> {
+        if (clubIds.length + performIds.length > MAX_POST_TAGS) {
+            throw new BadRequestError(`클럽/공연 태그는 합쳐서 최대 ${MAX_POST_TAGS}개까지 가능합니다.`);
+        }
+        const [clubCount, performCount] = await Promise.all([
+            clubIds.length > 0 ? tx.club.count({ where: { id: { in: clubIds } } }) : 0,
+            performIds.length > 0 ? tx.perform.count({ where: { id: { in: performIds } } }) : 0,
+        ]);
+        if (clubCount !== clubIds.length) {
+            throw new BadRequestError('존재하지 않는 클럽이 포함되어 있습니다.');
+        }
+        if (performCount !== performIds.length) {
+            throw new BadRequestError('존재하지 않는 공연이 포함되어 있습니다.');
+        }
+
+        await tx.post_tag_tb.deleteMany({ where: { post_id: postId } });
+        const data = [
+            ...clubIds.map((club_id) => ({ post_id: postId, club_id, perform_id: null })),
+            ...performIds.map((perform_id) => ({ post_id: postId, perform_id, club_id: null })),
+        ];
+        if (data.length > 0) {
+            await tx.post_tag_tb.createMany({ data });
+        }
     }
 
     private async getOwnedPost(postId: number, userId: number) {
@@ -264,6 +299,7 @@ export class PostService {
                 dto.content
             );
             await this.linkImages(tx, userId, created.id, referencedIds);
+            await this.syncPostTags(tx, created.id, dto.clubIds, dto.performIds);
             return created.id;
         });
     }
@@ -276,6 +312,35 @@ export class PostService {
                 board_tb: { select: { code: true } },
                 post_category_code: { select: { code: true, name: true } },
                 post_img_tb: { select: { id: true, file_path: true }, orderBy: { id: 'asc' } },
+                post_tag_tb: {
+                    include: {
+                        club_tb: {
+                            select: {
+                                id: true,
+                                name: true,
+                                address: true,
+                                club_img_tb: {
+                                    where: { is_main: true },
+                                    take: 1,
+                                    select: { id: true, file_path: true },
+                                },
+                            },
+                        },
+                        perform_tb: {
+                            select: {
+                                id: true,
+                                title: true,
+                                artists: true,
+                                perform_date: true,
+                                perform_img_tb: {
+                                    where: { is_main: true },
+                                    take: 1,
+                                    select: { id: true, file_path: true },
+                                },
+                            },
+                        },
+                    },
+                },
                 _count: {
                     select: { post_comment_tb: { where: { is_deleted: false } } },
                 },
@@ -316,6 +381,37 @@ export class PostService {
                 profilePath: row.user_tb.profile_path,
             },
             images: row.post_img_tb.map((img) => ({ id: img.id, filePath: img.file_path })),
+            clubTags: row.post_tag_tb
+                .filter((t) => t.club_tb)
+                .map((t) => ({
+                    id: t.club_tb!.id,
+                    name: t.club_tb!.name,
+                    address: t.club_tb!.address,
+                    mainImage: t.club_tb!.club_img_tb[0]
+                        ? {
+                              id: t.club_tb!.club_img_tb[0].id,
+                              filePath: t.club_tb!.club_img_tb[0].file_path,
+                          }
+                        : null,
+                })),
+            performTags: row.post_tag_tb
+                .filter((t) => t.perform_tb)
+                .map((t) => ({
+                    id: t.perform_tb!.id,
+                    title: t.perform_tb!.title,
+                    artists: Array.isArray(t.perform_tb!.artists)
+                        ? (t.perform_tb!.artists as { name: string }[])
+                        : null,
+                    performDate: t.perform_tb!.perform_date
+                        ? t.perform_tb!.perform_date.toISOString()
+                        : null,
+                    mainImage: t.perform_tb!.perform_img_tb[0]
+                        ? {
+                              id: t.perform_tb!.perform_img_tb[0].id,
+                              filePath: t.perform_tb!.perform_img_tb[0].file_path,
+                          }
+                        : null,
+                })),
             likeCount,
             dislikeCount,
             commentCount: row._count.post_comment_tb,
@@ -369,6 +465,7 @@ export class PostService {
                 });
             }
             await this.linkImages(tx, userId, postId, referencedIds);
+            await this.syncPostTags(tx, postId, dto.clubIds, dto.performIds);
 
             removedFilePaths = toRemove.map((img) => img.file_path);
         });
@@ -525,6 +622,7 @@ export class PostService {
                     });
                 }
                 await this.linkImages(tx, userId, existing.id, referencedIds);
+                await this.syncPostTags(tx, existing.id, dto.clubIds, dto.performIds);
 
                 removedFilePaths = toRemove.map((img) => img.file_path);
             });
@@ -552,6 +650,7 @@ export class PostService {
                 dto.content
             );
             await this.linkImages(tx, userId, created.id, referencedIds);
+            await this.syncPostTags(tx, created.id, dto.clubIds, dto.performIds);
             return created.id;
         });
         return { id, isNew: true, removedFilePaths: [] };
@@ -600,6 +699,7 @@ export class PostService {
                 });
             }
             await this.linkImages(tx, userId, postId, referencedIds);
+            await this.syncPostTags(tx, postId, dto.clubIds, dto.performIds);
 
             removedFilePaths = toRemove.map((img) => img.file_path);
         });
