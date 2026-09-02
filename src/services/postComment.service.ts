@@ -9,6 +9,7 @@ import {
     MentionableUserType,
     UpdateCommentType,
 } from '@/schemas/postComment.schema.js';
+import { commonCreatedAtSortBy } from '@/types/search.types.js';
 
 const authorSelect = {
     select: { id: true, nickname: true, profile_path: true },
@@ -123,7 +124,8 @@ export class PostCommentService {
         offset: number;
         limit: number;
     }> {
-        const { offset, limit } = params;
+        const { offset, limit, sort } = params;
+        const direction = sort === commonCreatedAtSortBy.RECENT ? 'desc' : 'asc';
 
         const post = await this.prisma.post_tb.findUnique({
             where: { id: postId },
@@ -137,7 +139,7 @@ export class PostCommentService {
         const [roots, total] = await Promise.all([
             this.prisma.post_comment_tb.findMany({
                 where: rootWhere,
-                orderBy: [{ created_at: 'asc' }, { id: 'asc' }],
+                orderBy: [{ created_at: direction }, { id: direction }],
                 skip: offset,
                 take: limit,
                 include: {

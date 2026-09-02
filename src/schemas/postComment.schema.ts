@@ -1,5 +1,6 @@
 import { z, generateSchema } from '@/common/zod.js';
 import { paginatedResponseSchema, successResponseSchema } from '@/schemas/common.schema.js';
+import { commonCreatedAtSortBy } from '@/types/search.types.js';
 
 const commentAuthorSchema = z.object({
     id: z.number(),
@@ -58,8 +59,13 @@ export const updateCommentSchema = z.object({
     }),
 });
 
-// 댓글 목록은 등록순 고정, 페이지네이션은 최상위 댓글 기준
+// 댓글 목록 정렬은 최상위 댓글 기준으로만 적용되고, 대댓글은 항상 등록순(오래된순) 고정
 export const getCommentsSchema = z.object({
+    sort: z.nativeEnum(commonCreatedAtSortBy).default(commonCreatedAtSortBy.OLDEST).openapi({
+        description:
+            '최상위 댓글 정렬 기준 (-createdAt: 최신순, +createdAt: 오래된순). 대댓글은 항상 등록순.',
+        example: '+createdAt',
+    }),
     offset: z
         .preprocess((val) => {
             if (typeof val === 'string') return parseInt(val, 10);
