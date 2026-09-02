@@ -62,7 +62,7 @@ export async function postCommentRoutes(fastify: FastifyInstance) {
                 tags: ['Post Comments'],
                 summary: '댓글 목록 조회',
                 description:
-                    '게시글의 댓글 목록을 등록순으로 조회합니다. 페이지네이션은 최상위 댓글 기준이며, 대댓글은 각 댓글의 replies에 flat 배열(parentId 포함)로 내려갑니다.',
+                    '게시글의 댓글 목록을 조회합니다. sort로 최상위 댓글 정렬(최신순/오래된순, 기본 오래된순)을 지정할 수 있고, 페이지네이션도 최상위 댓글 기준입니다. 대댓글은 항상 등록순으로 각 댓글의 replies에 flat 배열(parentId 포함)로 내려갑니다.',
                 response: {
                     200: commentListResJson,
                     404: errorResJson,
