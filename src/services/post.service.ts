@@ -160,7 +160,10 @@ export class PostService {
         return post;
     }
 
-    async getPosts(params: GetPostsType): Promise<{
+    async getPosts(
+        params: GetPostsType,
+        userId?: number | null
+    ): Promise<{
         items: PostListItemType[];
         total: number;
         offset: number;
@@ -223,14 +226,29 @@ export class PostService {
         ]);
 
         const postIds = rows.map((row) => row.id);
-        const likeGroups =
+        const [likeGroups, myLikes, myCommentedPosts] = await Promise.all([
             postIds.length > 0
-                ? await this.prisma.post_like_tb.groupBy({
+                ? this.prisma.post_like_tb.groupBy({
                       by: ['post_id', 'like_type'],
                       where: { post_id: { in: postIds } },
                       _count: { _all: true },
                   })
-                : [];
+                : [],
+            postIds.length > 0 && userId
+                ? this.prisma.post_like_tb.findMany({
+                      where: { post_id: { in: postIds }, user_id: userId },
+                      select: { post_id: true, like_type: true },
+                  })
+                : [],
+            postIds.length > 0 && userId
+                ? this.prisma.post_comment_tb.findMany({
+                      where: { post_id: { in: postIds }, user_id: userId, is_deleted: false },
+                      distinct: ['post_id'],
+                      select: { post_id: true },
+                  })
+                : [],
+        ]);
+
         const likeCountMap = new Map<number, { like: number; dislike: number }>();
         for (const group of likeGroups) {
             const entry = likeCountMap.get(group.post_id) ?? { like: 0, dislike: 0 };
@@ -241,6 +259,10 @@ export class PostService {
             }
             likeCountMap.set(group.post_id, entry);
         }
+        const myLikeTypeMap = new Map<number, PostLikeTypeValue>(
+            myLikes.map((like) => [like.post_id, like.like_type as PostLikeTypeValue])
+        );
+        const myCommentedSet = new Set(myCommentedPosts.map((c) => c.post_id));
 
         return {
             items: rows.map((row) => ({
@@ -263,6 +285,8 @@ export class PostService {
                 commentCount: row._count.post_comment_tb,
                 thumbnails: row.post_img_tb.map((img) => ({ id: img.id, filePath: img.file_path })),
                 imageCount: row._count.post_img_tb,
+                myLikeType: myLikeTypeMap.get(row.id) ?? null,
+                hasMyComment: myCommentedSet.has(row.id),
             })),
             total,
             offset,

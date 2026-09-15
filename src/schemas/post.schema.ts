@@ -178,6 +178,12 @@ export const postListItemSchema = z.object({
         description: '게시글에 첨부된 전체 이미지 개수',
         example: 10,
     }),
+    myLikeType: z.enum([PostLikeType.LIKE, PostLikeType.DISLIKE]).nullable().openapi({
+        description: '로그인 시 내가 좋아요/싫어요를 눌렀는지 여부. 비로그인은 항상 null',
+    }),
+    hasMyComment: z.boolean().openapi({
+        description: '로그인 시 내가 이 글에 댓글(삭제되지 않은)을 남겼는지 여부. 비로그인은 항상 false',
+    }),
 });
 
 // 임시저장 생성. title/content는 완결성 검사 없이 부분 상태 그대로 저장.

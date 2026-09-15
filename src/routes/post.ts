@@ -49,12 +49,13 @@ export async function postRoutes(fastify: FastifyInstance) {
     fastify.get(
         '/posts',
         {
+            preHandler: [fastify.optionalAuth],
             schema: {
                 querystring: getPostsJson,
                 tags: ['Posts'],
                 summary: '게시글 목록 조회',
                 description:
-                    '게시판별 게시글 목록을 조회합니다. 카테고리 필터, 검색(제목+내용/제목/내용/작성자), 정렬, 페이지네이션을 지원합니다.',
+                    '게시판별 게시글 목록을 조회합니다. 카테고리 필터, 검색(제목+내용/제목/내용/작성자), 정렬, 페이지네이션을 지원합니다. 로그인 상태면 각 게시글에 myLikeType, hasMyComment가 채워집니다.',
                 response: {
                     200: postListResJson,
                     400: errorResJson,
@@ -65,7 +66,7 @@ export async function postRoutes(fastify: FastifyInstance) {
         async (request, reply) => {
             const params = request.query as GetPostsType;
             const service = new PostService(request.server.prisma);
-            const result = await service.getPosts(params);
+            const result = await service.getPosts(params, request.userId);
             return reply.send({ data: result });
         }
     );
