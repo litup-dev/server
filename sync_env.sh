@@ -2,7 +2,7 @@
 set -e
 
 REMOTE_USER="litup"
-REMOTE_HOST="220.93.50.45"
+REMOTE_HOST="seohae-server.iptime.org"
 REMOTE_PATH="/Users/litup/workspace/litup/dockers/server/app"
 REMOTE_PORT="4342"
 

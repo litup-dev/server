@@ -2,7 +2,7 @@
 setlocal
 
 set REMOTE_USER=litup
-set REMOTE_HOST=220.93.50.45
+set REMOTE_HOST=seohae-server.iptime.org
 set REMOTE_PATH=/Users/litup/workspace/litup/dockers/server/app
 set REMOTE_PORT=4342
 
