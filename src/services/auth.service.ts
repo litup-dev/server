@@ -10,7 +10,7 @@ import { FileManager } from '@/utils/fileManager';
 import { createStorageAdapter } from '@/adapters/storage';
 import { UploadType } from '@/types/file.types';
 import { TokenService } from '@/services/token.service';
-import { NODE_ENV } from '@/common/constants';
+import { REFRESH_TOKEN_COOKIE_PATH } from '@/common/constants';
 
 export class AuthService {
     constructor(private prisma: PrismaClient) {}
@@ -358,9 +358,7 @@ export class AuthService {
             }
         }
 
-        const refreshTokenPath = NODE_ENV === 'production' ? '/auth/refresh' : '/';
-
-        reply.clearCookie('refreshToken', { path: refreshTokenPath });
+        reply.clearCookie('refreshToken', { path: REFRESH_TOKEN_COOKIE_PATH });
         reply.clearCookie('accessToken', { path: '/' });
         reply.clearCookie('isLogin', { path: '/' });
     }
