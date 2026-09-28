@@ -1,4 +1,4 @@
-import { NODE_ENV } from '@/common/constants';
+import { JWT_REFRESH_TOKEN_EXPIRES_IN, NODE_ENV, REFRESH_TOKEN_COOKIE_PATH } from '@/common/constants';
 import { decodeOAuthState } from '@/plugins/oauth.js';
 import { exchangeCodeJson, loginJson } from '@/schemas/auth.schema.js';
 import { errorResJson, successResJson } from '@/schemas/common.schema.js';
@@ -171,7 +171,8 @@ export async function authRoutes(fastify: FastifyInstance) {
                 httpOnly: true,
                 secure: NODE_ENV === 'production' ? true : false,
                 sameSite: 'lax', // CSRF 공격 방지
-                path: NODE_ENV === 'production' ? '/auth/refresh' : '/',
+                path: REFRESH_TOKEN_COOKIE_PATH,
+                maxAge: JWT_REFRESH_TOKEN_EXPIRES_IN,
             });
 
             reply.setCookie('accessToken', accessToken, {
@@ -179,12 +180,14 @@ export async function authRoutes(fastify: FastifyInstance) {
                 secure: NODE_ENV === 'production' ? true : false,
                 sameSite: 'lax',
                 path: '/',
+                maxAge: tokenService.getAccessTokenExpiresInSeconds(),
             });
 
             reply.setCookie('isLogin', 'true', {
                 secure: NODE_ENV === 'production' ? true : false,
                 sameSite: 'lax',
                 path: '/',
+                maxAge: JWT_REFRESH_TOKEN_EXPIRES_IN,
             });
 
             return reply.send({
@@ -246,7 +249,8 @@ export async function authRoutes(fastify: FastifyInstance) {
                     httpOnly: true,
                     secure: NODE_ENV === 'production' ? true : false,
                     sameSite: 'lax', // CSRF 공격 방지
-                    path: NODE_ENV === 'production' ? '/auth/refresh' : '/',
+                    path: REFRESH_TOKEN_COOKIE_PATH,
+                    maxAge: JWT_REFRESH_TOKEN_EXPIRES_IN,
                 });
 
                 reply.setCookie('accessToken', accessToken, {
@@ -254,6 +258,7 @@ export async function authRoutes(fastify: FastifyInstance) {
                     secure: NODE_ENV === 'production' ? true : false,
                     sameSite: 'lax',
                     path: '/',
+                    maxAge: tokenService.getAccessTokenExpiresInSeconds(),
                 });
 
                 reply.send({

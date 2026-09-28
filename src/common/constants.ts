@@ -25,6 +25,10 @@ export const JWT_REFRESH_TOKEN_EXPIRES_IN =
     Number(process.env.JWT_REFRESH_TOKEN_EXPIRES_IN) || 604800;
 export const OAUTH_LOGIN_CODE_EXPIRES_IN =
     Number(process.env.OAUTH_LOGIN_CODE_EXPIRES_IN) || 60;
+// refreshToken 쿠키 path. API_PREFIX(/api/v1)를 포함해야 실제 요청 경로(/api/v1/auth/refresh)와
+// 일치해 브라우저가 쿠키를 전송한다. 예전엔 NODE_ENV별로 '/auth/refresh' | '/'로 나뉘어 있었는데
+// 운영에서는 실제 요청 경로와 달라 쿠키가 전송되지 않아 토큰 재발급이 항상 실패했다.
+export const REFRESH_TOKEN_COOKIE_PATH = `${API_PREFIX}/auth/refresh`;
 export const JWT_TOKEN_SECRET = process.env.JWT_ACCESS_TOKEN_SECRET!;
 export const COOKIE_SECRET = process.env.COOKIE_SECRET!;
 export const KAKAO_CLIENT_ID = process.env.KAKAO_CLIENT_ID!;
