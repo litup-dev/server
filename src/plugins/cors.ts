@@ -3,6 +3,7 @@ import { FastifyInstance } from 'fastify';
 
 const allowedOrigins = [
     'http://100.116.32.24:10005',
+    'http://100.116.32.24:10015',
     'https://litup.kr',
     'https://www.litup.kr',
 ];
