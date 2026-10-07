@@ -27,7 +27,7 @@ export class PerformanceService {
         const offset = query.offset ?? 0;
         const limit = query.limit ?? 1000;
 
-        const conditions: string[] = ['p.is_cancelled = false'];
+        const conditions: string[] = ['p.is_cancelled = false', 'p.is_deleted = false'];
         const params: any[] = [];
         let paramIndex = 1;
 
@@ -179,6 +179,7 @@ export class PerformanceService {
                 lte: end,
             },
             is_cancelled: false,
+            is_deleted: false,
         };
         if (isFree) {
             where.OR = [{ booking_price: { equals: 0 } }, { onsite_price: { equals: 0 } }];
@@ -291,6 +292,7 @@ export class PerformanceService {
                 lte: end,
             },
             is_cancelled: false,
+            is_deleted: false,
         };
         if (isFree) {
             where.OR = [{ booking_price: { equals: 0 } }, { onsite_price: { equals: 0 } }];
@@ -401,6 +403,7 @@ export class PerformanceService {
                     lt: endDate,
                 },
                 is_cancelled: false,
+                is_deleted: false,
             },
             select: {
                 id: true,
@@ -492,6 +495,7 @@ export class PerformanceService {
                 },
                 club_id: entityId,
                 is_cancelled: false,
+                is_deleted: false,
             },
             include: {
                 attend_tb: userId
@@ -599,7 +603,7 @@ export class PerformanceService {
         userId: number | null
     ): Promise<PerformanceDetailType | null> {
         const performance = await this.prisma.perform.findUnique({
-            where: { id: performId, is_cancelled: false },
+            where: { id: performId, is_cancelled: false, is_deleted: false },
             include: {
                 club_tb: {
                     select: {

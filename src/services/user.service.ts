@@ -145,6 +145,7 @@ export class UserService {
                     id: { in: performanceIds },
                     perform_date: { lt: new Date() },
                     is_cancelled: false,
+                    is_deleted: false,
                 },
                 orderBy: {
                     perform_date: 'desc',
@@ -176,6 +177,7 @@ export class UserService {
                     id: { in: performanceIds },
                     perform_date: { lt: new Date() },
                     is_cancelled: false,
+                    is_deleted: false,
                 },
             }),
         ]);
@@ -344,7 +346,7 @@ export class UserService {
         const orderDirection = sort === commonCreatedAtSortBy.RECENT ? 'desc' : 'asc';
         const wishFilter = {
             user_id: targetUserId,
-            perform_tb: { perform_date: { gte: new Date() }, is_cancelled: false },
+            perform_tb: { perform_date: { gte: new Date() }, is_cancelled: false, is_deleted: false },
         };
 
         const [attendances, total] = await this.prisma.$transaction([
