@@ -356,6 +356,8 @@ export class PostService {
                                 title: true,
                                 artists: true,
                                 perform_date: true,
+                                is_cancelled: true,
+                                is_deleted: true,
                                 perform_img_tb: {
                                     where: { is_main: true },
                                     take: 1,
@@ -419,7 +421,9 @@ export class PostService {
                         : null,
                 })),
             performTags: row.post_tag_tb
-                .filter((t) => t.perform_tb)
+                .filter(
+                    (t) => t.perform_tb && !t.perform_tb.is_cancelled && !t.perform_tb.is_deleted
+                )
                 .map((t) => ({
                     id: t.perform_tb!.id,
                     title: t.perform_tb!.title,

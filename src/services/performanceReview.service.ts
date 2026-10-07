@@ -22,7 +22,10 @@ export class PerformanceReviewService {
         console.log('performId:', performId);
         const [reviews, total] = await Promise.all([
             this.prisma.perform_review_tb.findMany({
-                where: { perform_id: performId },
+                where: {
+                    perform_id: performId,
+                    perform_tb: { is_cancelled: false, is_deleted: false },
+                },
                 include: {
                     user_tb: {
                         select: {
@@ -47,7 +50,12 @@ export class PerformanceReviewService {
                 skip: offset,
                 take: limit,
             }),
-            this.prisma.perform_review_tb.count({ where: { perform_id: performId } }),
+            this.prisma.perform_review_tb.count({
+                where: {
+                    perform_id: performId,
+                    perform_tb: { is_cancelled: false, is_deleted: false },
+                },
+            }),
         ]);
 
         if (reviews.length === 0) {
@@ -88,7 +96,7 @@ export class PerformanceReviewService {
 
         const [reviews, total] = await Promise.all([
             this.prisma.perform_review_tb.findMany({
-                where: { user_id: userId },
+                where: { user_id: userId, perform_tb: { is_cancelled: false, is_deleted: false } },
                 select: {
                     id: true,
                     content: true,
@@ -116,7 +124,9 @@ export class PerformanceReviewService {
                 skip: offset,
                 take: limit,
             }),
-            this.prisma.perform_review_tb.count({ where: { user_id: userId } }),
+            this.prisma.perform_review_tb.count({
+                where: { user_id: userId, perform_tb: { is_cancelled: false, is_deleted: false } },
+            }),
         ]);
 
         if (reviews.length === 0) {
@@ -156,7 +166,10 @@ export class PerformanceReviewService {
 
         const [likes, total] = await Promise.all([
             this.prisma.perform_review_like_tb.findMany({
-                where: { user_id: userId },
+                where: {
+                    user_id: userId,
+                    perform_review_tb: { perform_tb: { is_cancelled: false, is_deleted: false } },
+                },
                 include: {
                     perform_review_tb: {
                         include: {
@@ -180,7 +193,12 @@ export class PerformanceReviewService {
                 skip: offset,
                 take: limit,
             }),
-            this.prisma.perform_review_like_tb.count({ where: { user_id: userId } }),
+            this.prisma.perform_review_like_tb.count({
+                where: {
+                    user_id: userId,
+                    perform_review_tb: { perform_tb: { is_cancelled: false, is_deleted: false } },
+                },
+            }),
         ]);
 
         if (likes.length === 0) {

@@ -89,12 +89,14 @@ export class UserService {
                     perform_date: {
                         gte: new Date(),
                     },
+                    is_cancelled: false,
+                    is_deleted: false,
                 },
             },
         });
 
         const performReviewCount = await this.prisma.perform_review_tb.count({
-            where: { user_id: userId },
+            where: { user_id: userId, perform_tb: { is_cancelled: false, is_deleted: false } },
         });
 
         return {
