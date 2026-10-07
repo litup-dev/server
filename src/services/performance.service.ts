@@ -1,4 +1,4 @@
-import { NotFoundError } from '@/common/error.js';
+import { ConflictError, NotFoundError } from '@/common/error.js';
 import { OperationSuccessType } from '@/schemas/common.schema.js';
 import {
     GetPerformanceByDateRangeType,
@@ -671,6 +671,22 @@ export class PerformanceService {
             })),
             isAttend: performance.attend_tb && performance.attend_tb.length > 0 ? true : false,
         };
+    }
+
+    // 소프트 삭제: 행은 남기고 is_deleted 만 true 로 바꾼다 (사용자 조회에서는 모두 제외됨)
+    async softDeletePerformance(performId: number): Promise<{ id: number; is_deleted: true }> {
+        const perform = await this.prisma.perform.findUnique({
+            where: { id: performId },
+            select: { id: true, is_deleted: true },
+        });
+        if (!perform) throw new NotFoundError('공연을 찾을 수 없습니다.');
+        if (perform.is_deleted) throw new ConflictError('이미 삭제된 공연입니다.');
+
+        await this.prisma.perform.update({
+            where: { id: performId },
+            data: { is_deleted: true, updated_at: new Date() },
+        });
+        return { id: performId, is_deleted: true };
     }
 
     async savePerformancePosters(

@@ -45,6 +45,10 @@ const createPerformanceManualSchema = z.object({
     sns_links: z.array(z.object({ instagram: z.string().optional() })),
 });
 
+const idParamSchema = z.object({
+    id: z.preprocess((v) => Number(v), z.number().int().positive()),
+});
+
 export async function internalPerformanceRoutes(fastify: FastifyInstance) {
     fastify.get(
         '/internal/performances/temp',
@@ -129,6 +133,23 @@ export async function internalPerformanceRoutes(fastify: FastifyInstance) {
             const result = await service.createPerformanceManual(parsed.data);
 
             return reply.code(201).send(result);
+        }
+    );
+
+    fastify.delete(
+        '/internal/performances/:id',
+        {
+            preHandler: [fastify.requireInternal],
+            schema: { hide: true },
+        },
+        async (request, reply) => {
+            const parsed = idParamSchema.safeParse(request.params);
+            if (!parsed.success) {
+                throw new BadRequestError(parsed.error.errors.map((e) => e.message).join(', '));
+            }
+
+            const service = new PerformanceService(request.server.prisma);
+            return reply.send(await service.softDeletePerformance(parsed.data.id));
         }
     );
 }

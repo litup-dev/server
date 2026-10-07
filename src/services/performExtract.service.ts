@@ -18,6 +18,15 @@ export interface ApproveExtractInput {
     image_ids: number[];
 }
 
+export interface DuplicateCandidate {
+    perform_id: number;
+    title: string | null;
+    artists: { name: string }[] | null;
+    perform_date: Date | null;
+    is_cancelled: boolean;
+    images: { id: number; file_path: string | null; is_main: boolean | null }[];
+}
+
 type Tx = Prisma.TransactionClient;
 
 // 입력은 KST 'YYYY-MM-DDTHH:mm'. 서버 TZ 와 무관하게 해석되도록 오프셋을 명시한다
@@ -25,6 +34,16 @@ const kstToUtc = (value: string) => {
     const date = new Date(/[zZ]|[+-]\d{2}:?\d{2}$/.test(value) ? value : `${value}+09:00`);
     if (Number.isNaN(date.getTime())) throw new BadRequestError('perform_date 형식이 올바르지 않습니다.');
     return date;
+};
+
+const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+// 공연 시각이 속한 KST 하루 범위 [00:00, 다음날 00:00)
+const kstDayRange = (date: Date) => {
+    const kst = new Date(date.getTime() + KST_OFFSET_MS);
+    const start = Date.UTC(kst.getUTCFullYear(), kst.getUTCMonth(), kst.getUTCDate()) - KST_OFFSET_MS;
+    return { gte: new Date(start), lt: new Date(start + DAY_MS) };
 };
 
 export class PerformExtractService {
@@ -67,6 +86,8 @@ export class PerformExtractService {
             }
         }
 
+        const duplicatesByExtractId = await this.findDuplicates(items);
+
         return {
             items: items.map(({ club_tb, perform_tmp, ...item }) => ({
                 ...item,
@@ -76,10 +97,63 @@ export class PerformExtractService {
                     instagram_shortcode: perform_tmp.instagram_shortcode,
                     images: perform_tmp.perform_img_tmp,
                 },
+                duplicates: duplicatesByExtractId.get(item.id) ?? [],
             })),
             total,
             counts,
         };
+    }
+
+    // 같은 클럽 · 같은 KST 날짜에 이미 등록된(삭제되지 않은) 공연을 중복 후보로 붙인다
+    private async findDuplicates(items: { id: number; club_id: number; perform_date: Date | null; perform_id: number | null }[]) {
+        const targets = items.flatMap((item) =>
+            item.perform_date ? [{ item, range: kstDayRange(item.perform_date) }] : []
+        );
+        const result = new Map<number, DuplicateCandidate[]>();
+        if (targets.length === 0) return result;
+
+        const performs = await this.prisma.perform.findMany({
+            where: {
+                is_deleted: false,
+                OR: targets.map(({ item, range }) => ({ club_id: item.club_id, perform_date: range })),
+            },
+            orderBy: [{ perform_date: 'asc' }, { id: 'asc' }],
+            select: {
+                id: true,
+                club_id: true,
+                title: true,
+                artists: true,
+                perform_date: true,
+                is_cancelled: true,
+                perform_img_tb: {
+                    select: { id: true, file_path: true, is_main: true },
+                    orderBy: { id: 'asc' },
+                },
+            },
+        });
+
+        for (const { item, range } of targets) {
+            const matched = performs.filter(
+                (p) =>
+                    p.club_id === item.club_id &&
+                    p.id !== item.perform_id &&
+                    p.perform_date !== null &&
+                    p.perform_date >= range.gte &&
+                    p.perform_date < range.lt
+            );
+            result.set(
+                item.id,
+                matched.map((p) => ({
+                    perform_id: p.id,
+                    title: p.title,
+                    artists: Array.isArray(p.artists) ? (p.artists as { name: string }[]) : null,
+                    perform_date: p.perform_date,
+                    is_cancelled: p.is_cancelled,
+                    images: p.perform_img_tb,
+                }))
+            );
+        }
+        return result;
     }
 
     async getPendingForApproval(id: number, imageIds: number[]) {
