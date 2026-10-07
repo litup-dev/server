@@ -46,6 +46,47 @@ const kstDayRange = (date: Date) => {
     return { gte: new Date(start), lt: new Date(start + DAY_MS) };
 };
 
+// 같은 날이어도 시간이 이만큼 이상 벌어지면 별개 공연으로 본다
+const DUPLICATE_TIME_TOLERANCE_MS = 60 * 60 * 1000;
+
+// KST 자정(00:00)은 시간 미상으로 등록된 공연이라 시간 비교에서 제외한다
+const isKstMidnight = (date: Date) => (date.getTime() + KST_OFFSET_MS) % DAY_MS === 0;
+
+const normalizeArtistName = (name: unknown) =>
+    typeof name === 'string' ? name.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '') : '';
+
+const artistNames = (artists: unknown) =>
+    (Array.isArray(artists) ? artists : [])
+        .map((a) => normalizeArtistName((a as { name?: unknown } | null)?.name))
+        .filter((n) => n.length > 0);
+
+// 이름이 같거나 한쪽이 다른 쪽을 포함(2자 이상)하면 같은 아티스트로 본다 (예: "DJ NAUN" / "NAUN")
+const isSameArtist = (a: string, b: string) =>
+    a === b || (Math.min(a.length, b.length) >= 2 && (a.includes(b) || b.includes(a)));
+
+/**
+ * 같은 클럽 · 같은 KST 날짜인 공연이 중복 후보인지 판단한다.
+ * - 시간: 차이가 1시간 이내. 한쪽이 자정(시간 미상)이면 통과
+ * - 아티스트: 하나 이상 겹침. 한쪽이 비어 있으면(판독 불가) 통과
+ */
+const isDuplicateCandidate = (
+    extract: { perform_date: Date | null; artists: unknown },
+    perform: { perform_date: Date | null; artists: unknown }
+) => {
+    if (!extract.perform_date || !perform.perform_date) return false;
+
+    const timeUnknown = isKstMidnight(extract.perform_date) || isKstMidnight(perform.perform_date);
+    if (!timeUnknown) {
+        const diff = Math.abs(extract.perform_date.getTime() - perform.perform_date.getTime());
+        if (diff > DUPLICATE_TIME_TOLERANCE_MS) return false;
+    }
+
+    const a = artistNames(extract.artists);
+    const b = artistNames(perform.artists);
+    if (a.length === 0 || b.length === 0) return true;
+    return a.some((x) => b.some((y) => isSameArtist(x, y)));
+};
+
 export class PerformExtractService {
     constructor(private prisma: PrismaClient) {}
 
@@ -104,8 +145,10 @@ export class PerformExtractService {
         };
     }
 
-    // 같은 클럽 · 같은 KST 날짜에 이미 등록된(삭제되지 않은) 공연을 중복 후보로 붙인다
-    private async findDuplicates(items: { id: number; club_id: number; perform_date: Date | null; perform_id: number | null }[]) {
+    // 같은 클럽 · 같은 KST 날짜에 이미 등록된(삭제되지 않은) 공연 중 시간·아티스트가 비슷한 것을 중복 후보로 붙인다
+    private async findDuplicates(
+        items: { id: number; club_id: number; perform_date: Date | null; perform_id: number | null; artists: unknown }[]
+    ) {
         const targets = items.flatMap((item) =>
             item.perform_date ? [{ item, range: kstDayRange(item.perform_date) }] : []
         );
@@ -139,7 +182,8 @@ export class PerformExtractService {
                     p.id !== item.perform_id &&
                     p.perform_date !== null &&
                     p.perform_date >= range.gte &&
-                    p.perform_date < range.lt
+                    p.perform_date < range.lt &&
+                    isDuplicateCandidate(item, p)
             );
             result.set(
                 item.id,
@@ -223,12 +267,12 @@ export class PerformExtractService {
     }
 
     /**
-     * 승인과 함께 지울 기존 공연을 소프트 삭제한다. 목록의 duplicates 와 같은 기준(같은 club_id · 같은 KST 날짜)에
-     * 속한 공연만 허용한다. 이미 삭제됐거나 없는 id 는 건너뛰고, 실제로 삭제한 id 를 돌려준다
+     * 승인과 함께 지울 기존 공연을 소프트 삭제한다. 목록의 duplicates 와 같은 기준(같은 club_id · 같은 KST 날짜 · 시간/아티스트 유사)에
+     * 속한 공연만 허용한다(isDuplicateCandidate 기준). 이미 삭제됐거나 없는 id 는 건너뛰고, 실제로 삭제한 id 를 돌려준다
      */
     private async softDeleteDuplicates(
         tx: Tx,
-        extract: { club_id: number; perform_date: Date | null },
+        extract: { club_id: number; perform_date: Date | null; artists: unknown },
         requestedIds: number[]
     ) {
         const ids = [...new Set(requestedIds)];
@@ -237,7 +281,7 @@ export class PerformExtractService {
         const range = extract.perform_date ? kstDayRange(extract.perform_date) : null;
         const found = await tx.perform.findMany({
             where: { id: { in: ids } },
-            select: { id: true, club_id: true, perform_date: true, is_deleted: true },
+            select: { id: true, club_id: true, perform_date: true, artists: true, is_deleted: true },
         });
 
         const invalid = found.filter(
@@ -246,11 +290,12 @@ export class PerformExtractService {
                 !range ||
                 p.perform_date === null ||
                 p.perform_date < range.gte ||
-                p.perform_date >= range.lt
+                p.perform_date >= range.lt ||
+                !isDuplicateCandidate(extract, p)
         );
         if (invalid.length > 0) {
             throw new BadRequestError(
-                `삭제할 수 없는 공연입니다(같은 클럽·같은 날 공연이 아님): ${invalid.map((p) => `#${p.id}`).join(', ')}`
+                `삭제할 수 없는 공연입니다(중복 후보가 아님): ${invalid.map((p) => `#${p.id}`).join(', ')}`
             );
         }
 
