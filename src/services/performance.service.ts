@@ -674,7 +674,7 @@ export class PerformanceService {
     }
 
     // 소프트 삭제: 행은 남기고 is_deleted 만 true 로 바꾼다 (사용자 조회에서는 모두 제외됨)
-    async softDeletePerformance(performId: number): Promise<{ id: number; is_deleted: true }> {
+    async softDeletePerformance(performId: number): Promise<{ success: true; id: number }> {
         const perform = await this.prisma.perform.findUnique({
             where: { id: performId },
             select: { id: true, is_deleted: true },
@@ -686,7 +686,7 @@ export class PerformanceService {
             where: { id: performId },
             data: { is_deleted: true, updated_at: new Date() },
         });
-        return { id: performId, is_deleted: true };
+        return { success: true, id: performId };
     }
 
     async savePerformancePosters(
