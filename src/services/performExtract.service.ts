@@ -22,7 +22,12 @@ export interface DuplicateCandidate {
     perform_id: number;
     title: string | null;
     artists: { name: string }[] | null;
+    description: string | null;
     perform_date: Date | null;
+    booking_price: number | null;
+    onsite_price: number | null;
+    booking_url: string | null;
+    sns_links: { instagram?: string }[] | null;
     is_cancelled: boolean;
     images: { id: number; file_path: string | null; is_main: boolean | null }[];
 }
@@ -165,8 +170,13 @@ export class PerformExtractService {
                 id: true,
                 club_id: true,
                 title: true,
+                description: true,
                 artists: true,
                 perform_date: true,
+                booking_price: true,
+                onsite_price: true,
+                booking_url: true,
+                sns_links: true,
                 is_cancelled: true,
                 perform_img_tb: {
                     select: { id: true, file_path: true, is_main: true },
@@ -191,7 +201,12 @@ export class PerformExtractService {
                     perform_id: p.id,
                     title: p.title,
                     artists: Array.isArray(p.artists) ? (p.artists as { name: string }[]) : null,
+                    description: p.description,
                     perform_date: p.perform_date,
+                    booking_price: p.booking_price,
+                    onsite_price: p.onsite_price,
+                    booking_url: p.booking_url,
+                    sns_links: Array.isArray(p.sns_links) ? (p.sns_links as { instagram?: string }[]) : null,
                     is_cancelled: p.is_cancelled,
                     images: p.perform_img_tb,
                 }))
