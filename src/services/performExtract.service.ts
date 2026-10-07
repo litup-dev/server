@@ -174,10 +174,13 @@ export class PerformExtractService {
         return extract;
     }
 
-    async approve(id: number, data: ApproveExtractInput) {
+    /** deletePerformIds 가 있으면 새 공연 등록과 같은 트랜잭션에서 기존 중복 공연을 소프트 삭제한다 */
+    async approve(id: number, data: ApproveExtractInput, deletePerformIds: number[] = []) {
         const extract = await this.getPendingForApproval(id, data.image_ids);
 
         return this.prisma.$transaction(async (tx) => {
+            const deletedPerformIds = await this.softDeleteDuplicates(tx, extract, deletePerformIds);
+
             const perform = await tx.perform.create({
                 data: {
                     club_id: extract.club_id,
@@ -215,13 +218,61 @@ export class PerformExtractService {
 
             await this.syncTmpStatus(tx, extract.tmp_id);
 
-            return { id, tmp_id: extract.tmp_id, perform_id: perform.id };
+            return { id, tmp_id: extract.tmp_id, perform_id: perform.id, deleted_perform_ids: deletedPerformIds };
         });
     }
 
+    /**
+     * 승인과 함께 지울 기존 공연을 소프트 삭제한다. 목록의 duplicates 와 같은 기준(같은 club_id · 같은 KST 날짜)에
+     * 속한 공연만 허용한다. 이미 삭제됐거나 없는 id 는 건너뛰고, 실제로 삭제한 id 를 돌려준다
+     */
+    private async softDeleteDuplicates(
+        tx: Tx,
+        extract: { club_id: number; perform_date: Date | null },
+        requestedIds: number[]
+    ) {
+        const ids = [...new Set(requestedIds)];
+        if (ids.length === 0) return [];
+
+        const range = extract.perform_date ? kstDayRange(extract.perform_date) : null;
+        const found = await tx.perform.findMany({
+            where: { id: { in: ids } },
+            select: { id: true, club_id: true, perform_date: true, is_deleted: true },
+        });
+
+        const invalid = found.filter(
+            (p) =>
+                p.club_id !== extract.club_id ||
+                !range ||
+                p.perform_date === null ||
+                p.perform_date < range.gte ||
+                p.perform_date >= range.lt
+        );
+        if (invalid.length > 0) {
+            throw new BadRequestError(
+                `삭제할 수 없는 공연입니다(같은 클럽·같은 날 공연이 아님): ${invalid.map((p) => `#${p.id}`).join(', ')}`
+            );
+        }
+
+        const targetIds = found.filter((p) => !p.is_deleted).map((p) => p.id);
+        if (targetIds.length === 0) return [];
+
+        await tx.perform.updateMany({
+            where: { id: { in: targetIds }, is_deleted: false },
+            data: { is_deleted: true, updated_at: new Date() },
+        });
+        return targetIds;
+    }
+
     /** 이미지 업로드 실패 시 승인을 되돌려 재시도 가능하게 한다 */
-    async revertApproval(id: number, performId: number, tmpId: number) {
+    async revertApproval(id: number, performId: number, tmpId: number, deletedPerformIds: number[] = []) {
         await this.prisma.$transaction(async (tx) => {
+            if (deletedPerformIds.length > 0) {
+                await tx.perform.updateMany({
+                    where: { id: { in: deletedPerformIds } },
+                    data: { is_deleted: false, updated_at: new Date() },
+                });
+            }
             await tx.perform_extract_tmp.update({
                 where: { id },
                 data: { status: 'pending', perform_id: null, reviewed_at: null, updated_at: new Date() },
