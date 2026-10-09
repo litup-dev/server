@@ -36,5 +36,7 @@ export const KAKAO_CLIENT_SECRET = process.env.KAKAO_CLIENT_SECRET!;
 export const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID!;
 export const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!;
 export const MAX_FILE_SIZE = Number(process.env.MAX_FILE_SIZE) || 5242880;
+// 업로드로 받을 수 있는 원본 최대 용량. MAX_FILE_SIZE 를 넘는 이미지는 저장 전에 서버에서 축소한다.
+export const MAX_UPLOAD_INPUT_SIZE = Number(process.env.MAX_UPLOAD_INPUT_SIZE) || 20 * 1024 * 1024;
 export const JWT_DEV_ACCESS_TOKEN = process.env.JWT_DEV_ACCESS_TOKEN || '';
 export const INTERNAL_SECRET_KEY = process.env.INTERNAL_SECRET_KEY || '';

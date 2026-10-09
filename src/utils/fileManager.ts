@@ -5,6 +5,7 @@ import { randomUUID } from 'crypto';
 import path from 'path';
 import { getCompactKoreaTimestamp } from './time.js';
 import { MAX_FILE_SIZE } from '@/common/constants.js';
+import { compressImageIfNeeded } from './imageCompressor.js';
 
 export class FileManager {
     private storage: IStorageAdapter;
@@ -35,6 +36,17 @@ export class FileManager {
                 `파일 크기가 너무 큽니다. 최대 허용 크기: ${this.maxFileSize} bytes`
             );
         }
+    }
+
+    /**
+     * 최대 용량을 넘는 이미지는 해상도/품질을 낮춰 한도 이하로 줄인다.
+     * 허용되지 않은 MIME 은 그대로 두어 validateFile 에서 거절되게 한다.
+     */
+    private async compressIfNeeded(file: UploadedFileInfo): Promise<UploadedFileInfo> {
+        if (!this.allowedMimeTypes.includes(file.mimeType)) {
+            return file;
+        }
+        return compressImageIfNeeded(file, this.maxFileSize);
     }
 
     /**
@@ -80,14 +92,15 @@ export class FileManager {
      * 다건 파일 저장
      */
     async savefiles(
-        files: UploadedFileInfo[],
+        inputFiles: UploadedFileInfo[],
         type: UploadType,
         entityId: string | number
     ): Promise<SavedFileInfo[]> {
         // 파일 개수 검증
-        this.validateFileCount(files, type);
+        this.validateFileCount(inputFiles, type);
 
-        // 파일 검증
+        // 용량 초과 이미지 축소 후 검증
+        const files = await Promise.all(inputFiles.map((file) => this.compressIfNeeded(file)));
         files.forEach((file) => this.validateFile(file));
 
         // 기존 폴더 삭제
@@ -145,10 +158,11 @@ export class FileManager {
      * (게시글 이미지처럼 같은 폴더에 파일이 누적되는 경우 사용)
      */
     async saveFile(
-        file: UploadedFileInfo,
+        inputFile: UploadedFileInfo,
         type: UploadType,
         entityId: string | number
     ): Promise<SavedFileInfo> {
+        const file = await this.compressIfNeeded(inputFile);
         this.validateFile(file);
 
         const folderPath = this.getUploadPath(type, entityId);
