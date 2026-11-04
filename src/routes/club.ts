@@ -6,6 +6,7 @@ import {
     clubDetailResJson,
     toggleFavoriteResJson,
     clubSearchResJson,
+    clubMapResJson,
 } from '@/schemas/club.schema.js';
 import { idParamSchema, idParamJson, errorResJson } from '@/schemas/common.schema.js';
 import { BadRequestError, NotFoundError } from '@/common/error.js';
@@ -33,6 +34,31 @@ export async function clubRoutes(fastify: FastifyInstance) {
             const result = await service.getSearch(query, request.userId);
 
             return reply.send({
+                data: result,
+            });
+        }
+    );
+
+    fastify.get(
+        '/clubs/map',
+        {
+            preHandler: [fastify.optionalAuth],
+            schema: {
+                tags: ['Clubs'],
+                summary: '지도용 클럽 목록 조회',
+                description:
+                    '지도 마커 표시용 경량 클럽 목록입니다. 사용 중(use_yn=true)이고 좌표가 있는 전체 클럽을 id, name, latitude, longitude, avgRating만 반환합니다. 유저별 값(isFavorite 등)은 포함하지 않습니다.',
+                response: {
+                    200: clubMapResJson,
+                    500: errorResJson,
+                },
+            },
+        },
+        async (request, reply) => {
+            const service = new ClubService(request.server.prisma);
+            const result = await service.getMapClubs();
+
+            return reply.header('Cache-Control', 'public, max-age=300').send({
                 data: result,
             });
         }

@@ -73,6 +73,8 @@ const isSameArtist = (a: string, b: string) =>
  * 같은 클럽 · 같은 KST 날짜인 공연이 중복 후보인지 판단한다.
  * - 시간: 차이가 1시간 이내. 한쪽이 자정(시간 미상)이면 통과
  * - 아티스트: 하나 이상 겹침. 한쪽이 비어 있으면(판독 불가) 통과
+ * - 예외: 시간 차가 1시간을 넘어도 아티스트가 실제로 겹치면 후보 (하루 여러 세트를 한 건으로 올린 경우,
+ *   예: 18:00 시작 3세트 extract vs 22:00 세트만 등록된 기존 공연). 한쪽이 비어 있으면 시간 차로 계속 제외
  */
 const isDuplicateCandidate = (
     extract: { perform_date: Date | null; artists: unknown },
@@ -80,16 +82,18 @@ const isDuplicateCandidate = (
 ) => {
     if (!extract.perform_date || !perform.perform_date) return false;
 
+    const a = artistNames(extract.artists);
+    const b = artistNames(perform.artists);
+    const artistsOverlap = a.some((x) => b.some((y) => isSameArtist(x, y)));
+
     const timeUnknown = isKstMidnight(extract.perform_date) || isKstMidnight(perform.perform_date);
     if (!timeUnknown) {
         const diff = Math.abs(extract.perform_date.getTime() - perform.perform_date.getTime());
-        if (diff > DUPLICATE_TIME_TOLERANCE_MS) return false;
+        if (diff > DUPLICATE_TIME_TOLERANCE_MS) return artistsOverlap;
     }
 
-    const a = artistNames(extract.artists);
-    const b = artistNames(perform.artists);
     if (a.length === 0 || b.length === 0) return true;
-    return a.some((x) => b.some((y) => isSameArtist(x, y)));
+    return artistsOverlap;
 };
 
 export class PerformExtractService {
