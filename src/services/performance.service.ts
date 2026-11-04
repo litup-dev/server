@@ -15,9 +15,57 @@ import { SavedFileInfo } from '@/types/file.types.js';
 import { PrismaClient } from '@prisma/client';
 import { Prisma } from '@prisma/client';
 import { title } from 'process';
+import { redis } from '@/configs/redis.js';
+
+const PERFORMANCE_CACHE_PREFIX = 'performances:';
+// 공연 등록은 하루 한 번 수준이고 등록/삭제/포스터 저장 시 캐시를 비우므로 길게 유지 (24시간)
+const PERFORMANCE_CACHE_TTL_SECONDS = 60 * 60 * 24;
 
 export class PerformanceService {
     constructor(private prisma: PrismaClient) {}
+
+    private async getCached<T>(key: string, loader: () => Promise<T>): Promise<T> {
+        try {
+            const cached = await redis.get(key);
+            if (cached) {
+                return JSON.parse(cached) as T;
+            }
+        } catch (error) {
+            console.error('공연 캐시 조회 실패:', error);
+        }
+
+        const result = await loader();
+
+        try {
+            await redis.set(key, JSON.stringify(result), 'EX', PERFORMANCE_CACHE_TTL_SECONDS);
+        } catch (error) {
+            console.error('공연 캐시 저장 실패:', error);
+        }
+
+        return result;
+    }
+
+    // 메인 화면용 공연 캐시(기간별 목록, 월별 캘린더)를 전부 삭제한다
+    async invalidatePerformanceCache(): Promise<void> {
+        try {
+            let cursor = '0';
+            do {
+                const [next, keys] = await redis.scan(
+                    cursor,
+                    'MATCH',
+                    `${PERFORMANCE_CACHE_PREFIX}*`,
+                    'COUNT',
+                    200
+                );
+                cursor = next;
+                if (keys.length > 0) {
+                    await redis.del(...keys);
+                }
+            } while (cursor !== '0');
+        } catch (error) {
+            console.error('공연 캐시 삭제 실패:', error);
+        }
+    }
 
     async getSearchPerformances(
         query: SearchPerformancesType
@@ -162,6 +210,23 @@ export class PerformanceService {
     }
 
     async getPerformancesByDateRange(
+        query: GetPerformanceByDateRangeType
+    ): Promise<PerformanceListResponseType> {
+        const { startDate, endDate, isFree, area } = query;
+        const key = [
+            `${PERFORMANCE_CACHE_PREFIX}range`,
+            startDate,
+            endDate,
+            area?.trim() ?? '',
+            isFree ? 'free' : '',
+            query.offset ?? 0,
+            query.limit ?? 1000,
+        ].join(':');
+
+        return this.getCached(key, () => this.queryPerformancesByDateRange(query));
+    }
+
+    private async queryPerformancesByDateRange(
         query: GetPerformanceByDateRangeType
     ): Promise<PerformanceListResponseType> {
         const { startDate, endDate, isFree, area } = query;
@@ -389,6 +454,14 @@ export class PerformanceService {
     }
 
     async getPerformancesByMonth(
+        query: GetPerformanceCalendarType
+    ): Promise<PerformanceCalendarListType> {
+        return this.getCached(`${PERFORMANCE_CACHE_PREFIX}calendar:${query.month}`, () =>
+            this.queryPerformancesByMonth(query)
+        );
+    }
+
+    private async queryPerformancesByMonth(
         query: GetPerformanceCalendarType
     ): Promise<PerformanceCalendarListType> {
         const { month } = query;
@@ -686,6 +759,7 @@ export class PerformanceService {
             where: { id: performId },
             data: { is_deleted: true, updated_at: new Date() },
         });
+        await this.invalidatePerformanceCache();
         return { success: true, id: performId };
     }
 
@@ -722,6 +796,7 @@ export class PerformanceService {
             });
         });
 
+        await this.invalidatePerformanceCache();
         return { success: true, operation: 'saved' };
     }
 
@@ -767,6 +842,7 @@ export class PerformanceService {
                 updated_at: new Date(),
             },
         });
+        await this.invalidatePerformanceCache();
         return {
             perform_id: perform.id,
             club_id: perform.club_id,
@@ -801,6 +877,7 @@ export class PerformanceService {
                 updated_at: new Date(),
             },
         });
+        await this.invalidatePerformanceCache();
         return {
             perform_id: perform.id,
             club_id: perform.club_id,
