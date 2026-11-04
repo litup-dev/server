@@ -92,6 +92,7 @@ export async function internalUploadRoutes(fastify: FastifyInstance) {
                     images: savedFiles.map((f) => ({
                         perform_id: entityId,
                         url: f.filePath,
+                        thumb_url: f.thumbPath ?? null,
                         is_main: f.order === 0,
                         order: f.order,
                     })),
@@ -147,6 +148,7 @@ export async function internalUploadRoutes(fastify: FastifyInstance) {
                     images: savedFiles.map((f) => ({
                         perform_id: entityId,
                         url: f.filePath,
+                        thumb_url: f.thumbPath ?? null,
                         is_main: f.order === 0,
                         order: f.order,
                     })),

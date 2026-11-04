@@ -5,7 +5,7 @@ import { randomUUID } from 'crypto';
 import path from 'path';
 import { getCompactKoreaTimestamp } from './time.js';
 import { MAX_FILE_SIZE } from '@/common/constants.js';
-import { compressImageIfNeeded } from './imageCompressor.js';
+import { compressImageIfNeeded, createThumbnail, limitImageDimension } from './imageCompressor.js';
 
 export class FileManager {
     private storage: IStorageAdapter;
@@ -100,7 +100,17 @@ export class FileManager {
         this.validateFileCount(inputFiles, type);
 
         // 용량 초과 이미지 축소 후 검증
-        const files = await Promise.all(inputFiles.map((file) => this.compressIfNeeded(file)));
+        const config = UPLOAD_CONFIGS[type];
+        const files = await Promise.all(
+            inputFiles.map(async (file) => {
+                const compressed = await this.compressIfNeeded(file);
+                // 허용된 MIME 이고 해상도 상한이 있는 타입(포스터 등)은 긴 변을 줄인다.
+                if (config.maxDimension && this.allowedMimeTypes.includes(compressed.mimeType)) {
+                    return limitImageDimension(compressed, config.maxDimension);
+                }
+                return compressed;
+            })
+        );
         files.forEach((file) => this.validateFile(file));
 
         // 기존 폴더 삭제
@@ -122,14 +132,22 @@ export class FileManager {
 
             try {
                 await this.storage.save(file.buffer, filePath);
-                savedFiles.push({
+                const saved: SavedFileInfo = {
                     originalName: file.fileName,
                     storedName,
                     filePath,
                     size: file.size,
                     mimeType: file.mimeType,
                     order: i,
-                });
+                };
+                // 본 파일은 이미 저장됐으므로 먼저 롤백 대상에 넣고 썸네일을 만든다.
+                savedFiles.push(saved);
+                if (config.thumbnailWidth) {
+                    const thumbPath = `${folderPath}/${path.parse(storedName).name}_thumb.webp`;
+                    const thumb = await createThumbnail(file, config.thumbnailWidth);
+                    await this.storage.save(thumb, thumbPath);
+                    saved.thumbPath = thumbPath;
+                }
             } catch (error: any) {
                 await this.rollbackFiles(savedFiles);
                 throw new Error(`파일 저장에 실패하였습니다: ${error.message}`);
@@ -142,6 +160,9 @@ export class FileManager {
         for (const file of files) {
             try {
                 await this.storage.delete(file.filePath);
+                if (file.thumbPath) {
+                    await this.storage.delete(file.thumbPath);
+                }
             } catch (error) {
                 throw new Error(`파일 롤백에 실패하였습니다: ${error}`);
             }

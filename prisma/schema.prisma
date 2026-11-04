@@ -144,6 +144,7 @@ model perform_img_tb {
   is_main       Boolean?
   original_name String?   @db.VarChar(255)
   file_size     BigInt?
+  thumb_path    String?   @db.VarChar(255)
   perform_tb    Perform   @relation(fields: [perform_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 

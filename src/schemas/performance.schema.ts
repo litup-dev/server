@@ -16,6 +16,7 @@ const snsLinkSchema = z.object({
 const imageSchema = z.object({
     id: z.number(),
     filePath: z.string().nullable(),
+    thumbPath: z.string().nullable().optional(),
     isMain: z.boolean().nullable(),
 });
 

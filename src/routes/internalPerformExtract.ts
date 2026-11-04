@@ -127,6 +127,7 @@ export async function internalPerformExtractRoutes(fastify: FastifyInstance) {
                     images: savedFiles.map((f) => ({
                         perform_id,
                         url: f.filePath,
+                        thumb_url: f.thumbPath ?? null,
                         is_main: f.order === 0,
                         order: f.order,
                     })),
