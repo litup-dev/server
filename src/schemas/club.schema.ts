@@ -100,6 +100,18 @@ export const clubSearchSchema = clubSchema.pick({
     isFavorite: true,
 });
 
+// 지도용 클럽 스키마 (좌표만 담은 경량 응답)
+export const clubMapSchema = clubSchema
+    .pick({
+        id: true,
+        name: true,
+        avgRating: true,
+    })
+    .extend({
+        latitude: z.number().openapi({ description: '위도', example: 37.5665 }),
+        longitude: z.number().openapi({ description: '경도', example: 126.978 }),
+    });
+
 // 클럽 목록 조회 쿼리 파라미터 스키마
 export const getClubsSchema = z.object({
     searchKey: z.string().nullable().optional().openapi({
@@ -198,6 +210,7 @@ export const clubListRes = paginatedResponseSchema(clubSchema);
 export const clubListSimpleRes = paginatedResponseSchema(clubSimpleSchema);
 export const clubSearchRes = paginatedResponseSchema(clubSearchSchema);
 export const toggleFavoriteRes = successResponseSchema(z.boolean());
+export const clubMapRes = successResponseSchema(z.array(clubMapSchema));
 
 // JSON Schema
 export const getClubsJson = generateSchema(getClubsSchema);
@@ -206,11 +219,13 @@ export const clubListResJson = generateSchema(clubListRes);
 export const clubSearchResJson = generateSchema(clubSearchRes);
 export const clubListSimpleResJson = generateSchema(clubListSimpleRes);
 export const toggleFavoriteResJson = generateSchema(toggleFavoriteRes);
+export const clubMapResJson = generateSchema(clubMapRes);
 export const createClubJson = generateSchema(createClubSchema);
 
 // 타입 추출
 export type ClubType = z.infer<typeof clubSchema>;
 export type ClubSearchType = z.infer<typeof clubSearchSchema>;
+export type ClubMapType = z.infer<typeof clubMapSchema>;
 export type GetClubsType = z.infer<typeof getClubsSchema>;
 export type ClubDetailResponseType = z.infer<typeof clubDetailRes>;
 export type ClubListResponseType = z.infer<typeof clubListResponseSchema>;

@@ -8,11 +8,73 @@ import {
     ClubSearchResponseType,
     ClubSearchType,
     ClubCreateType,
+    ClubMapType,
 } from '@/schemas/club.schema.js';
 import { ClubSearchArea } from '@/types/search.types.js';
+import { redis } from '@/configs/redis.js';
+
+const CLUB_MAP_CACHE_KEY = 'clubs:map';
+// 클럽 추가는 드물고 생성 시 캐시를 비우므로 길게 유지 (24시간)
+const CLUB_MAP_CACHE_TTL_SECONDS = 60 * 60 * 24;
 
 export class ClubService {
     constructor(private prisma: PrismaClient) {}
+
+    async getMapClubs(): Promise<ClubMapType[]> {
+        try {
+            const cached = await redis.get(CLUB_MAP_CACHE_KEY);
+            if (cached) {
+                return JSON.parse(cached) as ClubMapType[];
+            }
+        } catch (error) {
+            console.error('클럽 지도 캐시 조회 실패:', error);
+        }
+
+        const clubs = await this.prisma.club.findMany({
+            where: {
+                use_yn: true,
+                latitude: { not: null },
+                longitude: { not: null },
+            },
+            select: {
+                id: true,
+                name: true,
+                latitude: true,
+                longitude: true,
+                avgRating: true,
+            },
+            orderBy: { id: 'asc' },
+        });
+
+        const items = clubs.map((club) => ({
+            id: club.id,
+            name: club.name,
+            latitude: club.latitude as number,
+            longitude: club.longitude as number,
+            avgRating: club.avgRating,
+        }));
+
+        try {
+            await redis.set(
+                CLUB_MAP_CACHE_KEY,
+                JSON.stringify(items),
+                'EX',
+                CLUB_MAP_CACHE_TTL_SECONDS
+            );
+        } catch (error) {
+            console.error('클럽 지도 캐시 저장 실패:', error);
+        }
+
+        return items;
+    }
+
+    private async invalidateMapCache(): Promise<void> {
+        try {
+            await redis.del(CLUB_MAP_CACHE_KEY);
+        } catch (error) {
+            console.error('클럽 지도 캐시 삭제 실패:', error);
+        }
+    }
 
     async getSearch(
         parameters: GetClubsType,
@@ -486,6 +548,8 @@ export class ClubService {
                 WHERE id = ${club.id}
             `;
         }
+
+        await this.invalidateMapCache();
 
         return club.id;
     }
