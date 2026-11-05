@@ -5,7 +5,7 @@ import { randomUUID } from 'crypto';
 import path from 'path';
 import { getCompactKoreaTimestamp } from './time.js';
 import { MAX_FILE_SIZE } from '@/common/constants.js';
-import { compressImageIfNeeded } from './imageCompressor.js';
+import { compressImageIfNeeded, createThumbnail, limitImageDimension } from './imageCompressor.js';
 
 export class FileManager {
     private storage: IStorageAdapter;
@@ -100,8 +100,31 @@ export class FileManager {
         this.validateFileCount(inputFiles, type);
 
         // 용량 초과 이미지 축소 후 검증
-        const files = await Promise.all(inputFiles.map((file) => this.compressIfNeeded(file)));
+        const config = UPLOAD_CONFIGS[type];
+        const files = await Promise.all(
+            inputFiles.map(async (file) => {
+                const compressed = await this.compressIfNeeded(file);
+                // 허용된 MIME 이고 해상도 상한이 있는 타입(포스터 등)은 긴 변을 줄인다.
+                if (config.maxDimension && this.allowedMimeTypes.includes(compressed.mimeType)) {
+                    return limitImageDimension(compressed, config.maxDimension);
+                }
+                return compressed;
+            })
+        );
         files.forEach((file) => this.validateFile(file));
+
+        // 썸네일은 부가 산출물이다. 기존 폴더를 지우기 전에 미리 만들어 두고, 실패해도 업로드는 막지 않는다.
+        const thumbnails = await Promise.all(
+            files.map(async (file) => {
+                if (!config.thumbnailWidth) return undefined;
+                try {
+                    return await createThumbnail(file, config.thumbnailWidth);
+                } catch (error: any) {
+                    console.warn(`썸네일 생성 실패(원본만 저장): ${file.fileName} - ${error.message}`);
+                    return undefined;
+                }
+            })
+        );
 
         // 기존 폴더 삭제
         // 한장씩 수정가능하게 두는 것보다 업로드 시 기존 사진을 삭제하며 관리하는 편이 좋을 듯함.
@@ -122,17 +145,30 @@ export class FileManager {
 
             try {
                 await this.storage.save(file.buffer, filePath);
-                savedFiles.push({
+                const saved: SavedFileInfo = {
                     originalName: file.fileName,
                     storedName,
                     filePath,
                     size: file.size,
                     mimeType: file.mimeType,
                     order: i,
-                });
+                };
+                savedFiles.push(saved);
             } catch (error: any) {
                 await this.rollbackFiles(savedFiles);
                 throw new Error(`파일 저장에 실패하였습니다: ${error.message}`);
+            }
+
+            // 본 파일은 저장됐다. 썸네일 저장이 실패해도 업로드를 실패시키지 않고 썸네일 없이 둔다.
+            const thumb = thumbnails[i];
+            if (thumb) {
+                const thumbPath = `${folderPath}/${path.parse(storedName).name}_thumb.webp`;
+                try {
+                    await this.storage.save(thumb, thumbPath);
+                    savedFiles[savedFiles.length - 1]!.thumbPath = thumbPath;
+                } catch (error: any) {
+                    console.warn(`썸네일 저장 실패(원본만 저장): ${thumbPath} - ${error.message}`);
+                }
             }
         }
         return savedFiles;
@@ -142,6 +178,9 @@ export class FileManager {
         for (const file of files) {
             try {
                 await this.storage.delete(file.filePath);
+                if (file.thumbPath) {
+                    await this.storage.delete(file.thumbPath);
+                }
             } catch (error) {
                 throw new Error(`파일 롤백에 실패하였습니다: ${error}`);
             }

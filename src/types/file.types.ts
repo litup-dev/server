@@ -16,6 +16,10 @@ export interface UploadConfig {
     minFiles: number;
     maxFiles: number;
     folderName: string;
+    /** 설정하면 긴 변이 이 값(px)을 넘는 이미지를 줄여 저장한다. */
+    maxDimension?: number;
+    /** 설정하면 이 가로(px)의 목록용 썸네일(WebP)을 함께 저장한다. */
+    thumbnailWidth?: number;
 }
 
 export interface UploadedFileInfo {
@@ -33,6 +37,8 @@ export interface SavedFileInfo {
     size: number;
     mimeType: string;
     order?: number;
+    /** 목록용 썸네일 경로. 썸네일을 만들지 않는 타입이면 없다. */
+    thumbPath?: string;
 }
 
 export const UPLOAD_CONFIGS: Record<UploadType, UploadConfig> = {
@@ -47,6 +53,8 @@ export const UPLOAD_CONFIGS: Record<UploadType, UploadConfig> = {
         minFiles: 1,
         maxFiles: 20,
         folderName: 'poster',
+        maxDimension: 2048,
+        thumbnailWidth: 640,
     },
     [UploadType.CLUB_REVIEW]: {
         type: UploadType.CLUB_REVIEW,

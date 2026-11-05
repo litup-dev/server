@@ -57,6 +57,64 @@ export async function compressImageIfNeeded(
     return withBuffer(file, smallest ?? file.buffer, mimeType);
 }
 
+const DIMENSION_QUALITY = 85;
+const THUMBNAIL_QUALITY = 80;
+
+/**
+ * 긴 변이 maxDimension(px)을 넘는 이미지를 비율을 유지해 줄인다. (원본은 보관하지 않는다)
+ * - 이미 maxDimension 이하이면 다시 인코딩하지 않고 원본을 그대로 반환한다. (화질 손실 방지)
+ * - JPEG → JPEG(mozjpeg), PNG/WebP → WebP. EXIF 회전을 픽셀에 반영하고 메타데이터는 제거한다.
+ */
+export async function limitImageDimension(
+    file: UploadedFileInfo,
+    maxDimension: number
+): Promise<UploadedFileInfo> {
+    try {
+        const { width = 0, height = 0 } = await sharp(file.buffer).metadata();
+        // 긴 변은 EXIF 회전으로 가로/세로가 바뀌어도 같다.
+        if (Math.max(width, height) <= maxDimension) {
+            return file;
+        }
+
+        const asJpeg = file.mimeType === 'image/jpeg';
+        const pipeline = sharp(file.buffer)
+            .rotate()
+            .resize({
+                width: maxDimension,
+                height: maxDimension,
+                fit: 'inside',
+                withoutEnlargement: true,
+            });
+        const out = await (asJpeg
+            ? pipeline.jpeg({ quality: DIMENSION_QUALITY, mozjpeg: true })
+            : pipeline.webp({ quality: DIMENSION_QUALITY })
+        ).toBuffer();
+
+        // 줄였는데 오히려 커지면(이미 매우 높게 압축된 원본) 원본을 유지한다.
+        if (out.length >= file.buffer.length) {
+            return file;
+        }
+        return withBuffer(file, out, asJpeg ? 'image/jpeg' : 'image/webp');
+    } catch (error: any) {
+        throw new BadRequestError(`이미지를 처리할 수 없습니다: ${error.message}`);
+    }
+}
+
+/**
+ * 목록용 썸네일(WebP)을 만든다. 원본보다 크게 늘리지 않는다.
+ */
+export async function createThumbnail(file: UploadedFileInfo, width: number): Promise<Buffer> {
+    try {
+        return await sharp(file.buffer)
+            .rotate()
+            .resize({ width, withoutEnlargement: true })
+            .webp({ quality: THUMBNAIL_QUALITY })
+            .toBuffer();
+    } catch (error: any) {
+        throw new BadRequestError(`썸네일을 만들 수 없습니다: ${error.message}`);
+    }
+}
+
 function withBuffer(file: UploadedFileInfo, buffer: Buffer, mimeType: string): UploadedFileInfo {
     const ext = mimeType === 'image/jpeg' ? '.jpg' : '.webp';
     const parsed = path.parse(file.fileName);

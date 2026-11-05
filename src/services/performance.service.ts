@@ -164,6 +164,7 @@ export class PerformanceService {
                 perform_id: true,
                 id: true,
                 file_path: true,
+                thumb_path: true,
                 is_main: true,
             },
         });
@@ -200,6 +201,7 @@ export class PerformanceService {
                 images: (imagesByPerformId[p.id] || []).map((img) => ({
                     id: img.id,
                     filePath: img.file_path,
+                    thumbPath: img.thumb_path ?? null,
                     isMain: img.is_main,
                 })),
             })),
@@ -288,6 +290,7 @@ export class PerformanceService {
                         select: {
                             id: true,
                             file_path: true,
+                            thumb_path: true,
                             is_main: true,
                         },
                         take: 1,
@@ -330,6 +333,7 @@ export class PerformanceService {
                 images: p.perform_img_tb.map((img) => ({
                     id: img.id,
                     filePath: img.file_path,
+                    thumbPath: img.thumb_path ?? null,
                     isMain: img.is_main,
                 })),
             })),
@@ -402,6 +406,7 @@ export class PerformanceService {
                         select: {
                             id: true,
                             file_path: true,
+                            thumb_path: true,
                             is_main: true,
                         },
                         take: 1,
@@ -444,6 +449,7 @@ export class PerformanceService {
                 images: p.perform_img_tb.map((img) => ({
                     id: img.id,
                     filePath: img.file_path,
+                    thumbPath: img.thumb_path ?? null,
                     isMain: img.is_main,
                 })),
             })),
@@ -494,6 +500,7 @@ export class PerformanceService {
                     select: {
                         id: true,
                         file_path: true,
+                        thumb_path: true,
                         is_main: true,
                     },
                     take: 1,
@@ -542,6 +549,7 @@ export class PerformanceService {
                         images: p.perform_img_tb.map((img) => ({
                             id: img.id,
                             filePath: img.file_path,
+                            thumbPath: img.thumb_path ?? null,
                             isMain: img.is_main,
                         })),
                     })),
@@ -694,6 +702,7 @@ export class PerformanceService {
                     select: {
                         id: true,
                         file_path: true,
+                        thumb_path: true,
                         is_main: true,
                     },
                 },
@@ -740,6 +749,7 @@ export class PerformanceService {
             images: (performance.perform_img_tb ?? []).map((img) => ({
                 id: img.id,
                 filePath: img.file_path ?? null,
+                thumbPath: img.thumb_path ?? null,
                 isMain: img.is_main ?? null,
             })),
             isAttend: performance.attend_tb && performance.attend_tb.length > 0 ? true : false,
@@ -788,6 +798,7 @@ export class PerformanceService {
                 data: files.map((file) => ({
                     perform_id: performId,
                     file_path: file.filePath,
+                    thumb_path: file.thumbPath ?? null,
                     is_main: file.order === 0,
                     original_name: file.originalName,
                     file_size: file.size,
