@@ -113,6 +113,19 @@ export class FileManager {
         );
         files.forEach((file) => this.validateFile(file));
 
+        // 썸네일은 부가 산출물이다. 기존 폴더를 지우기 전에 미리 만들어 두고, 실패해도 업로드는 막지 않는다.
+        const thumbnails = await Promise.all(
+            files.map(async (file) => {
+                if (!config.thumbnailWidth) return undefined;
+                try {
+                    return await createThumbnail(file, config.thumbnailWidth);
+                } catch (error: any) {
+                    console.warn(`썸네일 생성 실패(원본만 저장): ${file.fileName} - ${error.message}`);
+                    return undefined;
+                }
+            })
+        );
+
         // 기존 폴더 삭제
         // 한장씩 수정가능하게 두는 것보다 업로드 시 기존 사진을 삭제하며 관리하는 편이 좋을 듯함.
         // 사용자가 리뷰 수정 시 기존 이미지가 날아가는 단점이 있음.
@@ -140,17 +153,22 @@ export class FileManager {
                     mimeType: file.mimeType,
                     order: i,
                 };
-                // 본 파일은 이미 저장됐으므로 먼저 롤백 대상에 넣고 썸네일을 만든다.
                 savedFiles.push(saved);
-                if (config.thumbnailWidth) {
-                    const thumbPath = `${folderPath}/${path.parse(storedName).name}_thumb.webp`;
-                    const thumb = await createThumbnail(file, config.thumbnailWidth);
-                    await this.storage.save(thumb, thumbPath);
-                    saved.thumbPath = thumbPath;
-                }
             } catch (error: any) {
                 await this.rollbackFiles(savedFiles);
                 throw new Error(`파일 저장에 실패하였습니다: ${error.message}`);
+            }
+
+            // 본 파일은 저장됐다. 썸네일 저장이 실패해도 업로드를 실패시키지 않고 썸네일 없이 둔다.
+            const thumb = thumbnails[i];
+            if (thumb) {
+                const thumbPath = `${folderPath}/${path.parse(storedName).name}_thumb.webp`;
+                try {
+                    await this.storage.save(thumb, thumbPath);
+                    savedFiles[savedFiles.length - 1]!.thumbPath = thumbPath;
+                } catch (error: any) {
+                    console.warn(`썸네일 저장 실패(원본만 저장): ${thumbPath} - ${error.message}`);
+                }
             }
         }
         return savedFiles;
