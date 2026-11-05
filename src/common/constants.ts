@@ -19,7 +19,15 @@ export const API_PREFIX = process.env.API_PREFIX || '/api';
 export const REDIS_HOST = process.env.REDIS_HOST || 'localhost';
 export const REDIS_PORT = Number(process.env.REDIS_PORT) || 6379;
 export const REDIS_PASSWORD = process.env.REDIS_PASSWORD || '';
-export const REDIS_DATABASE = Number(process.env.REDIS_DATABASE) || 4;
+// DB 번호 0 도 유효한 값이므로 `|| 4` 를 쓰면 0 이 4 로 바뀐다. 설정이 없을 때만 기본값(4)을 쓴다.
+const parsedRedisDatabase = Number(process.env.REDIS_DATABASE);
+export const REDIS_DATABASE =
+    process.env.REDIS_DATABASE !== undefined &&
+    process.env.REDIS_DATABASE.trim() !== '' &&
+    Number.isInteger(parsedRedisDatabase) &&
+    parsedRedisDatabase >= 0
+        ? parsedRedisDatabase
+        : 4;
 export const JWT_ACCESS_TOKEN_EXPIRES_IN = Number(process.env.JWT_ACCESS_TOKEN_EXPIRES_IN) || 3600;
 export const JWT_REFRESH_TOKEN_EXPIRES_IN =
     Number(process.env.JWT_REFRESH_TOKEN_EXPIRES_IN) || 604800;
