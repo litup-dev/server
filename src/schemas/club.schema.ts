@@ -110,6 +110,10 @@ export const clubMapSchema = clubSchema
     .extend({
         latitude: z.number().openapi({ description: '위도', example: 37.5665 }),
         longitude: z.number().openapi({ description: '경도', example: 126.978 }),
+        hasTodayPerform: z.boolean().openapi({
+            description: '오늘(KST) 예정된 공연이 있는지 여부. 취소·삭제된 공연은 제외',
+            example: true,
+        }),
     });
 
 // 클럽 목록 조회 쿼리 파라미터 스키마

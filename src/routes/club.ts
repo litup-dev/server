@@ -47,7 +47,7 @@ export async function clubRoutes(fastify: FastifyInstance) {
                 tags: ['Clubs'],
                 summary: '지도용 클럽 목록 조회',
                 description:
-                    '지도 마커 표시용 경량 클럽 목록입니다. 사용 중(use_yn=true)이고 좌표가 있는 전체 클럽을 id, name, latitude, longitude, avgRating만 반환합니다. 유저별 값(isFavorite 등)은 포함하지 않습니다.',
+                    '지도 마커 표시용 경량 클럽 목록입니다. 사용 중(use_yn=true)이고 좌표가 있는 전체 클럽을 id, name, latitude, longitude, avgRating, hasTodayPerform(오늘 KST 공연 여부)만 반환합니다. 유저별 값(isFavorite 등)은 포함하지 않습니다.',
                 response: {
                     200: clubMapResJson,
                     500: errorResJson,

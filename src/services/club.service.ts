@@ -17,14 +17,92 @@ const CLUB_MAP_CACHE_KEY = 'clubs:map';
 // 클럽 추가는 드물고 생성 시 캐시를 비우므로 길게 유지 (24시간)
 const CLUB_MAP_CACHE_TTL_SECONDS = 60 * 60 * 24;
 
+// 오늘 공연이 있는 클럽 id 캐시. 공연 캐시(performances:*)와 같은 접두사를 써서
+// 공연 등록·수정·취소 시 invalidatePerformanceCache 로 함께 무효화된다
+const TODAY_PERFORM_CLUB_CACHE_PREFIX = 'performances:club-map-today:';
+const TODAY_PERFORM_CLUB_CACHE_TTL_SECONDS = 60 * 60 * 24;
+
+const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+// KST 기준 오늘 하루 범위 [00:00, 다음날 00:00). 서버 TZ 와 무관하게 계산한다
+// (시간 미상 공연은 KST 00:00 으로 저장되므로 UTC 날짜로 자르면 누락된다)
+const getKstToday = (now: Date = new Date()) => {
+    const kst = new Date(now.getTime() + KST_OFFSET_MS);
+    const start =
+        Date.UTC(kst.getUTCFullYear(), kst.getUTCMonth(), kst.getUTCDate()) - KST_OFFSET_MS;
+    return {
+        date: kst.toISOString().slice(0, 10),
+        gte: new Date(start),
+        lt: new Date(start + DAY_MS),
+    };
+};
+
 export class ClubService {
     constructor(private prisma: PrismaClient) {}
 
     async getMapClubs(): Promise<ClubMapType[]> {
+        const [clubs, todayClubIds] = await Promise.all([
+            this.getMapClubBase(),
+            this.getTodayPerformClubIds(),
+        ]);
+
+        return clubs.map((club) => ({
+            ...club,
+            hasTodayPerform: todayClubIds.has(club.id),
+        }));
+    }
+
+    private async getTodayPerformClubIds(): Promise<Set<number>> {
+        const today = getKstToday();
+        const cacheKey = `${TODAY_PERFORM_CLUB_CACHE_PREFIX}${today.date}`;
+
+        try {
+            const cached = await redis.get(cacheKey);
+            if (cached) {
+                return new Set(JSON.parse(cached) as number[]);
+            }
+        } catch (error) {
+            console.error('오늘 공연 클럽 캐시 조회 실패:', error);
+        }
+
+        let ids: number[];
+        try {
+            const performs = await this.prisma.perform.findMany({
+                where: {
+                    perform_date: { gte: today.gte, lt: today.lt },
+                    is_cancelled: false,
+                    is_deleted: false,
+                },
+                select: { club_id: true },
+                distinct: ['club_id'],
+            });
+            ids = performs.map((perform) => perform.club_id);
+        } catch (error) {
+            // 오늘 공연 여부를 못 구해도 지도 자체는 보여준다
+            console.error('오늘 공연 클럽 조회 실패:', error);
+            return new Set();
+        }
+
+        try {
+            await redis.set(
+                cacheKey,
+                JSON.stringify(ids),
+                'EX',
+                TODAY_PERFORM_CLUB_CACHE_TTL_SECONDS
+            );
+        } catch (error) {
+            console.error('오늘 공연 클럽 캐시 저장 실패:', error);
+        }
+
+        return new Set(ids);
+    }
+
+    private async getMapClubBase(): Promise<Omit<ClubMapType, 'hasTodayPerform'>[]> {
         try {
             const cached = await redis.get(CLUB_MAP_CACHE_KEY);
             if (cached) {
-                return JSON.parse(cached) as ClubMapType[];
+                return JSON.parse(cached) as Omit<ClubMapType, 'hasTodayPerform'>[];
             }
         } catch (error) {
             console.error('클럽 지도 캐시 조회 실패:', error);
